@@ -180,15 +180,31 @@ export async function sendQuoteByEmail(quoteId: string) {
         return { success: false, error: "Quote or lead email not found" };
     }
 
-    const { sendEmail } = await import('@/lib/email');
+    try {
+        const { sendEmail } = await import('@/lib/email');
+        const { renderToBuffer } = await import('@react-pdf/renderer');
+        const { QuoteDocument } = await import('@/components/quotes/quote-pdf');
+        const React = await import('react');
 
-    await sendEmail({
-        to: quote.lead.email,
-        subject: `Preventivo #${quote.number} - PLATINUM CRM`,
-        body: `Gentile ${quote.lead.firstName},\n\nin allegato il preventivo richiesto.\n\nCordiali saluti,\nPlatinum CRM`,
-    });
+        // Generazione PDF sul server
+        const doc = React.createElement(QuoteDocument, { quote }) as any;
+        const buffer = await renderToBuffer(doc);
 
-    return { success: true };
+        await sendEmail({
+            to: quote.lead.email,
+            subject: `Preventivo #${quote.number} - PLATINUM CRM`,
+            body: `Gentile ${quote.lead.firstName},\n\nin allegato il preventivo #${quote.number} richiesto.\n\nCordiali saluti,\nPlatinum CRM`,
+            attachment: {
+                filename: `preventivo_${quote.number}.pdf`,
+                content: buffer
+            }
+        });
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Email send error:", error);
+        return { success: false, error: error.message || "Errore invio email" };
+    }
 }
 
 export async function updateQuoteStatus(id: string, status: string, leadId: string) {

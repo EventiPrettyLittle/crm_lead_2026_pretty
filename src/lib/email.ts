@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import { sendGmail } from './google-auth'
 
-export async function sendEmail({ to, subject, body }: { to: string, subject: string, body: string, attachments?: any[] }) {
+export async function sendEmail({ to, subject, body, attachment }: { to: string, subject: string, body: string, attachment?: { filename: string, content: Buffer } }) {
     try {
         const cookieStore = await cookies();
         const tokensCookie = cookieStore.get('google_tokens');
@@ -12,7 +12,7 @@ export async function sendEmail({ to, subject, body }: { to: string, subject: st
         }
 
         const tokens = JSON.parse(tokensCookie.value);
-        await sendGmail(tokens, { to, subject, body });
+        await sendGmail(tokens, { to, subject, body, attachment });
 
         return { success: true };
     } catch (error) {

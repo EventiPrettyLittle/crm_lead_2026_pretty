@@ -31,20 +31,41 @@ export const getAuthUrl = (state?: string) => {
     });
 };
 
-export const sendGmail = async (tokens: any, { to, subject, body }: { to: string, subject: string, body: string }) => {
+export const sendGmail = async (tokens: any, { to, subject, body, attachment }: { to: string, subject: string, body: string, attachment?: { filename: string, content: Buffer } }) => {
     oauth2Client.setCredentials(tokens);
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
     
+    const boundary = "antigravity_boundary_" + Math.random().toString(36).substring(7);
     const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
-    const messageParts = [
+
+    let messageParts = [
         `To: ${to}`,
-        'Content-Type: text/plain; charset=utf-8',
-        'MIME-Version: 1.0',
         `Subject: ${utf8Subject}`,
+        'MIME-Version: 1.0',
+        `Content-Type: multipart/mixed; boundary="${boundary}"`,
+        '',
+        `--${boundary}`,
+        'Content-Type: text/plain; charset=utf-8',
+        'Content-Transfer-Encoding: 7bit',
         '',
         body,
+        ''
     ];
-    const message = messageParts.join('\n');
+
+    if (attachment) {
+        messageParts.push(
+            `--${boundary}`,
+            `Content-Type: application/pdf; name="${attachment.filename}"`,
+            'Content-Transfer-Encoding: base64',
+            `Content-Disposition: attachment; filename="${attachment.filename}"`,
+            '',
+            attachment.content.toString('base64'),
+            ''
+        );
+    }
+
+    messageParts.push(`--${boundary}--`);
+    const message = messageParts.join('\r\n');
 
     const encodedMessage = Buffer.from(message)
         .toString('base64')
