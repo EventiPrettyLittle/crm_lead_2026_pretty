@@ -7,6 +7,13 @@ export async function GET() {
         const name = 'Admin Platinum';
         const password = 'Admin2026!';
         
+        // Forza aggiunta colonna password se manca
+        try {
+            await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "password" TEXT`);
+        } catch (e) {
+            console.log("Colonna password già presente o errore minore:", e);
+        }
+
         // Verifica se esiste già
         const existingUsers: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "User" WHERE email = $1`, email);
         
