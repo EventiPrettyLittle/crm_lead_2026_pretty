@@ -1,0 +1,75 @@
+'use server'
+
+import prisma from "@/lib/prisma"
+import { revalidatePath } from 'next/cache'
+
+export async function getCompanySettings() {
+    try {
+        const results: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "CompanySettings" LIMIT 1`);
+        if (results.length > 0) {
+            const res = results[0];
+            // Mappatura compatibilità lowercase
+            return {
+                id: res.id,
+                companyName: res.companyname || res.companyName,
+                address: res.address,
+                vatNumber: res.vatnumber || res.vatNumber,
+                iban: res.iban,
+                phone: res.phone,
+                email: res.email,
+                referente: res.referente,
+            };
+        }
+        return null;
+    } catch (e) {
+        // Se la tabella non esiste, la inizializziamo
+        await initSettingsTable();
+        return null;
+    }
+}
+
+export async function updateCompanySettings(data: any) {
+    await initSettingsTable();
+    
+    const existing = await getCompanySettings();
+    if (existing) {
+        await prisma.$executeRawUnsafe(
+            `UPDATE "CompanySettings" SET 
+             "companyName" = $1, "address" = $2, "vatNumber" = $3, 
+             "iban" = $4, "phone" = $5, "email" = $6, "referente" = $7, 
+             "updatedAt" = CURRENT_TIMESTAMP 
+             WHERE id = $8`,
+            data.companyName, data.address, data.vatNumber, data.iban, data.phone, data.email, data.referente, existing.id
+        );
+    } else {
+        const id = 'settings_main';
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO "CompanySettings" (id, "companyName", "address", "vatNumber", "iban", "phone", "email", "referente") 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            id, data.companyName, data.address, data.vatNumber, data.iban, data.phone, data.email, data.referente
+        );
+    }
+    revalidatePath('/settings');
+    revalidatePath('/quotes');
+}
+
+async function initSettingsTable() {
+    await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS public."CompanySettings" (
+            "id" TEXT PRIMARY KEY,
+            "companyName" TEXT,
+            "address" TEXT,
+            "vatNumber" TEXT,
+            "iban" TEXT,
+            "phone" TEXT,
+            "email" TEXT,
+            "referente" TEXT,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+    
+    // Aggiungiamo anche la colonna createdBy a Quote per tracciare chi lo crea
+    try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "Quote" ADD COLUMN IF NOT EXISTS "createdBy" TEXT;`);
+    } catch (e) {}
+}

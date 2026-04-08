@@ -1,0 +1,132 @@
+/**
+ * WhatsApp Meta API Integration
+ * This service handles sending official WhatsApp Business Templates
+ */
+
+interface WhatsAppTemplateParams {
+    to: string;
+    templateName: string;
+    languageCode?: string;
+    bodyVariables?: string[];
+}
+
+export async function sendWhatsAppTemplate({ 
+    to, 
+    templateName, 
+    languageCode = "it", 
+    bodyVariables = [] 
+}: WhatsAppTemplateParams) {
+    const apikey = process.env.WHATSAPP_API_KEY;
+    const token = process.env.WHATSAPP_TOKEN;
+    const baseUrl = process.env.WHATSAPP_BASE_URL || "https://app.sendapp.ai/api/whatsapp-meta/send";
+
+    if (!apikey || !token) {
+        console.error("WhatsApp credentials missing in .env");
+        return { success: false, error: "Credenziali WhatsApp mancanti" };
+    }
+
+    // Clean phone number: remove +, spaces, and any non-digit. 
+    // SendApp wants '393331234567', NOT '+393331234567'
+    const cleanTo = to.replace(/\D/g, "");
+
+    const bodyParameters = bodyVariables.map(text => ({
+        type: "text",
+        text: text
+    }));
+
+    const payload = {
+        apikey,
+        token,
+        number: cleanTo,
+        type: "template",
+        template: {
+            name: templateName,
+            language: {
+                code: languageCode
+            },
+            components: bodyParameters.length > 0 ? [
+                {
+                    type: "body",
+                    parameters: bodyParameters
+                }
+            ] : []
+        }
+    };
+
+    try {
+        const response = await fetch(baseUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.status === "error") {
+            console.error("WhatsApp API Error:", data);
+            return { 
+                success: false, 
+                error: data?.message || data?.error?.message || "Errore durante l'invio del messaggio" 
+            };
+        }
+
+        return { success: true, data };
+    } catch (error) {
+        console.error("WhatsApp Fetch Exception:", error);
+        return { success: false, error: "Errore di connessione con SendApp API" };
+    }
+}
+
+export async function sendWhatsAppMessage({ 
+    to, 
+    text 
+}: { 
+    to: string, 
+    text: string 
+}) {
+    const apikey = process.env.WHATSAPP_API_KEY;
+    const token = process.env.WHATSAPP_TOKEN;
+    const baseUrl = process.env.WHATSAPP_BASE_URL || "https://app.sendapp.ai/api/whatsapp-meta/send";
+
+    if (!apikey || !token) {
+        console.error("WhatsApp credentials missing in .env");
+        return { success: false, error: "Credenziali WhatsApp mancanti" };
+    }
+
+    const cleanTo = to.replace(/\D/g, "");
+
+    const payload = {
+        apikey,
+        token,
+        number: cleanTo,
+        type: "text",
+        text: text
+    };
+
+    try {
+        const response = await fetch(baseUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.status === "error") {
+            console.error("WhatsApp API Error:", data);
+            return { 
+                success: false, 
+                error: data?.message || data?.error?.message || "Errore durante l'invio del messaggio" 
+            };
+        }
+
+        return { success: true, data };
+    } catch (error) {
+        console.error("WhatsApp Fetch Exception:", error);
+        return { success: false, error: "Errore di connessione con SendApp API" };
+    }
+}

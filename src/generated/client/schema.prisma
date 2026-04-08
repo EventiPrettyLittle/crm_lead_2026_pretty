@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  role         String        @default("OPERATOR") // ADMIN, OPERATOR
+  leads        Lead[]
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Lead {
+  id         String  @id @default(cuid())
+  externalId String? @unique // ID from Google Sheet/Excel
+
+  // Import Fields
+  leadCreatedAt        DateTime? // Data Lead
+  countryCode          String? // Codice Paese
+  eventType            String? // Tipologia Evento
+  guestsCount          String? // Invitati
+  productInterest      String? // Prodotto
+  eventDate            DateTime? // Data Evento
+  eventLocation        String? // Luogo Evento (Indirizzo Completo)
+  locationName         String? // Nome Location (es: Villa Ravaschieri)
+  eventCity            String? // Città estratta
+  eventProvince        String? // Provincia estratta
+  eventRegion          String? // Regione estratta
+  firstName            String? // Nome
+  lastName             String? // Cognome
+  phoneRaw             String? // Telefono
+  phoneNormalized      String? // Telefono normalizzato
+  email                String? // Email
+  preferredContactTime String? // Quando Vorresti Essere Contattato
+
+  // Operator Fields
+  stage          String    @default("NUOVO") // NUOVO, CONTATTATO, QUALIFICATO, PREVENTIVO, FOLLOWUP, APPUNTAMENTO, VINTO, PERSO
+  ownerId        String?
+  owner          User?     @relation(fields: [ownerId], references: [id])
+  contactedAt    DateTime?
+  interestLevel  String? // BASSO, MEDIO, ALTO
+  budgetRange    String?
+  priceTarget    Decimal?
+  notesInternal  String?
+  nextFollowupAt DateTime?
+  lastStatus     String? // CONTATTATO, NON_RISPONDE, DA_RICONTATTARE
+  lastStatusAt   DateTime?
+  lostReason     String? // Nessuna risposta, Prezzo alto, Perso vs competitor, ecc.
+  quoteSentAt    DateTime?
+
+  // Relations
+  activities   Activity[]
+  quotes       Quote[]
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Activity {
+  id             String    @id @default(cuid())
+  leadId         String
+  lead           Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type           String // CALL, EMAIL, NOTE, SYSTEM, WHATSAPP, RICHIAMO
+  notes          String?
+  nextFollowupAt DateTime?
+  createdAt      DateTime  @default(now())
+  // updatedBy    String? // Could link to User
+}
+
+model Quote {
+  id            String      @id @default(cuid())
+  number        Int // Manual increment in app logic
+  leadId        String
+  lead          Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  status        String      @default("BOZZA") // BOZZA, INVIATO, ACCETTATO, RIFIUTATO
+  paymentMethod String? // CARTA, CONTANTI, BONIFICO, RATEALE
+  totalAmount   Decimal     @default(0) // Net total (after discounts)
+  discountTotal Decimal     @default(0) // Global discount on total
+  notes         String?
+  items         QuoteItem[]
+  sentAt        DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model QuoteItem {
+  id          String   @id @default(cuid())
+  quoteId     String
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Decimal
+  discount    Decimal? @default(0)
+  vatRate     Decimal  @default(22)
+  totalPrice  Decimal // Calculated: (quantity * unitPrice) - discount
+}
+
+model Appointment {
+  id            String   @id @default(cuid())
+  leadId        String
+  lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  ownerId       String
+  owner         User     @relation(fields: [ownerId], references: [id])
+  title         String?
+  startTime     DateTime // Data + Ora
+  duration      Int      @default(60) // Minutes
+  location      String?
+  notes         String?
+  googleEventId String? // ID for Google Calendar sync
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
