@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Search, User, Phone, X, Loader2, ArrowRight } from "lucide-react"
-import { Input } from "@/components/ui/sidebar" // Reusing sidebar input style
 import { searchLeadsGlobal } from "@/actions/search-leads"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
