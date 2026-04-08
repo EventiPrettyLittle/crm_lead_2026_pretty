@@ -13,7 +13,7 @@ export async function addLeadNoteAction(leadId: string, newNote: string) {
         });
 
         const currentNotes = lead?.notesInternal || "";
-        const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
         
         // Newest note at the TOP
         const noteWithSignature = `[Luca V. - ${timestamp}]: ${newNote.trim()}\n\n`;

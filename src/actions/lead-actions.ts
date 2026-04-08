@@ -59,7 +59,7 @@ export async function updateLeadQuickAction(
         await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
 
         // Sync to Internal Notes box (Top)
-        const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
         const currentNotes = lead.notesInternal || "";
         const systemNote = `[Sistema - ${timestamp}]: ${activityNotes}\n\n`;
         await prisma.lead.update({

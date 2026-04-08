@@ -32,7 +32,7 @@ export async function sendLeadWhatsAppAction(leadId: string, actionType: 'contac
         });
 
         if (res.success) {
-            const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
             
             // 1. Log activity in the DB (Timeline)
             await prisma.activity.create({
@@ -74,7 +74,7 @@ export async function sendFreeWhatsAppMessageAction(leadId: string, message: str
         });
 
         if (res.success) {
-            const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
             
             // 1. Log activity in the DB
             await prisma.activity.create({

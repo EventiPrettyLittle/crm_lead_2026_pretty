@@ -208,14 +208,18 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
         const scriptId = 'google-maps-script';
         if (!window.google) {
-            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-            if (!document.getElementById(scriptId) && apiKey) {
+            // Fallback alla chiave hardcoded se la variabile d'ambiente non è disponibile nel build corrente
+            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBOTQRShuod2e9ipkQ1FhR2nOJvASevr6k';
+            if (!document.getElementById(scriptId)) {
                 const script = document.createElement('script');
                 script.id = scriptId;
                 script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
                 script.async = true;
                 script.onload = () => initAutocomplete();
                 document.head.appendChild(script);
+            } else {
+                // Script già nel DOM, aspetta che sia pronto
+                setTimeout(initAutocomplete, 500);
             }
         } else {
             setTimeout(initAutocomplete, 200); // Ritardo leggero per garantire il mount
