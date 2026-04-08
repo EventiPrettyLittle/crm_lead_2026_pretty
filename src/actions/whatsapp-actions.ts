@@ -5,19 +5,22 @@ import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
-export async function sendLeadWhatsAppAction(leadId: string, actionType: 'contacted' | 'no-answer') {
+export async function sendLeadWhatsAppAction(leadId: string, actionType: 'contacted' | 'no-answer' | 'schedule') {
     try {
         const lead = await getLeadById(leadId);
         if (!lead || !lead.phoneRaw) {
             return { success: false, error: "Lead o numero di telefono non trovato" };
         }
 
+        // Nomi template reali su SendApp – fallback hardcoded se le env var non sono impostate
         const templateName = actionType === 'contacted' 
-            ? process.env.WHATSAPP_TEMPLATE_NAME_CONTACTED 
-            : process.env.WHATSAPP_TEMPLATE_NAME_NO_ANSWER;
+            ? (process.env.WHATSAPP_TEMPLATE_NAME_CONTACTED || 'contattato')
+            : actionType === 'no-answer'
+            ? (process.env.WHATSAPP_TEMPLATE_NAME_NO_ANSWER || 'non_risponde')
+            : (process.env.WHATSAPP_TEMPLATE_NAME_APPOINTMENT || 'appuntamento');
 
         if (!templateName) {
-            return { success: false, error: "Template non configurato nel file .env" };
+            return { success: false, error: "Template non configurato" };
         }
 
         // Prepare variables: only {{1}} for Name as specified by user
