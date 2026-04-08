@@ -80,36 +80,24 @@ export async function updateLeadQuickAction(
 
 export async function createManualLead(data: any) {
     try {
-        // Self-healing: ensure columns exist
-        try {
-            await (prisma as any).$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "preferredContactTime" TEXT;`);
-            await (prisma as any).$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "additionalServices" TEXT;`);
-        } catch (e) {}
+        const lead = await prisma.lead.create({
+            data: {
+                firstName: data.firstName || null,
+                lastName: data.lastName || null,
+                email: data.email || null,
+                phoneRaw: data.phone || null,
+                eventType: data.eventType || null,
+                eventDate: data.eventDate ? new Date(data.eventDate) : null,
+                eventLocation: data.eventLocation || null,
+                guestsCount: data.guestsCount ? data.guestsCount.toString() : null,
+                productInterest: data.productInterest || null,
+                preferredContactTime: data.preferredContactTime || null,
+                additionalServices: data.additionalServices || null,
+                stage: 'NUOVO',
+            } as any
+        });
 
-        const leadId = `cl${Math.random().toString(36).substring(2, 11)}`;
-        let eventDate = null;
-        if (data.eventDate && data.eventDate.trim() !== "") {
-            try {
-                eventDate = new Date(data.eventDate);
-            } catch (e) {}
-        }
-
-        await (prisma as any).$executeRaw`
-            INSERT INTO "Lead" (
-                "id", "firstName", "lastName", "email", "phoneRaw", 
-                "eventType", "eventDate", "eventLocation", "guestsCount", 
-                "productInterest", "preferredContactTime", "additionalServices", 
-                "stage", "updatedAt", "createdAt"
-            ) VALUES (
-                ${leadId}, ${data.firstName || null}, ${data.lastName || null}, ${data.email || null}, ${data.phone || null},
-                ${data.eventType || null}, ${eventDate}, ${data.eventLocation || null}, ${data.guestsCount ? data.guestsCount.toString() : null},
-                ${data.productInterest || null}, ${data.preferredContactTime || null}, ${data.additionalServices || null},
-                'NUOVO', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-            )
-        `;
-
-        await createActivity(leadId, 'SYSTEM', 'Lead created manually', undefined);
-
+        await createActivity(lead.id, 'SYSTEM', 'Lead created manually', undefined);
         revalidatePath('/leads');
         return { success: true };
     } catch (error) {
@@ -136,29 +124,28 @@ export async function deleteAllLeads() {
     }
 }
 export async function updateLeadDetails(id: string, data: any) {
-    console.log("SERVER: Received Geodata for update:", { city: data.eventCity, prov: data.eventProvince, reg: data.eventRegion });
     try {
-        // Self-healing: ensure columns exist
-        try {
-            await (prisma as any).$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "preferredContactTime" TEXT;`);
-            await (prisma as any).$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "additionalServices" TEXT;`);
-        } catch (e) {}
-
-        await (prisma as any).$executeRawUnsafe(`
-            UPDATE "Lead" 
-            SET "eventCity" = $1, "eventProvince" = $2, "eventRegion" = $3, "eventLocation" = $4, "locationName" = $5,
-                "firstName" = $6, "lastName" = $7, "email" = $8, "phoneRaw" = $9, 
-                "eventType" = $10, "eventDate" = $11, "guestsCount" = $12, "productInterest" = $13,
-                "additionalServices" = $14, "preferredContactTime" = $15,
-                "updatedAt" = CURRENT_TIMESTAMP
-            WHERE "id" = $16
-        `, 
-        data.eventCity || null, data.eventProvince || null, data.eventRegion || null, data.eventLocation || null, data.locationName || null,
-        data.firstName || null, data.lastName || null, data.email || null, data.phone || null, 
-        data.eventType || null, data.eventDate ? new Date(data.eventDate) : null, 
-        data.guestsCount ? data.guestsCount.toString() : null, data.productInterest || null, 
-        data.additionalServices || null, data.preferredContactTime || null, id);
-
+        await prisma.lead.update({
+            where: { id },
+            data: {
+                eventCity: data.eventCity || null,
+                eventProvince: data.eventProvince || null,
+                eventRegion: data.eventRegion || null,
+                eventLocation: data.eventLocation || null,
+                locationName: data.locationName || null,
+                firstName: data.firstName || null,
+                lastName: data.lastName || null,
+                email: data.email || null,
+                phoneRaw: data.phone || null,
+                eventType: data.eventType || null,
+                eventDate: data.eventDate ? new Date(data.eventDate) : null,
+                guestsCount: data.guestsCount ? data.guestsCount.toString() : null,
+                productInterest: data.productInterest || null,
+                additionalServices: data.additionalServices || null,
+                preferredContactTime: data.preferredContactTime || null,
+                updatedAt: new Date(),
+            } as any
+        });
 
         revalidatePath(`/leads/${id}`);
         revalidatePath('/leads');
