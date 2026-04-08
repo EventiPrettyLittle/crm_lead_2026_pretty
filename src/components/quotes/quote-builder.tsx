@@ -262,11 +262,27 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
         setOpen(false);
     }
 
+    const handleOpenChange = async (val: boolean) => {
+        setOpen(val);
+        if (val && !qId && initialLeadId) {
+            setLoading(true);
+            try {
+                const newQuote = await createQuote(initialLeadId);
+                setQId(newQuote.id);
+                setQuote(newQuote);
+                toast.success("Nuovo preventivo creato");
+            } catch (error) {
+                console.error("Create quote error:", error);
+                toast.error("Errore durante la creazione del preventivo");
+            } finally {
+                setLoading(false);
+            }
+        }
+        if (!val && onClose) onClose();
+    };
+
     return (
-        <Dialog open={open} onOpenChange={(val) => {
-            setOpen(val);
-            if (!val && onClose) onClose();
-        }}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 {existingQuote ? (
                     <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 hover:bg-white hover:shadow-md transition-all">
