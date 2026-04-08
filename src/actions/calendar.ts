@@ -5,7 +5,8 @@ import { cookies } from "next/headers";
 
 export async function getCalendarEvents() {
     const cookieStore = await cookies();
-    const tokenCookie = cookieStore.get('google_calendar_tokens');
+    // Il callback OAuth salva 'google_tokens'; supportiamo anche il vecchio nome per compatibilità
+    const tokenCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
 
     if (!tokenCookie) {
         return { error: 'Not authenticated', authenticated: false };
