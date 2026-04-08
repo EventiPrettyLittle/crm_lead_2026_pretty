@@ -16,8 +16,8 @@ export async function sendWhatsAppTemplate({
     languageCode = "it", 
     bodyVariables = [] 
 }: WhatsAppTemplateParams) {
-    const apikey = process.env.WHATSAPP_API_KEY;
-    const token = process.env.WHATSAPP_TOKEN;
+    const apikey = process.env.WHATSAPP_API_KEY || 'vCZnSEs90xYtLimo';
+    const token = process.env.WHATSAPP_TOKEN || 'DqvljFxnVAJ3i7XK';
     const baseUrl = process.env.WHATSAPP_BASE_URL || "https://app.sendapp.ai/api/whatsapp-meta/send";
 
     if (!apikey || !token) {
@@ -86,8 +86,8 @@ export async function sendWhatsAppMessage({
     to: string, 
     text: string 
 }) {
-    const apikey = process.env.WHATSAPP_API_KEY;
-    const token = process.env.WHATSAPP_TOKEN;
+    const apikey = process.env.WHATSAPP_API_KEY || 'vCZnSEs90xYtLimo';
+    const token = process.env.WHATSAPP_TOKEN || 'DqvljFxnVAJ3i7XK';
     const baseUrl = process.env.WHATSAPP_BASE_URL || "https://app.sendapp.ai/api/whatsapp-meta/send";
 
     if (!apikey || !token) {
