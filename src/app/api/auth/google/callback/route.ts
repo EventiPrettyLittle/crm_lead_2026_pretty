@@ -1,9 +1,10 @@
 import { getTokens } from "@/lib/google-auth"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
+    const state = searchParams.get('state') // 'calendar' or null
 
     if (!code) {
         return NextResponse.json({ error: 'No code provided' }, { status: 400 })
@@ -32,8 +33,8 @@ export async function GET(request: Request) {
             }
         } catch (e) {}
 
-        const displayName = dbUser?.name || userInfo.name || 'User';
-        const response = NextResponse.redirect(new URL('/', request.url))
+        const redirectUrl = state === 'calendar' ? '/calendar' : '/';
+        const response = NextResponse.redirect(new URL(redirectUrl, request.url))
 
         response.cookies.set('google_tokens', JSON.stringify(tokens), {
             httpOnly: true,
@@ -43,19 +44,23 @@ export async function GET(request: Request) {
             maxAge: 60 * 60 * 24 * 30 
         })
 
-        response.cookies.set('user_session', JSON.stringify({
-            id: dbUser?.id || userInfo.id,
-            name: displayName,
-            email: userInfo.email,
-            picture: userInfo.picture,
-            role: dbUser?.role || 'USER'
-        }), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 30 
-        })
+        const existingSession = request.cookies.get('user_session');
+        if (!existingSession) {
+            const displayName = dbUser?.name || userInfo.name || 'User';
+            response.cookies.set('user_session', JSON.stringify({
+                id: dbUser?.id || userInfo.id,
+                name: displayName,
+                email: userInfo.email,
+                picture: userInfo.picture,
+                role: dbUser?.role || 'USER'
+            }), {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 60 * 60 * 24 * 30 
+            })
+        }
 
         return response
     } catch (error) {
