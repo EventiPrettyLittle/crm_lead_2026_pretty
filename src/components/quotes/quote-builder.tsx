@@ -440,7 +440,8 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                         </div>
 
                         <div className="space-y-4 p-7 rounded-[3rem] bg-white border border-slate-100 mt-6 shadow-xl shadow-slate-200/20 relative border-l-4 border-l-indigo-500">
-                            <div className="absolute top-6 right-8">
+                            <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-50">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nuova Voce</Label>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" size="sm" className="rounded-full bg-slate-50 border-slate-200 text-slate-600 font-black text-[10px] h-9 px-5 hover:bg-indigo-600 hover:text-white transition-all">
@@ -448,22 +449,25 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className="rounded-2xl w-72 shadow-2xl border-slate-100 p-2">
-                                        {products.map(p => (
-                                            <DropdownMenuItem key={p.id} onClick={() => selectProduct(p)} className="p-3 rounded-xl cursor-pointer">
-                                                <div className="flex justify-between items-center w-full">
-                                                    <span className="font-black text-slate-800">{p.name}</span>
-                                                    <span className="text-indigo-600 font-black">€{Number(p.price).toFixed(0)}</span>
-                                                </div>
-                                            </DropdownMenuItem>
-                                        ))}
+                                        {products.length === 0 ? (
+                                            <p className="p-4 text-center text-[10px] text-slate-400 uppercase font-black tracking-widest">Nessun prodotto</p>
+                                        ) : (
+                                            products.map(p => (
+                                                <DropdownMenuItem key={p.id} onClick={() => selectProduct(p)} className="p-3 rounded-xl cursor-pointer">
+                                                    <div className="flex justify-between items-center w-full">
+                                                        <span className="font-black text-slate-800">{p.name}</span>
+                                                        <span className="text-indigo-600 font-black">€{Number(p.price).toFixed(0)}</span>
+                                                    </div>
+                                                </DropdownMenuItem>
+                                            ))
+                                        )}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
 
                             <div className="grid grid-cols-12 gap-4">
                                 <div className="col-span-12 md:col-span-6">
-                                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Nuova Voce</Label>
-                                    <Input placeholder="Es: Allestimento Floreale o Ulteriore ora Extra..." value={desc} onChange={(e) => setDesc(e.target.value)} className="h-14 rounded-2xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white transition-all" />
+                                    <Input placeholder="Es: Allestimento Floreale..." value={desc} onChange={(e) => setDesc(e.target.value)} className="h-14 rounded-2xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white transition-all" />
                                 </div>
                                 <div className="col-span-4 md:col-span-2">
                                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Qtà</Label>
