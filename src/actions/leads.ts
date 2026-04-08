@@ -3,7 +3,8 @@
 import { Lead } from '@prisma/client'
 import prisma from "@/lib/prisma"
 import { ParsedLead } from '@/lib/import-utils'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
+import { serializePrisma } from "@/lib/serialize"
 
 
 
@@ -78,14 +79,17 @@ export async function importLeadsAction(leads: ParsedLead[]): Promise<ImportResu
     };
 }
 
-import { serializePrisma } from "@/lib/serialize"
-
-export async function getLeads() {
-    const leads = await prisma.lead.findMany({
-        orderBy: { createdAt: 'desc' }
-    });
-    return serializePrisma(leads);
-}
+export const getLeads = unstable_cache(
+    async (limit = 100) => {
+        const leads = await prisma.lead.findMany({
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+        });
+        return serializePrisma(leads);
+    },
+    ['leads_list'],
+    { revalidate: 60, tags: ['leads'] }
+);
 
 export async function searchLeads(query: string) {
     if (!query || query.length < 2) return [];
