@@ -38,7 +38,7 @@ export function ReminderNotifier() {
                         }
 
                         const hour = rem.nextFollowupAt 
-                            ? new Date(rem.nextFollowupAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+                            ? new Date(rem.nextFollowupAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })
                             : "Ora";
 
                         const newToastId = toast.custom((t) => (

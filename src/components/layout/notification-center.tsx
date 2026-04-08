@@ -68,7 +68,7 @@ export function NotificationCenter() {
                                     </p>
                                     <p className="text-[10px] text-slate-500 font-bold flex items-center gap-1 mt-0.5">
                                         <Clock className="h-2.5 w-2.5" />
-                                        Scaduto: {new Date(rem.nextFollowupAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                                        Scaduto: {new Date(rem.nextFollowupAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}
                                     </p>
                                 </div>
                                 <ArrowRight className="h-3 w-3 text-slate-300 group-hover:text-indigo-600 transition-colors self-center" />

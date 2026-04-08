@@ -142,7 +142,7 @@ export default function GoogleCalendar() {
                                 <div key={event.id} className="flex items-start gap-4 p-5 rounded-3xl border border-slate-100 bg-white shadow-sm transition-all hover:shadow-md hover:border-indigo-100 group/ev">
                                     <div className="min-w-24 pt-1">
                                         <div className="text-xs font-black text-indigo-600 uppercase tracking-widest leading-none">
-                                            {new Date(event.start).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(event.start).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}
                                         </div>
                                         <div className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">Inizio</div>
                                     </div>

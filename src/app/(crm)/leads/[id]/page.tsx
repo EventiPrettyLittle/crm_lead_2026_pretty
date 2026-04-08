@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { format } from "date-fns"
+import { formatITDate, formatITDateTime, formatITTime } from "@/lib/utils"
 import { Mail, Phone, MapPin, Calendar, User, FileText, ArrowRight, ArrowLeft, MessageSquare, ExternalLink } from "lucide-react"
 import QuoteBuilder from "@/components/quotes/quote-builder"
 import { LeadLocationActions } from "@/components/leads/lead-location-actions"
@@ -59,7 +60,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                         <Separator orientation="vertical" className="h-4" />
                                         <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium">
                                             <Calendar className="h-3.5 w-3.5" />
-                                            Creato il {format(new Date(lead.createdAt), 'dd MMM yyyy')}
+                                                Creato il {formatITDate(lead.createdAt)}
                                         </div>
                                     </div>
                                 </div>
@@ -141,7 +142,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                                 <div>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase">Data Evento</p>
                                                     <p className="text-sm font-semibold">
-                                                        {lead.eventDate ? format(new Date(lead.eventDate), 'dd MMM yyyy') : '-'}
+                                                        {lead.eventDate ? formatITDate(lead.eventDate) : '-'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -190,7 +191,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                                     <div className="flex items-center justify-between mb-1">
                                                         <div className="font-bold text-slate-800 text-sm">{activity.type}</div>
                                                         <time className="text-[10px] font-bold text-indigo-500">
-                                                            {format(new Date(activity.createdAt), 'dd MMM HH:mm')}
+                                                        {formatITTime(activity.createdAt)}
                                                         </time>
                                                     </div>
                                                     <div className="text-slate-500 text-sm leading-relaxed">
@@ -221,7 +222,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                                                     {quote.status}
                                                                 </Badge>
                                                             </div>
-                                                            <p className="text-xs text-slate-400 font-medium italic">Creato il {format(new Date(quote.createdAt), 'dd MMM yyyy')}</p>
+                                                            <p className="text-xs text-slate-400 font-medium italic">Creato il {formatITDate(quote.createdAt)}</p>
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-2xl font-black text-slate-900">€{Number(quote.totalAmount).toFixed(2)}</p>
@@ -259,13 +260,13 @@ export default async function LeadDetailPage(props: PageProps) {
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold opacity-60 uppercase">Prossimo Follow-up</p>
                                     <p className="text-lg font-bold text-amber-400">
-                                        {lead.nextFollowupAt ? format(new Date(lead.nextFollowupAt), 'dd MMM yyyy HH:mm') : 'Non programmato'}
+                                        {lead.nextFollowupAt ? formatITDateTime(lead.nextFollowupAt) : 'Non programmato'}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold opacity-60 uppercase">Ultimo Contatto</p>
                                     <p className="text-sm font-medium">
-                                        {lead.contactedAt ? format(new Date(lead.contactedAt), 'dd MMM yyyy HH:mm') : 'Mai contattato'}
+                                        {lead.contactedAt ? formatITDateTime(lead.contactedAt) : 'Mai contattato'}
                                     </p>
                                 </div>
                                 <div className="pt-4 border-t border-white/10">
