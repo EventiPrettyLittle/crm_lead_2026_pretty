@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from "react"
-import { Lead } from "../../generated/client"
+import { Lead } from "@prisma/client"
 import {
     Table,
     TableBody,

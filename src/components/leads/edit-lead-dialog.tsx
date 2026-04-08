@@ -41,7 +41,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { updateLeadDetails } from '@/actions/lead-actions'
 import { toast } from 'sonner'
-import { Lead } from '../../generated/client'
+import { Lead } from '@prisma/client'
 import { cn } from "@/lib/utils"
 
 const formSchema = z.object({
