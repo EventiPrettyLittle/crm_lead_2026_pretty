@@ -151,6 +151,7 @@ exports.Prisma.LeadScalarFieldEnum = {
   phoneNormalized: 'phoneNormalized',
   email: 'email',
   preferredContactTime: 'preferredContactTime',
+  additionalServices: 'additionalServices',
   stage: 'stage',
   ownerId: 'ownerId',
   contactedAt: 'contactedAt',
@@ -190,15 +191,37 @@ exports.Prisma.QuoteScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PaymentScalarFieldEnum = {
+  id: 'id',
+  quoteId: 'quoteId',
+  amount: 'amount',
+  method: 'method',
+  notes: 'notes',
+  date: 'date',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.QuoteItemScalarFieldEnum = {
   id: 'id',
   quoteId: 'quoteId',
   description: 'description',
   quantity: 'quantity',
+  originalPrice: 'originalPrice',
   unitPrice: 'unitPrice',
   discount: 'discount',
   vatRate: 'vatRate',
   totalPrice: 'totalPrice'
+};
+
+exports.Prisma.ProductScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  sku: 'sku',
+  price: 'price',
+  category: 'category',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.AppointmentScalarFieldEnum = {
@@ -236,7 +259,9 @@ exports.Prisma.ModelName = {
   Lead: 'Lead',
   Activity: 'Activity',
   Quote: 'Quote',
+  Payment: 'Payment',
   QuoteItem: 'QuoteItem',
+  Product: 'Product',
   Appointment: 'Appointment'
 };
 

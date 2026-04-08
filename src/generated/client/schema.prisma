@@ -45,6 +45,7 @@ model Lead {
   phoneNormalized      String? // Telefono normalizzato
   email                String? // Email
   preferredContactTime String? // Quando Vorresti Essere Contattato
+  additionalServices   String? // Servizi Aggiuntivi (CSV)
 
   // Operator Fields
   stage          String    @default("NUOVO") // NUOVO, CONTATTATO, QUALIFICATO, PREVENTIVO, FOLLOWUP, APPUNTAMENTO, VINTO, PERSO
@@ -92,21 +93,45 @@ model Quote {
   discountTotal Decimal     @default(0) // Global discount on total
   notes         String?
   items         QuoteItem[]
+  payments      Payment[]
   sentAt        DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
 
+model Payment {
+  id        String   @id @default(cuid())
+  quoteId   String
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  amount    Decimal
+  method    String? // BONIFICO, CONTANTI, CARTA, POS, ECC.
+  notes     String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
 model QuoteItem {
+  id            String   @id @default(cuid())
+  quoteId       String
+  quote         Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description   String
+  quantity      Int      @default(1)
+  originalPrice Decimal? // Prezzo di listino
+  unitPrice     Decimal // Prezzo scontato finale
+  discount      Decimal? @default(0) // Sconto applicato (valore assoluto o %)
+  vatRate       Decimal  @default(22)
+  totalPrice    Decimal // Calculated: (quantity * unitPrice)
+}
+
+model Product {
   id          String   @id @default(cuid())
-  quoteId     String
-  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  description String
-  quantity    Int      @default(1)
-  unitPrice   Decimal
-  discount    Decimal? @default(0)
-  vatRate     Decimal  @default(22)
-  totalPrice  Decimal // Calculated: (quantity * unitPrice) - discount
+  name        String
+  description String?
+  sku         String?
+  price       Decimal
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Appointment {

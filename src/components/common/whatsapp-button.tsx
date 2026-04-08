@@ -26,7 +26,8 @@ export function WhatsAppButton({ lead, quote }: WhatsAppButtonProps) {
             text += `Importo totale: €${Number(quote.totalAmount).toFixed(2)}. \n`;
             // Link to PDF? In a real app, this would be a public URL to the generated PDF.
             // For now, we put a placeholder or maybe we upload it first.
-            text += `Puoi visualizzare il preventivo qui: ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/leads/${lead.id}`;
+            const appUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+            text += `Puoi visualizzare il preventivo qui: ${appUrl}/leads/${lead.id}`;
         } else {
             text += `come stai?`;
         }
