@@ -155,9 +155,10 @@ export async function updateLeadDetails(id: string, data: any) {
         `, 
         data.eventCity || null, data.eventProvince || null, data.eventRegion || null, data.eventLocation || null, data.locationName || null,
         data.firstName || null, data.lastName || null, data.email || null, data.phone || null, 
-        data.eventType || null, data.eventDate ? new Date(data.eventDate).toISOString() : null, 
+        data.eventType || null, data.eventDate ? new Date(data.eventDate) : null, 
         data.guestsCount ? data.guestsCount.toString() : null, data.productInterest || null, 
         data.additionalServices || null, data.preferredContactTime || null, id);
+
 
         revalidatePath(`/leads/${id}`);
         revalidatePath('/leads');
