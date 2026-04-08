@@ -14,7 +14,7 @@ const oauth2Client = new google.auth.OAuth2(
     getEnvVar('GOOGLE_REDIRECT_URI')
 );
 
-export const getAuthUrl = () => {
+export const getAuthUrl = (state?: string) => {
     return oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: [
@@ -26,7 +26,8 @@ export const getAuthUrl = () => {
             'https://www.googleapis.com/auth/userinfo.email',
             'https://www.googleapis.com/auth/gmail.send'
         ],
-        prompt: 'consent select_account'
+        prompt: 'consent select_account',
+        ...(state ? { state } : {})
     });
 };
 

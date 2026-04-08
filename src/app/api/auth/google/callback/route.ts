@@ -33,9 +33,11 @@ export async function GET(request: NextRequest) {
             }
         } catch (e) {}
 
-        const redirectUrl = state === 'calendar' ? '/calendar' : '/';
+        const isCalendarConnect = state === 'calendar_connect';
+        const redirectUrl = isCalendarConnect ? '/calendar' : '/';
         const response = NextResponse.redirect(new URL(redirectUrl, request.url))
 
+        // Salva sempre i token Google (servono per le API Calendar/Sheets)
         response.cookies.set('google_tokens', JSON.stringify(tokens), {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -44,8 +46,10 @@ export async function GET(request: NextRequest) {
             maxAge: 60 * 60 * 24 * 30 
         })
 
+        // Se è un collegamento calendario, NON toccare la sessione esistente
+        // Se è un login Google, creare/aggiornare la sessione
         const existingSession = request.cookies.get('user_session');
-        if (!existingSession) {
+        if (!isCalendarConnect && !existingSession) {
             const displayName = dbUser?.name || userInfo.name || 'User';
             response.cookies.set('user_session', JSON.stringify({
                 id: dbUser?.id || userInfo.id,
