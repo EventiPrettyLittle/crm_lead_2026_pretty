@@ -3,17 +3,43 @@
 import { getGoogleCalendarClient } from "@/lib/google-auth";
 import { cookies } from "next/headers";
 
-export async function getCalendarEvents() {
-    const cookieStore = await cookies();
-    // Il callback OAuth salva 'google_tokens'; supportiamo anche il vecchio nome per compatibilità
-    const tokenCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
+async function getGoogleTokens(): Promise<any | null> {
+    // 1. Prima prova dal DB (fonte primaria - non si perde mai)
+    try {
+        const cookieStore = await cookies();
+        const session = cookieStore.get('user_session');
+        if (session) {
+            const sessionData = JSON.parse(session.value);
+            const prisma = (await import("@/lib/prisma")).default;
+            const users: any[] = await prisma.$queryRawUnsafe(
+                `SELECT "googleTokens" FROM "User" WHERE email = $1 LIMIT 1`,
+                sessionData.email
+            );
+            if (users.length > 0 && users[0].googleTokens) {
+                return JSON.parse(users[0].googleTokens);
+            }
+        }
+    } catch (e) {
+        console.warn('Could not read tokens from DB, falling back to cookie:', e);
+    }
 
-    if (!tokenCookie) {
+    // 2. Fallback: leggi dal cookie
+    const cookieStore = await cookies();
+    const tokenCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
+    if (tokenCookie) {
+        try { return JSON.parse(tokenCookie.value); } catch { return null; }
+    }
+    return null;
+}
+
+export async function getCalendarEvents() {
+    const tokens = await getGoogleTokens();
+
+    if (!tokens) {
         return { error: 'Not authenticated', authenticated: false };
     }
 
     try {
-        const tokens = JSON.parse(tokenCookie.value);
         const calendar = getGoogleCalendarClient(tokens);
 
         // 1. Recuperiamo la lista dei calendari dell'utente
@@ -59,10 +85,41 @@ export async function getCalendarEvents() {
         return {
             authenticated: true,
             calendars: calendarList.map(c => ({ id: c.id, summary: c.summary, primary: c.primary })),
-            events: allEvents.slice(0, 30) // Mostriamo i primi 30 eventi cronologici
+            events: allEvents.slice(0, 30)
         };
     } catch (error) {
         console.error('Error fetching calendar events:', error);
-        return { error: 'Failed to fetch events', authenticated: true };
+        return { error: 'Failed to fetch events', authenticated: false };
+    }
+}
+
+export async function createCalendarEvent(eventData: {
+    title: string;
+    description?: string;
+    startDateTime: string;
+    endDateTime: string;
+    location?: string;
+}) {
+    const tokens = await getGoogleTokens();
+    if (!tokens) {
+        return { success: false, error: 'Non connesso a Google Calendar' };
+    }
+
+    try {
+        const calendar = getGoogleCalendarClient(tokens);
+        const response = await calendar.events.insert({
+            calendarId: 'primary',
+            requestBody: {
+                summary: eventData.title,
+                description: eventData.description,
+                location: eventData.location,
+                start: { dateTime: eventData.startDateTime, timeZone: 'Europe/Rome' },
+                end: { dateTime: eventData.endDateTime, timeZone: 'Europe/Rome' },
+            },
+        });
+        return { success: true, eventId: response.data.id };
+    } catch (error: any) {
+        console.error('Error creating calendar event:', error);
+        return { success: false, error: error.message };
     }
 }

@@ -13,6 +13,7 @@ import { Calendar as CalendarIcon, Phone, PhoneOff, Clock, Trash2 } from "lucide
 import { cn } from "@/lib/utils"
 import { updateLeadQuickAction } from "@/actions/lead-actions"
 import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
+import { createCalendarEvent } from "@/actions/calendar"
 import { Lead } from "@prisma/client"
 import { Checkbox } from "@/components/ui/checkbox"
 import { MessageSquare } from "lucide-react"
@@ -70,12 +71,30 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             nextFollowup,
         });
 
-        if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer')) {
+        // Invia WhatsApp per contattato, non risponde e appuntamento
+        if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'schedule')) {
             const waRes = await sendLeadWhatsAppAction(lead.id, actionType);
             if (waRes.success) {
                 toast.success("Messaggio WhatsApp inviato!");
             } else {
                 toast.error(`WhatsApp fallito: ${waRes.error}`);
+            }
+        }
+
+        // Per gli appuntamenti: salva anche su Google Calendar
+        if (actionType === 'schedule' && nextFollowup) {
+            const endTime = new Date(nextFollowup.getTime() + 60 * 60 * 1000); // +1 ora
+            const calRes = await createCalendarEvent({
+                title: `Appuntamento: ${lead.firstName} ${lead.lastName}`,
+                description: notes || `Appuntamento con ${lead.firstName} ${lead.lastName}`,
+                startDateTime: nextFollowup.toISOString(),
+                endDateTime: endTime.toISOString(),
+                location: (lead as any).eventLocation || '',
+            });
+            if (calRes.success) {
+                toast.success("Appuntamento salvato su Google Calendar! 📅");
+            } else {
+                toast.warning(`Non salvato su Calendar: ${calRes.error}`);
             }
         }
 
