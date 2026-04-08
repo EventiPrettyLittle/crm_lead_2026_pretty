@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { GlobalSearch } from "@/components/global-search"
 import { NotificationCenter } from "@/components/layout/notification-center"
 import { UserNav } from "@/components/layout/user-nav"
+import { LiveClock } from "@/components/layout/live-clock"
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,17 +15,22 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger className="h-10 w-10 text-slate-500 hover:text-indigo-600 transition-colors" />
             <div className="h-8 w-px bg-slate-200" />
           </div>
-          
+
           <div className="flex-1 max-w-2xl px-4">
             <GlobalSearch />
           </div>
 
-          <div className="flex items-center gap-4 ml-auto lg:min-w-[12rem] justify-end">
-              <NotificationCenter />
-              <UserNav />
+          {/* Live Clock — centro header */}
+          <div className="hidden md:flex items-center justify-center px-8 border-x border-slate-100 h-full">
+            <LiveClock />
+          </div>
+
+          <div className="flex items-center gap-4 lg:min-w-[12rem] justify-end">
+            <NotificationCenter />
+            <UserNav />
           </div>
         </header>
-        
+
         <div className="p-8 lg:p-10 transition-all duration-500">
           {children}
         </div>
