@@ -203,10 +203,8 @@ export default async function QuotesPage({
                                             <div className="flex justify-end gap-2 items-center">
                                                 <QuoteRowActions quote={quote} />
                                                 
-                                                {/* Download */}
-                                                <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 hover:bg-white hover:shadow-md transition-all group/btn">
-                                                    <Download className="h-5 w-5 text-slate-400 group-hover/btn:text-indigo-600" />
-                                                </Button>
+                                                {/* Stampa Rapida */}
+                                                <QuotePreviewDialog quote={quote} autoPrint={true} />
 
                                                 {/* Anteprima (Pop-up) */}
                                                 <QuotePreviewDialog quote={quote} />
