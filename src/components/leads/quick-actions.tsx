@@ -13,7 +13,7 @@ import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
 import { Lead } from "@prisma/client"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
-import { Select, SelectContent, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface QuickActionsProps {
     lead: Lead;
@@ -163,6 +163,14 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                             {actionType === 'preventivo' && "📑 Passa a Preventivo"}
                             {actionType === 'cancelled' && "❌ Cancella Lead"}
                         </DialogTitle>
+                        <div className="flex justify-center items-center gap-2">
+                           <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 italic">
+                                {lead.firstName} {lead.lastName}
+                           </span>
+                           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                                {lead.eventType || 'Evento'}
+                           </span>
+                        </div>
                     </DialogHeader>
 
                     <div className="space-y-4">
