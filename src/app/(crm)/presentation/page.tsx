@@ -261,11 +261,17 @@ export default function PresentationPage() {
                     <div className="w-full max-w-5xl h-[80vh] flex items-center justify-center rounded-[3rem] overflow-hidden bg-black/20 relative shadow-2xl">
                         {selectedEntry.kind === 'IMAGE' ? (
                             <img src={selectedEntry.url} className="max-w-full max-h-full object-contain" />
-                        ) : selectedEntry.kind === 'VIDEO' ? (
+                        ) : selectedEntry.kind === 'VIDEO' || selectedEntry.kind === 'PDF' ? (
                             <iframe 
-                                src={selectedEntry.url.includes('youtube.com') ? selectedEntry.url.replace('watch?v=', 'embed/') : selectedEntry.url} 
-                                className="w-full h-full border-none" 
-                                allow="autoplay; encrypted-media" 
+                                src={
+                                    selectedEntry.url.includes('youtube.com') 
+                                        ? selectedEntry.url.replace('watch?v=', 'embed/') 
+                                        : selectedEntry.url.includes('drive.google.com')
+                                            ? selectedEntry.url.replace('/view', '/preview').replace('/edit', '/preview')
+                                            : selectedEntry.url
+                                } 
+                                className="w-full h-full border-none bg-white" 
+                                allow="autoplay; shadow-none" 
                                 allowFullScreen
                             />
                         ) : (
