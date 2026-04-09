@@ -5,7 +5,11 @@ import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
-export async function sendLeadWhatsAppAction(leadId: string, actionType: 'contacted' | 'no-answer' | 'schedule') {
+export async function sendLeadWhatsAppAction(
+    leadId: string, 
+    actionType: 'contacted' | 'no-answer' | 'schedule',
+    context?: { type?: string, date?: string, time?: string }
+) {
     try {
         const lead = await getLeadById(leadId);
         if (!lead || !lead.phoneRaw) {
@@ -23,10 +27,17 @@ export async function sendLeadWhatsAppAction(leadId: string, actionType: 'contac
             return { success: false, error: "Template non configurato" };
         }
 
-        // Prepare variables: only {{1}} for Name as specified by user
+        // Prepare variables
         const variables = [
             lead.firstName || "Cliente"
         ];
+
+        // If it's an appointment, add type, date and time
+        if (actionType === 'schedule' && context) {
+            variables.push(context.type || "Appuntamento");
+            variables.push(context.date || "-");
+            variables.push(context.time || "-");
+        }
 
         const res = await sendWhatsAppTemplate({
             to: lead.phoneRaw,

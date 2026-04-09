@@ -73,7 +73,17 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
 
         // Invia WhatsApp per contattato, non risponde e appuntamento
         if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'schedule')) {
-            const waRes = await sendLeadWhatsAppAction(lead.id, actionType);
+            let context: any = undefined;
+            if (actionType === 'schedule' && nextFollowup) {
+                const type = notes.includes("SHOWROOM") ? "Appuntamento in Showroom" : 
+                             notes.includes("RICHIAMATA") ? "Richiamata Telefonica" : "Appuntamento";
+                context = {
+                    type,
+                    date: format(nextFollowup, "EEEE d MMMM", { locale: require('date-fns/locale').it }),
+                    time: time
+                };
+            }
+            const waRes = await sendLeadWhatsAppAction(lead.id, actionType, context);
             if (waRes.success) {
                 toast.success("Messaggio WhatsApp inviato!");
             } else {
