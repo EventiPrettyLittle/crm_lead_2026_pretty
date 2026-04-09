@@ -86,24 +86,27 @@ export async function renameEntry(id: string, newName: string) {
         );
         revalidatePath('/presentation');
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Rename error:", error);
-        return { success: false, error: "Errore rinomina" };
+        return { success: false, error: `Errore rinomina: ${error.message}` };
     }
 }
 
 export async function deleteEntry(id: string) {
     try {
-        // 1. Eliminiamo i figli ricorsivamente (per cartelle)
-        await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE "parentId" = $1`, id);
+        console.log("Tentativo eliminazione ID:", id);
+        // 1. Eliminiamo i contenuti se è una cartella
+        const delChildren = await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE "parentId" = $1`, id);
+        console.log("Figli eliminati:", delChildren);
         
         // 2. Eliminiamo l'elemento stesso
-        await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE id = $1`, id);
+        const delSelf = await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE id = $1`, id);
+        console.log("Elemento eliminato:", delSelf);
         
         revalidatePath('/presentation');
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("Delete error:", error);
-        return { success: false, error: "Errore eliminazione" };
+        return { success: false, error: `Errore eliminazione: ${error.message}` };
     }
 }
