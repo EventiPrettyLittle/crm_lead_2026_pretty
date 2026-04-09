@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge'
-import { Building2, MapPin, CreditCard, User, Phone, Mail, Save, Loader2, Sparkles, ShieldCheck, Lock, Key, Fingerprint, Users, UserPlus, Trash2, ShieldAlert } from 'lucide-react'
+import { Building2, MapPin, CreditCard, User, Phone, Mail, Save, Loader2, Sparkles, ShieldCheck, Lock, Key, Fingerprint, Users, UserPlus, Trash2, ShieldAlert, Image as ImageIcon, Maximize2 } from 'lucide-react'
+import { getSystemSettings, updateSystemSettings } from '@/actions/settings-actions'
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -36,6 +37,10 @@ export default function SettingsPage() {
         role: 'OPERATOR',
         password: ''
     });
+    const [systemSettings, setSystemSettings] = useState({
+        logoUrl: '',
+        logoWidth: 150
+    });
 
     useEffect(() => {
         loadData();
@@ -56,6 +61,14 @@ export default function SettingsPage() {
                 });
             }
             
+            const sysData = await getSystemSettings();
+            if (sysData) {
+                setSystemSettings({
+                    logoUrl: sysData.logoUrl || '',
+                    logoWidth: sysData.logoWidth || 150
+                });
+            }
+
             const { getCurrentUser } = await import("@/actions/auth");
             const u = await getCurrentUser();
             setUser(u);
@@ -76,6 +89,7 @@ export default function SettingsPage() {
         setSaving(true);
         try {
             await updateCompanySettings(settings);
+            await updateSystemSettings(systemSettings);
             const { updateUser } = await import("@/actions/auth");
             const userRes = await updateUser(accountData);
             
@@ -169,6 +183,10 @@ export default function SettingsPage() {
                     <TabsTrigger value="company" className="rounded-full px-8 py-2.5 font-black text-xs uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-md">
                         <Building2 className="h-4 w-4 mr-2" />
                         Azienda
+                    </TabsTrigger>
+                    <TabsTrigger value="brand" className="rounded-full px-8 py-2.5 font-black text-xs uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-md">
+                        <ImageIcon className="h-4 w-4 mr-2" />
+                        Brand & Logo
                     </TabsTrigger>
                     <TabsTrigger value="account" className="rounded-full px-8 py-2.5 font-black text-xs uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-md">
                         <User className="h-4 w-4 mr-2" />
@@ -294,6 +312,84 @@ export default function SettingsPage() {
                                 </CardContent>
                             </Card>
                         </div>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="brand">
+                    <div className="max-w-4xl space-y-8 px-4 mx-auto">
+                        <Card className="rounded-[2.5rem] border-none shadow-xl shadow-slate-200/50 overflow-hidden bg-white">
+                            <CardHeader className="bg-slate-900 p-8 text-white relative">
+                                <ImageIcon className="absolute top-4 right-4 h-12 w-12 opacity-10" />
+                                <div className="flex items-center gap-4">
+                                    <div className="h-12 w-12 rounded-2xl bg-indigo-500 flex items-center justify-center text-white shadow-lg">
+                                        <Sparkles className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-xl font-black italic">Identità Visiva</CardTitle>
+                                        <CardDescription className="font-bold text-slate-400 uppercase text-[10px] tracking-widest mt-1">Logo e personalizzazione grafica</CardDescription>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-8 space-y-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+                                    <div className="space-y-6">
+                                        <div className="space-y-3">
+                                            <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">URL Logo Aziendale</Label>
+                                            <Input 
+                                                value={systemSettings.logoUrl} 
+                                                onChange={e => setSystemSettings({...systemSettings, logoUrl: e.target.value})}
+                                                disabled={!isAdmin}
+                                                placeholder="https://esempio.it/logo.png"
+                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white"
+                                            />
+                                            <p className="text-[10px] text-slate-400 italic font-medium px-1">Inserisci il link del logo (formato PNG o SVG trasparente consigliato).</p>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center px-1">
+                                                <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Larghezza Logo</Label>
+                                                <Badge variant="outline" className="font-black text-[10px] rounded-full">{systemSettings.logoWidth}px</Badge>
+                                            </div>
+                                            <input 
+                                                type="range"
+                                                value={systemSettings.logoWidth}
+                                                onChange={e => setSystemSettings({...systemSettings, logoWidth: parseInt(e.target.value)})}
+                                                min={50}
+                                                max={300}
+                                                step={5}
+                                                disabled={!isAdmin}
+                                                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                            />
+                                            <div className="flex justify-between text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                                                <span>Piccolo</span>
+                                                <span>Grande</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-50/50 rounded-[2rem] p-8 border-2 border-dashed border-slate-100 flex flex-col items-center justify-center gap-6 min-h-[250px] relative overflow-hidden group">
+                                        <div className="absolute top-4 left-4">
+                                            <Badge className="bg-white text-slate-400 border-slate-100 uppercase text-[8px] font-black tracking-widest">Anteprima Real-time</Badge>
+                                        </div>
+                                        {systemSettings.logoUrl ? (
+                                            <div className="transition-transform duration-500 group-hover:scale-110">
+                                                <img 
+                                                    src={systemSettings.logoUrl} 
+                                                    alt="Preview Logo" 
+                                                    style={{ width: `${systemSettings.logoWidth}px` }}
+                                                    className="max-h-[150px] object-contain drop-shadow-md"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-3 text-slate-300">
+                                                <ImageIcon className="h-16 w-16 opacity-20" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Nessun Logo Caricato</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </TabsContent>
 
@@ -482,8 +578,4 @@ export default function SettingsPage() {
 
 function cn(...inputs: any[]) {
     return inputs.filter(Boolean).join(' ');
-}
-
-function Separator() {
-    return <div className="h-px bg-slate-100 w-full" />;
 }

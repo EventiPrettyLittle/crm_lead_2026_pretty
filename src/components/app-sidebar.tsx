@@ -16,28 +16,47 @@ import {
 import { sidebarLinks } from "@/config/sidebar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { getSystemSettings } from "@/actions/settings-actions"
 import { cn } from "@/lib/utils"
 import { User, LogOut, ChevronRight, LayoutGrid } from "lucide-react"
 
 export function AppSidebar() {
     const pathname = usePathname();
+    const [logoSettings, setLogoSettings] = useState({ logoUrl: '', logoWidth: 150 });
+
+    useEffect(() => {
+        getSystemSettings().then(setLogoSettings);
+    }, []);
 
     return (
         <Sidebar className="border-r border-slate-200/60 bg-white/50 backdrop-blur-xl">
             <SidebarHeader className="py-8 px-6">
-                <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-white shadow-lg shadow-indigo-200 ring-2 ring-indigo-50">
-                        <LayoutGrid className="h-6 w-6" />
-                    </div>
-                    <div>
-                        <span className="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-                            PLATINUM
-                        </span>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
-                            CRM Logistics
-                        </p>
-                    </div>
-                </div>
+                <Link href="/" className="flex items-center gap-3 group">
+                    {logoSettings.logoUrl ? (
+                        <div className="flex flex-col items-start gap-1">
+                            <img 
+                                src={logoSettings.logoUrl} 
+                                alt="Logo" 
+                                style={{ width: `${logoSettings.logoWidth}px` }}
+                                className="object-contain transition-transform group-hover:scale-105 duration-300"
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 flex items-center justify-center text-white shadow-lg shadow-indigo-200 ring-2 ring-indigo-50 transition-transform group-hover:rotate-12">
+                                <LayoutGrid className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <span className="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
+                                    PLATINUM
+                                </span>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                                    CRM Logistics
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </Link>
             </SidebarHeader>
 
             <SidebarContent className="px-3 pt-4">

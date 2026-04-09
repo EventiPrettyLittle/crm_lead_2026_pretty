@@ -32,19 +32,24 @@ import {
     MoreHorizontal,
     MapPin,
     Clock,
-    RefreshCcw
+    RefreshCcw,
+    X,
+    ExternalLink,
+    Phone
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { 
-    DropdownMenu, 
-    DropdownMenuContent, 
-    DropdownMenuItem, 
-    DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu'
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog"
 import { cn } from '@/lib/utils'
 import { getCalendarEvents } from '@/actions/calendar'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 type ViewType = 'month' | 'week' | 'day'
 
@@ -54,6 +59,7 @@ export default function PremiumCalendar() {
     const [events, setEvents] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+    const [selectedEvent, setSelectedEvent] = useState<any | null>(null)
 
     const loadEvents = async () => {
         setLoading(true)
@@ -88,6 +94,11 @@ export default function PremiumCalendar() {
     }
 
     const setToday = () => setCurrentDate(new Date())
+
+    const handleDayClick = (day: Date) => {
+        setCurrentDate(day)
+        setView('day')
+    }
 
     // UI Renders
     const renderHeader = () => {
@@ -184,10 +195,13 @@ export default function PremiumCalendar() {
                                 )}
                             >
                                 <div className="flex justify-between items-center mb-1 px-1">
-                                    <span className={cn(
-                                        "text-xs font-black h-7 w-7 flex items-center justify-center rounded-full transition-all",
-                                        isToday(day) ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "text-slate-600"
-                                    )}>
+                                    <span 
+                                        onClick={() => handleDayClick(day)}
+                                        className={cn(
+                                            "text-xs font-black h-7 w-7 flex items-center justify-center rounded-full transition-all cursor-pointer hover:bg-slate-100",
+                                            isToday(day) ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "text-slate-600"
+                                        )}
+                                    >
                                         {format(day, 'd')}
                                     </span>
                                 </div>
@@ -195,6 +209,7 @@ export default function PremiumCalendar() {
                                     {dayEvents.slice(0, 4).map((event, idx) => (
                                         <div 
                                             key={event.id || idx}
+                                            onClick={() => setSelectedEvent(event)}
                                             className="text-[9px] font-bold px-2 py-1 rounded-lg truncate cursor-pointer transition-all hover:scale-[1.02] flex items-center gap-1"
                                             style={{ 
                                                 backgroundColor: event.calendarColor || '#eef2ff',
@@ -207,7 +222,10 @@ export default function PremiumCalendar() {
                                         </div>
                                     ))}
                                     {dayEvents.length > 4 && (
-                                        <div className="text-[9px] font-black text-slate-400 px-2 mt-1 uppercase tracking-tighter">
+                                        <div 
+                                            onClick={() => handleDayClick(day)}
+                                            className="text-[9px] font-black text-indigo-500 px-2 mt-1 uppercase tracking-tighter cursor-pointer hover:underline"
+                                        >
                                             + {dayEvents.length - 4} altri
                                         </div>
                                     )}
@@ -234,10 +252,13 @@ export default function PremiumCalendar() {
                             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                                 {format(day, 'EEE', { locale: it })}
                             </span>
-                            <span className={cn(
-                                "text-lg font-black h-10 w-10 flex items-center justify-center rounded-xl transition-all",
-                                isToday(day) ? "bg-indigo-600 text-white shadow-lg" : "text-slate-700 hover:bg-slate-100"
-                            )}>
+                            <span 
+                                onClick={() => handleDayClick(day)}
+                                className={cn(
+                                    "text-lg font-black h-10 w-10 flex items-center justify-center rounded-xl transition-all cursor-pointer",
+                                    isToday(day) ? "bg-indigo-600 text-white shadow-lg" : "text-slate-700 hover:bg-slate-100"
+                                )}
+                            >
                                 {format(day, 'd')}
                             </span>
                         </div>
@@ -265,6 +286,7 @@ export default function PremiumCalendar() {
                                         return (
                                             <div 
                                                 key={event.id || eIdx}
+                                                onClick={() => setSelectedEvent(event)}
                                                 className="absolute inset-x-1.5 p-2 rounded-xl text-[10px] font-bold shadow-sm border border-black/5 flex flex-col gap-0.5 cursor-pointer hover:shadow-md transition-all group overflow-hidden"
                                                 style={{ 
                                                     top: `${(startMin / 60) * 80}px`, 
@@ -320,6 +342,7 @@ export default function PremiumCalendar() {
                             return (
                                 <div 
                                     key={event.id || idx}
+                                    onClick={() => setSelectedEvent(event)}
                                     className="absolute inset-x-8 p-4 rounded-[2rem] text-sm font-bold shadow-xl border border-black/5 flex flex-col gap-1 cursor-pointer hover:scale-[1.01] transition-all group overflow-hidden"
                                     style={{ 
                                         top: `${(startMin / 60) * 80}px`, 
@@ -388,6 +411,87 @@ export default function PremiumCalendar() {
                     </div>
                 )}
             </div>
+
+            {/* Event Detail Modal */}
+            <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
+                <DialogContent className="rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl max-w-md">
+                    <div className="h-32 bg-indigo-600 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-violet-700 opacity-90" />
+                        <Sparkles className="absolute top-4 right-4 text-white/20 h-24 w-24" />
+                        <button 
+                            onClick={() => setSelectedEvent(null)}
+                            className="absolute top-4 right-4 h-8 w-8 rounded-full bg-black/20 text-white flex items-center justify-center hover:bg-black/40 transition-all z-10"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+                    
+                    <div className="p-8 -mt-10 bg-white rounded-t-[2.5rem] relative">
+                        <div className="flex flex-col gap-6">
+                            <div className="space-y-1">
+                                <Badge className={cn(
+                                    "font-black text-[9px] uppercase tracking-widest px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 border-indigo-100"
+                                )}>
+                                    {selectedEvent?.calendarName || 'Evento'}
+                                </Badge>
+                                <h2 className="text-3xl font-black text-slate-900 tracking-tighter leading-tight mt-2">
+                                    {selectedEvent?.title}
+                                </h2>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group transition-all hover:bg-white hover:shadow-md">
+                                    <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
+                                        <Clock className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Orario</p>
+                                        <p className="font-extrabold text-slate-700 text-sm">
+                                            {selectedEvent?.start && format(parseISO(selectedEvent.start), 'd MMMM yyyy, HH:mm', { locale: it })}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {selectedEvent?.location && (
+                                    <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 group transition-all hover:bg-white hover:shadow-md">
+                                        <div className="h-10 w-10 rounded-xl bg-rose-500 flex items-center justify-center text-white shadow-lg">
+                                            <MapPin className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Luogo</p>
+                                            <p className="font-extrabold text-slate-700 text-sm truncate uppercase tracking-tighter">
+                                                {selectedEvent.location}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {selectedEvent?.description && (
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Note / Descrizione</Label>
+                                    <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 text-sm text-slate-600 font-medium leading-relaxed italic">
+                                        {selectedEvent.description}
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedEvent?.leadId && (
+                                <Button asChild className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-black font-black text-sm uppercase tracking-widest gap-3 shadow-xl shadow-slate-200">
+                                    <Link href={`/leads/${selectedEvent.leadId}`}>
+                                        <ExternalLink className="w-5 h-5 text-indigo-400" />
+                                        Vedi Scheda Lead
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
+}
+
+function Label({ className, children }: { className?: string, children: React.ReactNode }) {
+    return <span className={cn("block text-xs font-medium text-slate-700", className)}>{children}</span>
 }

@@ -92,8 +92,8 @@ export async function getCalendarEvents() {
             try {
                 const res = await calendar.events.list({
                     calendarId: cal.id || 'primary',
-                    timeMin: new Date(new Date().setMonth(new Date().getMonth() - 2)).toISOString(),
-                    maxResults: 100,
+                    timeMin: new Date(new Date().setMonth(new Date().getMonth() - 3)).toISOString(),
+                    maxResults: 250,
                     singleEvents: true,
                     orderBy: 'startTime',
                 });
