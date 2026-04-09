@@ -1,4 +1,4 @@
-import { Home, Users, Calendar, FileText, Settings, Phone, LayoutDashboard, MessageSquare, Database, Wallet } from "lucide-react"
+import { Home, Users, Calendar, FileText, Settings, Phone, LayoutDashboard, MessageSquare, Database, Wallet, MonitorPlay } from "lucide-react"
 
 export const sidebarLinks = [
     {
@@ -25,6 +25,11 @@ export const sidebarLinks = [
         title: "Preventivi",
         href: "/quotes",
         icon: FileText,
+    },
+    {
+        title: "Presentazione",
+        href: "/presentation",
+        icon: MonitorPlay,
     },
     {
         title: "Incassi & Pagamenti",
