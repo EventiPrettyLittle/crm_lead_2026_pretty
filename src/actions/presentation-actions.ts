@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma"
 import { serializePrisma } from "@/lib/serialize"
+import { revalidatePath } from "next/cache"
 
 /**
  * Crea la tabella per i file di presentazione se non esiste via SQL puro
@@ -21,7 +22,7 @@ async function ensurePresentationTable() {
             );
         `);
     } catch (e) {
-        // Ignora se la tabella esiste già o c'è un errore non critico
+        // Ignora se la tabella esiste già
     }
 }
 
@@ -29,7 +30,6 @@ export async function getFiles(parentId: string | null = null) {
     try {
         await ensurePresentationTable();
         
-        // Uso queryRaw per evitare errori di compilazione Prisma
         const items = parentId 
             ? await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" = $1 ORDER BY "type" DESC, "name" ASC`, parentId)
             : await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" IS NULL ORDER BY "type" DESC, "name" ASC`);
@@ -51,6 +51,7 @@ export async function createFolder(name: string, parentId: string | null = null)
             id, name, 'FOLDER', parentId
         );
         
+        revalidatePath('/presentation');
         return { success: true };
     } catch (error) {
         console.error("createFolder error:", error);
@@ -68,6 +69,7 @@ export async function saveFile(data: { name: string, kind: string, url: string, 
             id, data.name, 'FILE', data.kind, data.url, data.parentId
         );
         
+        revalidatePath('/presentation');
         return { success: true };
     } catch (error) {
         console.error("Save file error:", error);
@@ -81,6 +83,7 @@ export async function renameEntry(id: string, newName: string) {
             `UPDATE "PresentationItem" SET name = $1, "updatedAt" = $2 WHERE id = $3`,
             newName, new Date(), id
         );
+        revalidatePath('/presentation');
         return { success: true };
     } catch (error) {
         console.error("Rename error:", error);
@@ -90,13 +93,18 @@ export async function renameEntry(id: string, newName: string) {
 
 export async function deleteEntry(id: string) {
     try {
-        // Se è una cartella, eliminiamo anche i figli (gestione manuale per massima compatibilità SQL)
+        console.log("Eliminando entry:", id);
+        
+        // Prima eliminiamo i figli se è una cartella
         await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE "parentId" = $1`, id);
+        
         // Poi eliminiamo l'elemento stesso
         await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE id = $1`, id);
+        
+        revalidatePath('/presentation');
         return { success: true };
     } catch (error) {
         console.error("Delete error:", error);
-        return { success: false, error: "Errore eliminazione" };
+        return { success: false, error: "Errore eliminazione: " + (error as any).message };
     }
 }
