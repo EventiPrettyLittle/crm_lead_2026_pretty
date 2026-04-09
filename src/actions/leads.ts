@@ -167,12 +167,11 @@ export async function syncLeadsFromGoogleSheet(url: string): Promise<ImportResul
         const headers = rows[0].map(h => String(h).trim());
         console.log("Headers found:", headers);
         
-        // Use data starting from row 637 (index 636)
-        // If the sheet has fewer rows, this will handle it gracefully
-        const dataRows = rows.slice(636); 
+        // Use data starting from row 2 (index 1)
+        const dataRows = rows.slice(1); 
 
         if (dataRows.length === 0) {
-            return { success: 0, errors: 0, message: "Nessun dato trovato a partire dalla riga 637." };
+            return { success: 0, errors: 0, message: "Nessun dato trovato nel foglio (oltre alle intestazioni)." };
         }
 
         const parsedLeads = dataRows.map(row => {

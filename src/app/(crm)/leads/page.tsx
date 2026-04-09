@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Upload } from "lucide-react";
 import { AddLeadDialog } from "@/components/leads/add-lead-dialog";
 import { DeleteAllLeadsButton } from "@/components/leads/delete-all-leads-button";
+import { RefreshButton } from "@/components/common/refresh-button";
 
 export default async function LeadsPage() {
     const leads = await getLeads();
@@ -25,8 +26,11 @@ export default async function LeadsPage() {
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-3 relative z-10 w-full md:w-auto">
-                    <div className="hidden lg:block">
-                        <DeleteAllLeadsButton />
+                    <div className="flex items-center gap-3">
+                        <RefreshButton />
+                        <div className="hidden lg:block">
+                            <DeleteAllLeadsButton />
+                        </div>
                     </div>
                     <Button variant="outline" asChild className="rounded-[1.5rem] h-12 px-6 border-slate-200 bg-white hover:bg-slate-50 font-black text-[11px] uppercase tracking-widest shadow-sm transition-all hover:scale-[1.02]">
                         <Link href="/leads/import">

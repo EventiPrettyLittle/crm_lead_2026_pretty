@@ -139,13 +139,81 @@ export default function SyncSheetsPage() {
                                     <li>Incolla lo script che trovi qui sotto.</li>
                                     <li>Salva e aggiungi un <span className="text-white font-bold">Attivatore (Trigger)</span> per la funzione <code className="bg-white/10 px-2 py-0.5 rounded text-white">onEdit</code> o <code className="bg-white/10 px-2 py-0.5 rounded text-white">onFormSubmit</code>.</li>
                                 </ol>
-                                <div className="mt-6">
-                                    <p className="font-black text-rose-400 mb-2 uppercase tracking-tighter text-xs">Webhook URL (da usare nello script):</p>
-                                    <code className="block bg-black/40 p-3 rounded-xl border border-white/5 font-mono text-emerald-400 text-xs break-all">
-                                        {typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/google-sheets` : 'https://tuo-dominio.com/api/webhooks/google-sheets'}
-                                    </code>
+                                    <div className="mt-6">
+                                        <p className="font-black text-rose-400 mb-2 uppercase tracking-tighter text-xs">Webhook URL (da usare nello script):</p>
+                                        <div className="space-y-2">
+                                            <code className="block bg-black/40 p-3 rounded-xl border border-white/5 font-mono text-emerald-400 text-xs break-all">
+                                                {typeof window !== 'undefined' ? `${window.location.origin}/api/webhooks/google-sheets` : 'https://tuo-dominio.com/api/webhooks/google-sheets'}
+                                            </code>
+                                            {typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+                                                <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-200">
+                                                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                                    <p className="text-[10px] font-bold leading-tight">
+                                                        ⚠️ ATTENZIONE: Sei in locale (localhost). Google Sheets non potrà contattare questo indirizzo. Usa l'URL di produzione (es. Vercel) nello script.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 pt-6 border-t border-white/10">
+                                        <p className="font-black text-indigo-300 mb-2 uppercase tracking-tighter text-xs">Script da copiare:</p>
+                                        <pre className="block bg-black/40 p-4 rounded-xl border border-white/5 font-mono text-slate-300 text-[10px] overflow-x-auto leading-relaxed">
+{`function onEdit(e) {
+  var sheet = e.source.getActiveSheet();
+  var range = e.range;
+  var row = range.getRow();
+  if (row < 2) return;
+  syncRowToCRM(row, sheet);
+}
+
+function syncRowToCRM(row, sheet) {
+  var lastCol = sheet.getLastColumn();
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var values = sheet.getRange(row, 1, 1, lastCol).getValues()[0];
+  var payload = {};
+  for (var i = 0; i < headers.length; i++) {
+    if (headers[i]) payload[headers[i].toString().trim()] = values[i];
+  }
+
+  // URL del tuo CRM
+  var url = "https://app.events-prettylittle.it/api/webhooks/google-sheets";
+  
+  var options = {
+    "method": "post",
+    "contentType": "application/json",
+    "payload": JSON.stringify(payload),
+    "muteHttpExceptions": true
+  };
+  
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var responseCode = response.getResponseCode();
+    
+    if (responseCode >= 200 && responseCode < 300) {
+      // Successo: Colora la riga di VERDE CHIARO
+      sheet.getRange(row, 1, 1, lastCol).setBackground("#d9ead3");
+    } else {
+      // Errore Server: Colora di GIALLO
+      sheet.getRange(row, 1, 1, lastCol).setBackground("#fff2cc");
+    }
+  } catch (err) {
+    // Errore Connessione: Colora di ROSSO
+    sheet.getRange(row, 1, 1, lastCol).setBackground("#f4cccc");
+  }
+}
+
+// Per sincronizzare manualmente i lead esistenti
+function syncAllExisting() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var lastRow = sheet.getLastRow();
+  for (var r = 2; r <= lastRow; r++) {
+    syncRowToCRM(r, sheet);
+  }
+}`}
+                                        </pre>
+                                    </div>
                                 </div>
-                            </div>
                         </CardContent>
                     </Card>
 
