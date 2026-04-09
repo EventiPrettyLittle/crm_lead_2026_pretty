@@ -362,8 +362,15 @@ export default function SettingsPage() {
                                                                     const reader = new FileReader();
                                                                     reader.onloadend = async () => {
                                                                         const base64String = reader.result as string;
-                                                                        setSystemSettings({...systemSettings, logoUrl: base64String});
-                                                                        toast.success("Logo caricato (anteprima pronta)");
+                                                                        const newSettings = {...systemSettings, logoUrl: base64String};
+                                                                        setSystemSettings(newSettings);
+                                                                        
+                                                                        // Salvataggio immediato per il logo
+                                                                        await updateSystemSettings(newSettings);
+                                                                        toast.success("Logo salvato e applicato!");
+                                                                        
+                                                                        // Piccolo delay e reload per aggiornare la Sidebar ovunque
+                                                                        setTimeout(() => window.location.reload(), 1000);
                                                                     };
                                                                     reader.readAsDataURL(file);
                                                                 }
