@@ -11,14 +11,14 @@ async function ensurePresentationTable() {
     try {
         await prisma.$executeRawUnsafe(`
             CREATE TABLE IF NOT EXISTS "PresentationItem" (
-                "id" TEXT NOT NULL PRIMARY KEY,
+                "id" TEXT PRIMARY KEY,
                 "name" TEXT NOT NULL,
                 "type" TEXT NOT NULL,
                 "kind" TEXT,
                 "url" TEXT,
                 "parentId" TEXT,
-                "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+                "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
     } catch (e) {
@@ -79,9 +79,10 @@ export async function saveFile(data: { name: string, kind: string, url: string, 
 
 export async function renameEntry(id: string, newName: string) {
     try {
+        const now = new Date().toISOString();
         await prisma.$executeRawUnsafe(
             `UPDATE "PresentationItem" SET name = $1, "updatedAt" = $2 WHERE id = $3`,
-            newName, new Date(), id
+            newName, now, id
         );
         revalidatePath('/presentation');
         return { success: true };
@@ -93,18 +94,16 @@ export async function renameEntry(id: string, newName: string) {
 
 export async function deleteEntry(id: string) {
     try {
-        console.log("Eliminando entry:", id);
-        
-        // Prima eliminiamo i figli se è una cartella
+        // 1. Eliminiamo i figli ricorsivamente (per cartelle)
         await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE "parentId" = $1`, id);
         
-        // Poi eliminiamo l'elemento stesso
+        // 2. Eliminiamo l'elemento stesso
         await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE id = $1`, id);
         
         revalidatePath('/presentation');
         return { success: true };
     } catch (error) {
         console.error("Delete error:", error);
-        return { success: false, error: "Errore eliminazione: " + (error as any).message };
+        return { success: false, error: "Errore eliminazione" };
     }
 }
