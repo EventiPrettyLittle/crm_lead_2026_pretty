@@ -6,10 +6,10 @@ import { writeFile, mkdir, readdir, unlink, rmdir } from 'fs/promises'
 
 const PRESENTATION_ROOT = path.join(process.cwd(), 'public', 'presentation');
 
-// Assicura che la cartella root esista
 async function ensureRoot() {
     try {
         if (!fs.existsSync(PRESENTATION_ROOT)) {
+            console.log("Creating root:", PRESENTATION_ROOT);
             await mkdir(PRESENTATION_ROOT, { recursive: true });
         }
     } catch (e) {
@@ -17,54 +17,55 @@ async function ensureRoot() {
     }
 }
 
-/**
- * Ottiene la lista di file e cartelle
- */
 export async function getFiles(currentPath: string = '') {
     try {
         await ensureRoot();
         const fullPath = path.join(PRESENTATION_ROOT, currentPath);
         
-        if (!fs.existsSync(fullPath)) return [];
+        console.log("Fetching files from:", fullPath);
+
+        if (!fs.existsSync(fullPath)) {
+            console.warn("Path does not exist:", fullPath);
+            return [];
+        }
 
         const entries = await readdir(fullPath, { withFileTypes: true });
         
-        return entries.map(entry => ({
-            name: entry.name,
-            isDir: entry.isDirectory(),
-            size: 0,
-            ext: path.extname(entry.name).toLowerCase(),
-            url: `/presentation/${currentPath ? currentPath + '/' : ''}${entry.name}`
-        })).sort((a, b) => b.isDir ? 1 : -1);
+        const results = entries
+            .filter(entry => entry.name !== '.DS_Store' && entry.name !== 'test.txt')
+            .map(entry => ({
+                name: entry.name,
+                isDir: entry.isDirectory(),
+                size: 0,
+                ext: path.extname(entry.name).toLowerCase(),
+                url: `/presentation/${currentPath ? currentPath + '/' : ''}${entry.name}`
+            })).sort((a, b) => b.isDir ? 1 : -1);
+
+        console.log(`Found ${results.length} items`);
+        return results;
     } catch (error) {
-        console.error("getFiles error:", error);
-        return [];
+        console.error("getFiles error detail:", error);
+        throw new Error("Errore durante la lettura della cartella");
     }
 }
 
-/**
- * Crea una nuova cartella
- */
 export async function createFolder(folderName: string, currentPath: string = '') {
     try {
-        await ensureRoot();
         const newPath = path.join(PRESENTATION_ROOT, currentPath, folderName);
+        console.log("Creating folder:", newPath);
         if (!fs.existsSync(newPath)) {
             await mkdir(newPath, { recursive: true });
             return { success: true };
         }
         return { success: false, error: "Cartella già esistente" };
     } catch (error) {
+        console.error("createFolder error:", error);
         return { success: false, error: "Errore permessi server" };
     }
 }
 
-/**
- * Carica un file
- */
 export async function uploadFile(formData: FormData, currentPath: string = '') {
     try {
-        await ensureRoot();
         const file = formData.get('file') as File;
         if (!file) throw new Error("File mancante");
 
@@ -74,6 +75,7 @@ export async function uploadFile(formData: FormData, currentPath: string = '') {
         const targetDir = path.join(PRESENTATION_ROOT, currentPath);
         const targetPath = path.join(targetDir, file.name);
 
+        console.log("Uploading file to:", targetPath);
         await writeFile(targetPath, buffer);
         return { success: true };
     } catch (error) {
@@ -82,12 +84,10 @@ export async function uploadFile(formData: FormData, currentPath: string = '') {
     }
 }
 
-/**
- * Elimina un file o cartella
- */
 export async function deleteEntry(name: string, currentPath: string = '', isDir: boolean = false) {
     try {
         const targetPath = path.join(PRESENTATION_ROOT, currentPath, name);
+        console.log("Deleting:", targetPath);
         if (isDir) {
             await rmdir(targetPath, { recursive: true });
         } else {
@@ -95,6 +95,7 @@ export async function deleteEntry(name: string, currentPath: string = '', isDir:
         }
         return { success: true };
     } catch (error) {
+        console.error("Delete error:", error);
         return { success: false, error: "Errore eliminazione" };
     }
 }
