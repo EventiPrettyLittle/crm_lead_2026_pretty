@@ -12,7 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge'
 import { Building2, MapPin, CreditCard, User, Phone, Mail, Save, Loader2, Sparkles, ShieldCheck, Lock, Key, Fingerprint, Users, UserPlus, Trash2, ShieldAlert, Image as ImageIcon, Maximize2 } from 'lucide-react'
 import { getSystemSettings, updateSystemSettings } from '@/actions/settings-actions'
-import { uploadLogoAction } from '@/actions/upload-logo'
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -355,17 +354,18 @@ export default function SettingsPage() {
                                                             onChange={async (e) => {
                                                                 const file = e.target.files?.[0];
                                                                 if (file) {
-                                                                    setSaving(true);
-                                                                    const formData = new FormData();
-                                                                    formData.append('file', file);
-                                                                    const res = await uploadLogoAction(formData);
-                                                                    if (res.success && res.url) {
-                                                                        setSystemSettings({...systemSettings, logoUrl: res.url});
-                                                                        toast.success("Logo caricato con successo");
-                                                                    } else {
-                                                                        toast.error(res.error || "Errore upload");
+                                                                    if (file.size > 2 * 1024 * 1024) {
+                                                                        toast.error("File troppo grande (max 2MB)");
+                                                                        return;
                                                                     }
-                                                                    setSaving(false);
+                                                                    
+                                                                    const reader = new FileReader();
+                                                                    reader.onloadend = async () => {
+                                                                        const base64String = reader.result as string;
+                                                                        setSystemSettings({...systemSettings, logoUrl: base64String});
+                                                                        toast.success("Logo caricato (anteprima pronta)");
+                                                                    };
+                                                                    reader.readAsDataURL(file);
                                                                 }
                                                             }}
                                                         />
