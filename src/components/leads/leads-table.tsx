@@ -201,9 +201,9 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                                         Data <ArrowUpDown className="ml-1.5 h-3.5 w-3.5 opacity-50 group-hover:opacity-100" />
                                     </div>
                                 </TableHead>
-                                <TableHead className="min-w-[150px] text-[10px] font-black uppercase tracking-widest text-slate-400 py-5">Location</TableHead>
-                                <TableHead className="min-w-[150px] text-[10px] font-black uppercase tracking-widest text-slate-400 py-5">Contatto</TableHead>
-                                <TableHead className="min-w-[150px] px-8 text-[10px] font-black uppercase tracking-widest text-slate-400 py-5 text-right flex justify-end items-center h-full">Azioni Rapide</TableHead>
+                                <TableHead className="min-w-[100px] text-[10px] font-black uppercase tracking-widest text-slate-400 py-5">Location</TableHead>
+                                <TableHead className="min-w-[120px] text-[10px] font-black uppercase tracking-widest text-slate-400 py-5">Contatto</TableHead>
+                                <TableHead className="w-[120px] px-8 text-[10px] font-black uppercase tracking-widest text-slate-400 py-5 text-right">Azioni</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -253,12 +253,6 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                                                 </span>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-[10px] text-slate-500 font-bold tracking-tight">{lead.phoneRaw || lead.email}</span>
-                                                    {(lead as any).preferredContactTime && (
-                                                        <Badge variant="outline" className="bg-indigo-50 text-indigo-600 border-indigo-100 text-[8px] font-black py-0.5 px-2 rounded-md flex items-center gap-1 uppercase tracking-widest">
-                                                            <Clock className="h-2.5 w-2.5" />
-                                                            {(lead as any).preferredContactTime}
-                                                        </Badge>
-                                                    )}
                                                 </div>
                                             </div>
                                         </TableCell>
