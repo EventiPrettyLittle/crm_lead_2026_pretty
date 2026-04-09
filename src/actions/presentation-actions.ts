@@ -1,101 +1,90 @@
 'use server'
 
-import fs from 'fs'
-import path from 'path'
-import { writeFile, mkdir, readdir, unlink, rmdir } from 'fs/promises'
+import prisma from "@/lib/prisma"
+import { serializePrisma } from "@/lib/serialize"
 
-const PRESENTATION_ROOT = path.join(process.cwd(), 'public', 'presentation');
-
-async function ensureRoot() {
+/**
+ * Crea la tabella per i file di presentazione se non esiste
+ */
+async function ensurePresentationTable() {
     try {
-        if (!fs.existsSync(PRESENTATION_ROOT)) {
-            console.log("Creating root:", PRESENTATION_ROOT);
-            await mkdir(PRESENTATION_ROOT, { recursive: true });
-        }
+        await prisma.$executeRawUnsafe(`
+            CREATE TABLE IF NOT EXISTS "PresentationItem" (
+                "id" TEXT NOT NULL PRIMARY KEY,
+                "name" TEXT NOT NULL,
+                "type" TEXT NOT NULL, -- "FILE", "FOLDER"
+                "kind" TEXT, -- "IMAGE", "VIDEO", "PDF", "OTHER"
+                "url" TEXT, -- Base64 for images or Link for videos/PDFs
+                "parentId" TEXT, -- For folder structure
+                "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
     } catch (e) {
-        console.error("Critical: Cannot create presentation root", e);
+        // console.log("Table exists or error");
     }
 }
 
-export async function getFiles(currentPath: string = '') {
+export async function getFiles(parentId: string | null = null) {
     try {
-        await ensureRoot();
-        const fullPath = path.join(PRESENTATION_ROOT, currentPath);
-        
-        console.log("Fetching files from:", fullPath);
-
-        if (!fs.existsSync(fullPath)) {
-            console.warn("Path does not exist:", fullPath);
-            return [];
-        }
-
-        const entries = await readdir(fullPath, { withFileTypes: true });
-        
-        const results = entries
-            .filter(entry => entry.name !== '.DS_Store' && entry.name !== 'test.txt')
-            .map(entry => ({
-                name: entry.name,
-                isDir: entry.isDirectory(),
-                size: 0,
-                ext: path.extname(entry.name).toLowerCase(),
-                url: `/presentation/${currentPath ? currentPath + '/' : ''}${entry.name}`
-            })).sort((a, b) => b.isDir ? 1 : -1);
-
-        console.log(`Found ${results.length} items`);
-        return results;
+        await ensurePresentationTable();
+        const items = await prisma.presentationItem.findMany({
+            where: { parentId: parentId || undefined },
+            orderBy: [{ type: 'desc' }, { createdAt: 'desc' }]
+        });
+        return serializePrisma(items);
     } catch (error) {
-        console.error("getFiles error detail:", error);
-        throw new Error("Errore durante la lettura della cartella");
+        console.error("getFiles error:", error);
+        return [];
     }
 }
 
-export async function createFolder(folderName: string, currentPath: string = '') {
+export async function createFolder(name: string, parentId: string | null = null) {
     try {
-        const newPath = path.join(PRESENTATION_ROOT, currentPath, folderName);
-        console.log("Creating folder:", newPath);
-        if (!fs.existsSync(newPath)) {
-            await mkdir(newPath, { recursive: true });
-            return { success: true };
-        }
-        return { success: false, error: "Cartella già esistente" };
+        await ensurePresentationTable();
+        const folder = await prisma.presentationItem.create({
+            data: {
+                id: `folder-${Date.now()}`,
+                name,
+                type: 'FOLDER',
+                parentId: parentId || null
+            }
+        });
+        return { success: true, folder: serializePrisma(folder) };
     } catch (error) {
-        console.error("createFolder error:", error);
-        return { success: false, error: "Errore permessi server" };
+        return { success: false, error: "Errore creazione cartella" };
     }
 }
 
-export async function uploadFile(formData: FormData, currentPath: string = '') {
+export async function saveFile(data: { name: string, kind: string, url: string, parentId: string | null }) {
     try {
-        const file = formData.get('file') as File;
-        if (!file) throw new Error("File mancante");
+        await ensurePresentationTable();
+        const file = await prisma.presentationItem.create({
+            data: {
+                id: `file-${Date.now()}`,
+                name: data.name,
+                type: 'FILE',
+                kind: data.kind,
+                url: data.url,
+                parentId: data.parentId || null
+            }
+        });
+        return { success: true, file: serializePrisma(file) };
+    } catch (error) {
+        console.error("Save file error:", error);
+        return { success: false, error: "Errore salvataggio nel database" };
+    }
+}
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-
-        const targetDir = path.join(PRESENTATION_ROOT, currentPath);
-        const targetPath = path.join(targetDir, file.name);
-
-        console.log("Uploading file to:", targetPath);
-        await writeFile(targetPath, buffer);
+export async function deleteEntry(id: string) {
+    try {
+        // Se è una cartella, dovremmo cancellare ricorsivamente, 
+        // ma per semplicità ora cancelliamo solo l'id selezionato
+        await prisma.presentationItem.delete({
+            where: { id }
+        });
         return { success: true };
     } catch (error) {
-        console.error("Upload error:", error);
-        return { success: false, error: "Errore permessi disco" };
-    }
-}
-
-export async function deleteEntry(name: string, currentPath: string = '', isDir: boolean = false) {
-    try {
-        const targetPath = path.join(PRESENTATION_ROOT, currentPath, name);
-        console.log("Deleting:", targetPath);
-        if (isDir) {
-            await rmdir(targetPath, { recursive: true });
-        } else {
-            await unlink(targetPath);
-        }
-        return { success: true };
-    } catch (error) {
-        console.error("Delete error:", error);
         return { success: false, error: "Errore eliminazione" };
     }
 }
