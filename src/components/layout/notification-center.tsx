@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { getDueRemindersAction } from "@/actions/reminder-actions"
-import { Bell, User, Clock, ArrowRight } from "lucide-react"
+import { getDueRemindersAction, completeReminderAction } from "@/actions/reminder-actions"
+import { Bell, User, Clock, ArrowRight, Check } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 export function NotificationCenter() {
     const [reminders, setReminders] = useState<any[]>([])
@@ -54,25 +55,45 @@ export function NotificationCenter() {
                         </div>
                     ) : (
                         reminders.map((rem) => (
-                            <Link 
+                            <div 
                                 key={rem.id} 
-                                href={`/leads/${rem.id}`}
-                                className="flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0 group"
+                                className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0 group"
                             >
-                                <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 text-[10px] font-black">
-                                    {rem.firstName?.[0]}{rem.lastName?.[0]}
+                                <Link href={`/leads/${rem.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 text-[10px] font-black group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                        {rem.firstName?.[0]}{rem.lastName?.[0]}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-black text-slate-900 uppercase truncate">
+                                            {rem.firstName} {rem.lastName}
+                                        </p>
+                                        <p className="text-[10px] text-slate-500 font-bold flex items-center gap-1 mt-0.5">
+                                            <Clock className="h-2.5 w-2.5" />
+                                            Scaduto: {new Date(rem.nextFollowupAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}
+                                        </p>
+                                    </div>
+                                </Link>
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={async (e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            const res = await completeReminderAction(rem.id);
+                                            if (res.success) {
+                                                toast.success("Completato!");
+                                                fetchReminders();
+                                            }
+                                        }}
+                                        className="h-7 w-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                                        title="Segna come completato"
+                                    >
+                                        <Check className="h-3.5 w-3.5" />
+                                    </button>
+                                    <Link href={`/leads/${rem.id}`}>
+                                        <ArrowRight className="h-3 w-3 text-slate-300 hover:text-indigo-600 transition-colors" />
+                                    </Link>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-black text-slate-900 uppercase truncate">
-                                        {rem.firstName} {rem.lastName}
-                                    </p>
-                                    <p className="text-[10px] text-slate-500 font-bold flex items-center gap-1 mt-0.5">
-                                        <Clock className="h-2.5 w-2.5" />
-                                        Scaduto: {new Date(rem.nextFollowupAt).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' })}
-                                    </p>
-                                </div>
-                                <ArrowRight className="h-3 w-3 text-slate-300 group-hover:text-indigo-600 transition-colors self-center" />
-                            </Link>
+                            </div>
                         ))
                     )}
                 </div>
