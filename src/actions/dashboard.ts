@@ -13,7 +13,6 @@ export async function getDashboardStats() {
 
     const todayTasks = await prisma.lead.count({
         where: {
-            deletedAt: null,
             OR: [
                 { stage: 'NUOVO' },
                 {
