@@ -6,9 +6,9 @@ export async function initDatabase() {
     try {
         console.log("Inizializzazione database manuale...");
         
-        // Crea tabella Product se non esiste - Usiamo il nome minuscolo per massimizzare la compatibilità
+        // Creazione tabelle essenziali se mancano (senza prefisso public forzato per evitare errori di schema)
         await prisma.$executeRawUnsafe(`
-            CREATE TABLE IF NOT EXISTS public."Product" (
+            CREATE TABLE IF NOT EXISTS "Product" (
                 "id" TEXT PRIMARY KEY,
                 "name" TEXT NOT NULL,
                 "description" TEXT,
@@ -20,7 +20,20 @@ export async function initDatabase() {
             );
         `);
 
-        // Sincronizziamo anche User, QuoteItem e Quote
+        await prisma.$executeRawUnsafe(`
+            CREATE TABLE IF NOT EXISTS "PresentationItem" (
+                "id" TEXT PRIMARY KEY,
+                "name" TEXT NOT NULL,
+                "type" TEXT NOT NULL,
+                "kind" TEXT,
+                "url" TEXT,
+                "parentId" TEXT,
+                "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // Sincronizziamo colonne mancanti su tabelle esistenti
         try {
             await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "password" TEXT;`);
             await prisma.$executeRawUnsafe(`ALTER TABLE "QuoteItem" ADD COLUMN IF NOT EXISTS "originalPrice" DECIMAL(65,30);`);
@@ -29,34 +42,6 @@ export async function initDatabase() {
             await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "additionalServices" TEXT;`);
             await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "preferredContactTime" TEXT;`);
         } catch (e) {}
-
-        // Tabella Payment
-        await prisma.$executeRawUnsafe(`
-            CREATE TABLE IF NOT EXISTS public."Payment" (
-                "id" TEXT PRIMARY KEY,
-                "quoteId" TEXT NOT NULL REFERENCES "Quote"(id) ON DELETE CASCADE,
-                "amount" DECIMAL(65,30) NOT NULL,
-                "method" TEXT,
-                "notes" TEXT,
-                "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // Tabella Settings
-        await prisma.$executeRawUnsafe(`
-            CREATE TABLE IF NOT EXISTS public."CompanySettings" (
-                "id" TEXT PRIMARY KEY,
-                "companyName" TEXT,
-                "address" TEXT,
-                "vatNumber" TEXT,
-                "iban" TEXT,
-                "phone" TEXT,
-                "email" TEXT,
-                "referente" TEXT,
-                "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
 
         return { success: true };
     } catch (error: any) {

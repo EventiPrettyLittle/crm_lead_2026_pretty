@@ -5,12 +5,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import Link from "next/link";
-import { Plus, Search, FileText, Eye, MoreHorizontal, Filter, Download, Mail, IndianRupee, Euro, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
+import { Plus, Search, FileText, Eye, MoreHorizontal, Filter, Download, Mail, IndianRupee, Euro, TrendingUp, Clock, CheckCircle2, User } from "lucide-react";
 import QuoteBuilder from "@/components/quotes/quote-builder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { CreateQuoteDialog } from "@/components/quotes/create-quote-dialog";
 import { ProductManager } from "@/components/quotes/product-manager";
+import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog";
 
 export default async function QuotesPage({
     searchParams,
@@ -204,13 +205,24 @@ export default async function QuotesPage({
                                                 €{Number(quote.totalAmount).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                                             </TableCell>
                                             <TableCell className="text-right pr-8">
-                                                <div className="flex justify-end gap-2">
+                                                <div className="flex justify-end gap-2 items-center">
                                                     <QuoteRowActions quote={quote} />
-                                                    <Button variant="ghost" size="icon" asChild className="rounded-xl h-10 w-10 hover:bg-white hover:shadow-md transition-all">
+                                                    
+                                                    {/* Download */}
+                                                    <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 hover:bg-white hover:shadow-md transition-all group/btn">
+                                                        <Download className="h-5 w-5 text-slate-400 group-hover/btn:text-indigo-600" />
+                                                    </Button>
+
+                                                    {/* Anteprima (Pop-up invece di Link) */}
+                                                    <QuotePreviewDialog quote={quote} />
+
+                                                    {/* Profilo Cliente (User) */}
+                                                    <Button variant="ghost" size="icon" asChild className="rounded-xl h-10 w-10 hover:bg-white hover:shadow-md transition-all group/btn">
                                                         <Link href={`/leads/${quote.leadId}`}>
-                                                            <Eye className="h-5 w-5 text-slate-400" />
+                                                            <User className="h-5 w-5 text-slate-400 group-hover/btn:text-indigo-600" />
                                                         </Link>
                                                     </Button>
+
                                                     <QuoteBuilder
                                                         leadId={quote.leadId}
                                                         quoteId={quote.id}
