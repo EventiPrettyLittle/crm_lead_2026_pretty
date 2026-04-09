@@ -60,15 +60,15 @@ export default function LoginPage() {
                     <div className="space-y-6">
                         {/* Logo Container */}
                         <div className="flex justify-center lg:justify-start">
-                            <div className="h-20 w-20 bg-white rounded-3xl shadow-2xl shadow-indigo-100 flex items-center justify-center border border-slate-100 group hover:scale-105 transition-transform duration-500 overflow-hidden p-2">
+                            <div className="h-40 w-64 flex items-center justify-center group hover:scale-105 transition-transform duration-500 overflow-hidden">
                                 {logoSettings.logoUrl ? (
                                     <img 
                                         src={logoSettings.logoUrl} 
                                         alt="Logo" 
-                                        className="h-full w-full object-contain"
+                                        className="h-full w-full object-contain filter drop-shadow-sm"
                                     />
                                 ) : (
-                                    <Globe className="h-10 w-10 text-indigo-600 animate-pulse" />
+                                    <Globe className="h-20 w-20 text-indigo-600 animate-pulse" />
                                 )}
                             </div>
                         </div>

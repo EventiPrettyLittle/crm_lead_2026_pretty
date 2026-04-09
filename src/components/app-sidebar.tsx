@@ -37,8 +37,8 @@ export function AppSidebar() {
                             <img 
                                 src={logoSettings.logoUrl} 
                                 alt="Logo" 
-                                style={{ width: `${logoSettings.logoWidth}px` }}
-                                className="object-contain transition-transform group-hover:scale-105 duration-300"
+                                style={{ width: `${Math.max(logoSettings.logoWidth || 180, 180)}px` }}
+                                className="object-contain transition-transform group-hover:scale-110 duration-500 filter drop-shadow-sm"
                             />
                         </div>
                     ) : (
