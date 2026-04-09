@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Phone, PhoneOff, FileText, XCircle, MessageSquare, Loader2, Sparkles, Plus } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Phone, PhoneOff, FileText, XCircle, MessageSquare, Loader2, Sparkles, Plus, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { updateLeadQuickAction } from "@/actions/lead-actions"
 import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
 import { Lead } from "@prisma/client"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
-// import QuoteBuilder from "@/components/quotes/quote-builder"
 
 interface QuickActionsProps {
     lead: Lead;
@@ -21,15 +21,16 @@ interface QuickActionsProps {
 
 export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [actionType, setActionType] = useState<'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | null>(null);
+    const [actionType, setActionType] = useState<'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | 'appointment' | null>(null);
     const [notes, setNotes] = useState("");
+    const [appointmentDate, setAppointmentDate] = useState("");
     const [loading, setLoading] = useState(false);
     const [sendWhatsapp, setSendWhatsapp] = useState(true);
 
-    const handleAction = async (type: 'contacted' | 'no-answer' | 'preventivo' | 'cancelled') => {
+    const handleAction = async (type: 'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | 'appointment') => {
         setActionType(type);
         setIsOpen(true);
-        setSendWhatsapp(type === 'contacted' || type === 'no-answer' || type === 'preventivo');
+        setSendWhatsapp(true);
     };
 
     const submitAction = async () => {
@@ -41,7 +42,8 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 'contacted': 'CONTATTATO',
                 'no-answer': 'NON_RISPONDE',
                 'preventivo': 'PREVENTIVO',
-                'cancelled': 'CANCELLATO'
+                'cancelled': 'CANCELLATO',
+                'appointment': 'APPUNTAMENTO'
             };
 
             if (actionType === 'preventivo') {
@@ -50,11 +52,13 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             }
 
             await updateLeadQuickAction(lead.id, actionType as any, {
-                notes,
+                notes: actionType === 'appointment' ? `Appuntamento fissato per il: ${appointmentDate}. ${notes}` : notes,
             });
 
-            if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer')) {
-                const waRes = await sendLeadWhatsAppAction(lead.id, actionType as any);
+            if (sendWhatsapp) {
+                const waRes = await sendLeadWhatsAppAction(lead.id, actionType as any, {
+                    appointmentDate: actionType === 'appointment' ? appointmentDate : undefined
+                });
                 if (waRes.success) {
                     toast.success("Messaggio WhatsApp inviato!");
                 }
@@ -63,6 +67,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             toast.success(`Stato aggiornato a ${stageMap[actionType]}`);
             setIsOpen(false);
             setNotes("");
+            setAppointmentDate("");
         } catch (error) {
             toast.error("Errore nell'aggiornamento dello stato");
         } finally {
@@ -71,61 +76,74 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     };
 
     const btnClass = showLabels 
-        ? "h-9 px-3 flex items-center gap-2 rounded-xl" 
-        : "h-7 w-7 p-0 flex items-center justify-center rounded-lg";
+        ? "h-9 px-3 flex items-center gap-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all" 
+        : "h-7 w-7 p-0 flex items-center justify-center rounded-lg transition-all";
 
     return (
         <div className="flex gap-1.5 items-center justify-end">
             <Button
                 variant="ghost"
                 className={cn(
-                    "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white shadow-sm transition-all border border-emerald-100",
+                    "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white shadow-sm border border-emerald-100",
                     btnClass
                 )}
                 onClick={() => handleAction('contacted')}
                 title="Contattato"
             >
                 <Phone className={showLabels ? "h-4 w-4" : "h-3.5 w-3.5"} />
-                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest leading-none">Contattato</span>}
+                {showLabels && <span>Contattato</span>}
             </Button>
 
             <Button
                 variant="ghost"
                 className={cn(
-                    "bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white shadow-sm transition-all border border-amber-100",
+                    "bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white shadow-sm border border-amber-100",
                     btnClass
                 )}
                 onClick={() => handleAction('no-answer')}
                 title="Non Risponde"
             >
                 <PhoneOff className={showLabels ? "h-4 w-4" : "h-3.5 w-3.5"} />
-                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest leading-none">Non Risponde</span>}
+                {showLabels && <span>Non Risponde</span>}
             </Button>
 
             <Button
                 variant="ghost"
                 className={cn(
-                    "bg-violet-50 text-violet-600 hover:bg-violet-600 hover:text-white shadow-sm transition-all border border-violet-100",
+                    "bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white shadow-sm border border-indigo-100",
+                    btnClass
+                )}
+                onClick={() => handleAction('appointment')}
+                title="Appuntamento"
+            >
+                <Calendar className={showLabels ? "h-4 w-4" : "h-3.5 w-3.5"} />
+                {showLabels && <span>Appuntamento</span>}
+            </Button>
+
+            <Button
+                variant="ghost"
+                className={cn(
+                    "bg-violet-50 text-violet-600 hover:bg-violet-600 hover:text-white shadow-sm border border-violet-100",
                     btnClass
                 )}
                 onClick={() => handleAction('preventivo')}
                 title="Preventivo"
             >
                 <FileText className={showLabels ? "h-4 w-4" : "h-3.5 w-3.5"} />
-                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest leading-none">Preventivo</span>}
+                {showLabels && <span>Preventivo</span>}
             </Button>
 
             <Button
                 variant="ghost"
                 className={cn(
-                    "bg-slate-50 text-slate-500 hover:bg-slate-600 hover:text-white shadow-sm transition-all border border-slate-200",
+                    "bg-slate-50 text-slate-500 hover:bg-slate-600 hover:text-white shadow-sm border border-slate-200",
                     btnClass
                 )}
                 onClick={() => handleAction('cancelled')}
                 title="Cancellato"
             >
                 <XCircle className={showLabels ? "h-4 w-4" : "h-3.5 w-3.5"} />
-                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest leading-none">Cancellato</span>}
+                {showLabels && <span>Cancellato</span>}
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -134,12 +152,25 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                         <DialogTitle className="text-2xl font-black italic text-slate-900 uppercase tracking-tight">
                             {actionType === 'contacted' && "📞 Registra Contatto"}
                             {actionType === 'no-answer' && "🔇 Non Risponde"}
+                            {actionType === 'appointment' && "📅 Fissa Appuntamento"}
                             {actionType === 'preventivo' && "📑 Passa a Preventivo"}
                             {actionType === 'cancelled' && "❌ Cancella Lead"}
                         </DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-4">
+                        {actionType === 'appointment' && (
+                            <div className="grid gap-2 p-5 bg-indigo-50/50 rounded-[2rem] border border-indigo-100">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Data e Ora Appuntamento</Label>
+                                <Input 
+                                    type="datetime-local" 
+                                    value={appointmentDate}
+                                    onChange={(e) => setAppointmentDate(e.target.value)}
+                                    className="rounded-2xl border-indigo-100 bg-white"
+                                />
+                            </div>
+                        )}
+
                         {actionType === 'preventivo' && (
                             <div className="bg-indigo-50/50 p-6 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center gap-4 text-center">
                                 <Sparkles className="h-10 w-10 text-indigo-500" />
@@ -160,7 +191,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                             />
                         </div>
 
-                        {(actionType === 'contacted' || actionType === 'no-answer') && (
+                        {actionType !== 'cancelled' && (
                             <div className="flex items-center space-x-4 p-5 bg-emerald-50/50 rounded-[2rem] border border-emerald-100">
                                 <Checkbox 
                                     id="whatsapp" 
@@ -170,7 +201,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                                 />
                                 <Label htmlFor="whatsapp" className="text-[11px] font-black text-emerald-900 cursor-pointer flex items-center gap-2 uppercase tracking-tight">
                                     <MessageSquare className="h-4 w-4 text-emerald-500" />
-                                    Invia Notifica WhatsApp
+                                    Invia Template WhatsApp
                                 </Label>
                             </div>
                         )}
