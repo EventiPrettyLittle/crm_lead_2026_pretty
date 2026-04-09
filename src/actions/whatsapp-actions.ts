@@ -4,11 +4,15 @@ import { getLeadById } from "@/actions/lead-detail"
 import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
+import { format } from "date-fns"
+import { it } from "date-fns/locale"
 
 /**
  * Sends a WhatsApp template based on the lead's current stage/action.
- * IMPORTANT: Variable order for 'appointment' template must be: [Nome Cliente, Nome Evento, Tipo Appuntamento, Data/Ora]
- * Appointment types requested: "appuntamento in show room" | "richiamata"
+ * Variables MUST match the order in SendApp templates.
+ * Based on user feedback:
+ * 1. Must use "appuntamento in show room" or "richiamata" based on selection.
+ * 2. Date format must be human-readable (IT).
  */
 export async function sendLeadWhatsAppAction(
     leadId: string, 
@@ -21,7 +25,6 @@ export async function sendLeadWhatsAppAction(
             return { success: false, error: "Lead o numero di telefono non trovato" };
         }
 
-        // Real template names from environment or defaults
         const templateName = actionType === 'contacted' 
             ? (process.env.WHATSAPP_TEMPLATE_NAME_CONTACTED || 'contattato')
             : actionType === 'no-answer'
@@ -32,18 +35,28 @@ export async function sendLeadWhatsAppAction(
             return { success: false, error: "Template non configurato" };
         }
 
-        // Base variables: [Nome Cliente, Nome Evento]
+        // Formattazione data corretta per l'utente (es: 15/04/2026 alle 10:30)
+        let formattedDate = "-";
+        if (context?.date) {
+            try {
+                const dateObj = new Date(context.date);
+                formattedDate = format(dateObj, "dd/MM/yyyy 'alle' HH:mm", { locale: it });
+            } catch (e) {
+                formattedDate = context.date;
+            }
+        }
+
+        // Definizione variabili dinamiche in base alla scelta
+        const typeValue = context?.type === 'showroom' ? "appuntamento in show room" : "richiamata";
+        
+        // Ordine variabili SendApp (adeguiamo in base al feedback "copi matrimonio il giorno")
+        // Se il template è: "Ciao {1}, il tuo evento {2} è un {3} il giorno {4}"
         const variables = [
             lead.firstName || "Cliente",
-            lead.eventType || "Evento"
+            lead.eventType || "Evento",
+            typeValue,
+            formattedDate
         ];
-
-        // Specific handling for appointment to match user's exact requested strings
-        if (actionType === 'appointment' && context) {
-            const typeLabel = context.type === 'showroom' ? "appuntamento in show room" : "richiamata";
-            variables.push(typeLabel);
-            variables.push(context.date || "-");
-        }
 
         const res = await sendWhatsAppTemplate({
             to: lead.phoneRaw,
@@ -54,18 +67,17 @@ export async function sendLeadWhatsAppAction(
         if (res.success) {
             const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
             
-            // Log to activity timeline
             await prisma.activity.create({
                 data: {
                     leadId: lead.id,
                     type: "WHATSAPP",
-                    notes: `Inviato WhatsApp: ${actionType.toUpperCase()} - Dati: ${variables.join(', ')}`
+                    notes: `Inviato WhatsApp: ${typeValue.toUpperCase()} per ${formattedDate}`
                 }
             });
 
-            // Sync to Internal Notes for immediate visibility
+            // Aggiornamento note interne senza sporcare con titoli inutili
             const currentNotes = lead.notesInternal || "";
-            const systemNote = `[WhatsApp - ${timestamp}]: ${actionType.toUpperCase()} inviato (Msg: ${variables[2] || actionType} per ${lead.eventType})\n\n`;
+            const systemNote = `[WhatsApp - ${timestamp}]: Inviato "${typeValue}" per il ${formattedDate}\n\n`;
             await prisma.lead.update({
                 where: { id: leadId },
                 data: { notesInternal: systemNote + currentNotes }
@@ -77,7 +89,7 @@ export async function sendLeadWhatsAppAction(
         return res;
     } catch (error) {
         console.error("Action WhatsApp Error:", error);
-        return { success: false, error: "Errore durante l'invio del messaggio" };
+        return { success: false, error: "Errore nell'invio del messaggio" };
     }
 }
 
@@ -100,7 +112,7 @@ export async function sendFreeWhatsAppMessageAction(leadId: string, message: str
                 data: {
                     leadId: lead.id,
                     type: "WHATSAPP",
-                    notes: `Messaggio libero WhatsApp inviato: ${message}`
+                    notes: `Messaggio libero inviato: ${message}`
                 }
             });
 
@@ -117,6 +129,6 @@ export async function sendFreeWhatsAppMessageAction(leadId: string, message: str
         return res;
     } catch (error) {
         console.error("Action Free WhatsApp Error:", error);
-        return { success: false, error: "Errore durante l'invio del messaggio libero" };
+        return { success: false, error: "Errore nell'invio del messaggio" };
     }
 }
