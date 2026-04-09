@@ -21,7 +21,7 @@ export async function sendLeadWhatsAppAction(
             ? (process.env.WHATSAPP_TEMPLATE_NAME_CONTACTED || 'contattato')
             : actionType === 'no-answer'
             ? (process.env.WHATSAPP_TEMPLATE_NAME_NO_ANSWER || 'non_risponde')
-            : (process.env.WHATSAPP_TEMPLATE_NAME_APPOINTMENT || 'appuntamento');
+            : (process.env.WHATSAPP_TEMPLATE_NAME_APPOINTMENT || 'notifica_cliente');
 
         if (!templateName) {
             return { success: false, error: "Template non configurato" };
