@@ -12,7 +12,7 @@ import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
 import { Lead } from "@prisma/client"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
-import QuoteBuilder from "@/components/quotes/quote-builder"
+// import QuoteBuilder from "@/components/quotes/quote-builder"
 
 interface QuickActionsProps {
     lead: Lead;
@@ -139,10 +139,9 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                             <div className="bg-indigo-50/50 p-6 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center gap-4 text-center">
                                 <Sparkles className="h-10 w-10 text-indigo-500" />
                                 <div>
-                                    <p className="text-sm font-black text-indigo-900 uppercase">Configurazione Rapida</p>
-                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">Puoi creare il preventivo ora o solo cambiare lo stato</p>
+                                    <p className="text-sm font-black text-indigo-900 uppercase">Configurazione Preventivo</p>
+                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">Cambia lo stato qui e poi usa la tab 'Preventivi' per costruirlo</p>
                                 </div>
-                                <QuoteBuilder leadId={lead.id} onClose={() => setIsOpen(false)} />
                             </div>
                         )}
 
