@@ -17,8 +17,7 @@ import {
     Loader2,
     X,
     Download,
-    Video,
-    Sparkles
+    Video
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,15 +25,12 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { getFiles, createFolder, saveFile, deleteEntry } from '@/actions/presentation-actions'
-import { getProducts } from '@/actions/products'
 import { cn } from '@/lib/utils'
 
 export default function PresentationPage() {
     const [path, setPath] = useState<any[]>([]) // Array di oggetti cartella
     const [entries, setEntries] = useState<any[]>([])
-    const [products, setProducts] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
-    const [loadingProducts, setLoadingProducts] = useState(true)
     const [isCreatingFolder, setIsCreatingFolder] = useState(false)
     const [isAddingLink, setIsAddingLink] = useState(false)
     const [newFolderName, setNewFolderName] = useState("")
@@ -58,25 +54,9 @@ export default function PresentationPage() {
         }
     }
 
-    const loadProducts = async () => {
-        setLoadingProducts(true)
-        try {
-            const data = await getProducts()
-            setProducts(data as any)
-        } catch (error) {
-            console.error("Error loading products:", error)
-        } finally {
-            setLoadingProducts(false)
-        }
-    }
-
     useEffect(() => {
         loadEntries()
     }, [path])
-
-    useEffect(() => {
-        loadProducts()
-    }, [])
 
     const handleCreateFolder = async () => {
         if (!newFolderName) return
@@ -252,40 +232,7 @@ export default function PresentationPage() {
                 </div>
             </div>
 
-            {/* Product Catalog Quick View */}
-            {products.length > 0 && (
-                <div className="pt-12 border-t border-slate-100 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                                <Sparkles className="h-5 w-5 text-indigo-600" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black text-slate-900 tracking-tight">Catalogo Prodotti Rapido</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Accesso immediato ai prezzi</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {products.map((product) => (
-                            <div key={product.id} className="p-5 rounded-[2rem] bg-indigo-50/50 border border-indigo-100/50 hover:bg-white hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-300 group">
-                                <div className="flex justify-between items-start mb-2">
-                                    <Badge className="bg-white text-indigo-600 border-none font-black text-[9px] uppercase px-2 shadow-sm">
-                                        €{Number(product.price).toLocaleString('it-IT')}
-                                    </Badge>
-                                    <div className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Plus className="w-4 h-4" />
-                                    </div>
-                                </div>
-                                <h4 className="font-black text-slate-900 text-sm leading-snug">{product.name}</h4>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Preview */}
+            {/* Preview Popup */}
             {showPreview && selectedEntry && (
                 <div className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
                     <Button onClick={() => setShowPreview(false)} variant="ghost" className="absolute top-6 right-6 bg-white/10 text-white hover:bg-white/20 rounded-2xl h-12 w-12"><X className="w-6 h-6"/></Button>
