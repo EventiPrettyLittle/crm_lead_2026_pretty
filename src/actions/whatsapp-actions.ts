@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache"
 export async function sendLeadWhatsAppAction(
     leadId: string, 
     actionType: 'contacted' | 'no-answer' | 'appointment',
-    context?: { appointmentType?: string, appointmentDate?: string }
+    context?: { type?: string, date?: string }
 ) {
     try {
         const lead = await getLeadById(leadId);
@@ -35,9 +35,9 @@ export async function sendLeadWhatsAppAction(
 
         // Se è un appuntamento, aggiungo tipo e data
         if (actionType === 'appointment' && context) {
-            const typeLabel = context.appointmentType === 'showroom' ? "In Showroom" : "Richiamata Telefonica";
+            const typeLabel = context.type === 'showroom' ? "In Showroom" : "Richiamata Telefonica";
             variables.push(typeLabel);
-            variables.push(context.appointmentDate || "-");
+            variables.push(context.date || "-");
         }
 
         const res = await sendWhatsAppTemplate({

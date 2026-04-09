@@ -63,8 +63,8 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
 
             if (sendWhatsapp) {
                 const waRes = await sendLeadWhatsAppAction(lead.id, actionType as any, {
-                    appointmentDate: actionType === 'appointment' ? appointmentDate : undefined,
-                    appointmentType: actionType === 'appointment' ? appointmentType : undefined
+                    date: actionType === 'appointment' ? appointmentDate : undefined,
+                    type: actionType === 'appointment' ? appointmentType : undefined
                 });
                 if (waRes.success) {
                     toast.success("Messaggio WhatsApp inviato!");
