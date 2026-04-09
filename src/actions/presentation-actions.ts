@@ -31,8 +31,8 @@ export async function getFiles(parentId: string | null = null) {
         
         // Uso queryRaw per evitare errori di compilazione Prisma
         const items = parentId 
-            ? await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" = $1 ORDER BY "type" DESC, "createdAt" DESC`, parentId)
-            : await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" IS NULL ORDER BY "type" DESC, "createdAt" DESC`);
+            ? await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" = $1 ORDER BY "type" DESC, "name" ASC`, parentId)
+            : await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" IS NULL ORDER BY "type" DESC, "name" ASC`);
             
         return serializePrisma(items);
     } catch (error) {
@@ -75,11 +75,28 @@ export async function saveFile(data: { name: string, kind: string, url: string, 
     }
 }
 
+export async function renameEntry(id: string, newName: string) {
+    try {
+        await prisma.$executeRawUnsafe(
+            `UPDATE "PresentationItem" SET name = $1, "updatedAt" = $2 WHERE id = $3`,
+            newName, new Date(), id
+        );
+        return { success: true };
+    } catch (error) {
+        console.error("Rename error:", error);
+        return { success: false, error: "Errore rinomina" };
+    }
+}
+
 export async function deleteEntry(id: string) {
     try {
+        // Se è una cartella, eliminiamo anche i figli (gestione manuale per massima compatibilità SQL)
+        await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE "parentId" = $1`, id);
+        // Poi eliminiamo l'elemento stesso
         await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE id = $1`, id);
         return { success: true };
     } catch (error) {
+        console.error("Delete error:", error);
         return { success: false, error: "Errore eliminazione" };
     }
 }

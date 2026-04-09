@@ -17,14 +17,15 @@ import {
     Loader2,
     X,
     Download,
-    Video
+    Video,
+    Pencil
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { getFiles, createFolder, saveFile, deleteEntry } from '@/actions/presentation-actions'
+import { getFiles, createFolder, saveFile, deleteEntry, renameEntry } from '@/actions/presentation-actions'
 import { cn } from '@/lib/utils'
 
 export default function PresentationPage() {
@@ -108,12 +109,27 @@ export default function PresentationPage() {
         }
     }
 
+    const handleRename = async (id: string, currentName: string) => {
+        const newName = prompt("Inserisci il nuovo nome:", currentName)
+        if (!newName || newName === currentName) return
+        
+        const res = await renameEntry(id, newName)
+        if (res.success) {
+            toast.success("Rinominato")
+            loadEntries()
+        } else {
+            toast.error(res.error)
+        }
+    }
+
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Eliminare ${name}?`)) return
+        if (!confirm(`Eliminare ${name}? (Se è una cartella verranno eliminati anche i file all'interno)`)) return
         const res = await deleteEntry(id)
         if (res.success) {
             toast.success("Eliminato")
             loadEntries()
+        } else {
+            toast.error(res.error)
         }
     }
 
@@ -224,9 +240,15 @@ export default function PresentationPage() {
                                     {item.type === 'FILE' && <Badge className="bg-slate-50 text-slate-400 border-none font-black text-[8px] uppercase px-2 mt-1">{item.kind}</Badge>}
                                 </div>
                             </Card>
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }} className="absolute top-3 right-3 p-2 rounded-xl bg-rose-50 text-rose-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white">
-                                <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            {/* Action Buttons */}
+                            <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                <button onClick={(e) => { e.stopPropagation(); handleRename(item.id, item.name); }} className="p-2 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors">
+                                    <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }} className="p-2 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
