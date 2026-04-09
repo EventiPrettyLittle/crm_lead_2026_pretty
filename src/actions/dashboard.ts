@@ -66,6 +66,13 @@ export async function getDashboardStats() {
     });
     const callsDone = activitiesToday.length;
 
+    // 7. Preventivi inviati oggi
+    const quotesToday = await prisma.quote.count({
+        where: {
+            createdAt: { gte: todayStart, lte: todayEnd }
+        }
+    });
+
     // 7. Programmazione (In base all'orario di preferenza)
     // Filtriamo i lead che hanno una preferenza e non sono ancora chiusi
     const scheduledLeads = await prisma.lead.findMany({
@@ -86,8 +93,9 @@ export async function getDashboardStats() {
         pipelineValue,
         totalRevenue,
         conversionRate,
-        recentLeads,
         callsDone,
+        quotesToday,
+        recentLeads,
         scheduledLeads
     };
 }

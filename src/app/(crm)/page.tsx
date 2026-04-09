@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Upload, PhoneCall, Users, TrendingUp, Calendar, ArrowRight, CheckCircle2, Sparkles, Zap, Clock } from "lucide-react"
+import { Upload, PhoneCall, Users, TrendingUp, Calendar, ArrowRight, CheckCircle2, Sparkles, Zap, Clock, FileText } from "lucide-react"
 import { getDashboardStats } from "@/actions/dashboard"
 import { getCurrentUser } from "@/actions/auth"
 import { getCompanySettings } from "@/actions/settings"
@@ -88,8 +88,8 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { icon: Users, label: "Totale Lead", value: stats.totalLeads, color: "text-blue-600", bg: "bg-blue-50" },
-          { icon: Sparkles, label: "Revenue Totale", value: `€${stats.totalRevenue.toLocaleString('it-IT')}`, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { icon: TrendingUp, label: "Tasso Conversione", value: `${stats.conversionRate.toFixed(1)}%`, color: "text-indigo-600", bg: "bg-indigo-50" },
+          { icon: Zap, label: "Gestiti Oggi", value: stats.callsDone, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { icon: FileText, label: "Preventivi Oggi", value: stats.quotesToday, color: "text-indigo-600", bg: "bg-indigo-50" },
           { icon: Clock, label: "In Attesa", value: stats.todayTasks - stats.callsDone, color: "text-amber-600", bg: "bg-amber-50" },
         ].map((item, idx) => (
           <Card key={idx} className="rounded-[2rem] border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
