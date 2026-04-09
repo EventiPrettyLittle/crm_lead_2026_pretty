@@ -115,57 +115,49 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     };
 
     return (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-1.5 items-center justify-end">
             <Button
                 variant="ghost"
                 className={cn(
-                    "bg-green-50 text-green-600 hover:bg-green-600 hover:text-white rounded-xl shadow-sm transition-all flex items-center gap-1.5",
-                    showLabels ? "px-3 py-1.5 h-9 text-[10px] font-bold uppercase tracking-wider min-w-[100px] justify-center" : "h-8 w-8 p-0"
+                    "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg shadow-sm transition-all h-7 w-7 p-0 flex items-center justify-center",
                 )}
                 onClick={() => handleAction('contacted')}
                 title="Contattato"
             >
-                <Phone className="h-4 w-4" />
-                {showLabels && <span>Contattato</span>}
+                <Phone className="h-3.5 w-3.5" />
             </Button>
 
             <Button
                 variant="ghost"
                 className={cn(
-                    "bg-yellow-50 text-yellow-600 hover:bg-yellow-500 hover:text-white rounded-xl shadow-sm transition-all flex items-center gap-1.5",
-                    showLabels ? "px-3 py-1.5 h-9 text-[10px] font-bold uppercase tracking-wider min-w-[100px] justify-center" : "h-8 w-8 p-0"
+                    "bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white rounded-lg shadow-sm transition-all h-7 w-7 p-0 flex items-center justify-center",
                 )}
                 onClick={() => handleAction('no-answer')}
                 title="Non Risponde"
             >
-                <PhoneOff className="h-4 w-4" />
-                {showLabels && <span>Non Risponde</span>}
+                <PhoneOff className="h-3.5 w-3.5" />
             </Button>
 
             <Button
                 variant="ghost"
                 className={cn(
-                    "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl shadow-sm transition-all flex items-center gap-1.5",
-                    showLabels ? "px-3 py-1.5 h-9 text-[10px] font-bold uppercase tracking-wider min-w-[100px] justify-center" : "h-8 w-8 p-0"
+                    "bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg shadow-sm transition-all h-7 w-7 p-0 flex items-center justify-center",
                 )}
                 onClick={() => handleAction('schedule')}
                 title="Appuntamento"
             >
-                <Clock className="h-4 w-4" />
-                {showLabels && <span>Appuntamento</span>}
+                <Clock className="h-3.5 w-3.5" />
             </Button>
 
             <Button
                 variant="ghost"
                 className={cn(
-                    "bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl shadow-sm transition-all flex items-center gap-1.5",
-                    showLabels ? "px-3 py-1.5 h-9 text-[10px] font-bold uppercase tracking-wider min-w-[100px] justify-center" : "h-8 w-8 p-0"
+                    "bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg shadow-sm transition-all h-7 w-7 p-0 flex items-center justify-center",
                 )}
                 onClick={() => handleAction('cancelled')}
                 title="Perso / Chiuso"
             >
-                <Trash2 className="h-4 w-4" />
-                {showLabels && <span>Perso / Chiuso</span>}
+                <Trash2 className="h-3.5 w-3.5" />
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
