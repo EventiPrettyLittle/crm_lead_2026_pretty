@@ -9,6 +9,7 @@ import { formatITDate, formatITDateTime, formatITTime } from "@/lib/utils"
 import { Mail, Phone, MapPin, Calendar, User, FileText, ArrowRight, ArrowLeft, MessageSquare, ExternalLink } from "lucide-react"
 import QuoteBuilder from "@/components/quotes/quote-builder"
 import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog"
+import { QuoteRowActions } from "@/components/quotes/quote-row-actions"
 import { LeadLocationActions } from "@/components/leads/lead-location-actions"
 import { EditLeadDialog } from "@/components/leads/edit-lead-dialog"
 import { DeleteLeadButton } from "@/components/leads/delete-lead-button"
@@ -227,10 +228,8 @@ export default async function LeadDetailPage(props: PageProps) {
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-2xl font-black text-slate-900">€{Number(quote.totalAmount).toFixed(2)}</p>
-                                                                <div className="flex items-center gap-2">
-                                                                    <QuotePreviewDialog quote={quote} autoPrint={true} />
-                                                                    <QuotePreviewDialog quote={quote} />
-                                                                    <QuoteBuilder leadId={lead.id} quoteId={quote.id} existingQuote={quote} />
+                                                                <div className="flex items-center gap-2 justify-end">
+                                                                    <QuoteRowActions quote={quote} />
                                                                 </div>
                                                         </div>
                                                     </div>
