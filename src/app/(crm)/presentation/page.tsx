@@ -260,14 +260,25 @@ export default function PresentationPage() {
                     <Button onClick={() => setShowPreview(false)} variant="ghost" className="absolute top-6 right-6 bg-white/10 text-white hover:bg-white/20 rounded-2xl h-12 w-12"><X className="w-6 h-6"/></Button>
                     <div className="w-full max-w-5xl h-[80vh] flex items-center justify-center rounded-[3rem] overflow-hidden bg-black/20 relative shadow-2xl">
                         {selectedEntry.kind === 'IMAGE' ? (
-                            <img src={selectedEntry.url} className="max-w-full max-h-full object-contain" />
+                            <img 
+                                src={
+                                    selectedEntry.url.includes('drive.google.com')
+                                        ? selectedEntry.url.replace('/view', '').replace('/preview', '').replace('/edit', '').replace('file/d/', 'uc?id=').replace('open?id=', 'uc?id=')
+                                        : selectedEntry.url
+                                } 
+                                className="max-w-full max-h-full object-contain" 
+                            />
                         ) : selectedEntry.kind === 'VIDEO' || selectedEntry.kind === 'PDF' ? (
                             <iframe 
                                 src={
                                     selectedEntry.url.includes('youtube.com') 
                                         ? selectedEntry.url.replace('watch?v=', 'embed/') 
                                         : selectedEntry.url.includes('drive.google.com')
-                                            ? selectedEntry.url.replace('/view', '/preview').replace('/edit', '/preview')
+                                            ? (() => {
+                                                const idMatch = selectedEntry.url.match(/[-\w]{25,}/);
+                                                const id = idMatch ? idMatch[0] : '';
+                                                return `https://drive.google.com/file/d/${id}/preview`;
+                                            })()
                                             : selectedEntry.url
                                 } 
                                 className="w-full h-full border-none bg-white" 
