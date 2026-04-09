@@ -13,7 +13,6 @@ import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
 import { Lead } from "@prisma/client"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface QuickActionsProps {
     lead: Lead;

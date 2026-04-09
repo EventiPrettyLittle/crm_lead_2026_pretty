@@ -59,17 +59,14 @@ export async function updateLeadQuickAction(
             updateData.stage = 'APPUNTAMENTO';
             activityType = 'SYSTEM';
             
-            // EXACT STRINGS FOR USER
             const typeLabel = data.appointmentType === 'showroom' ? "appuntamento in show room" : "richiamata";
             activityNotes = `${typeLabel} fissato per il ${data.appointmentDate}. ${activityNotes}`;
 
-            // GOOGLE CALENDAR SYNC
-            // Ensure date is valid and format correctly for Google
             const startDate = new Date(data.appointmentDate);
             const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour
 
             await createCalendarEvent({
-                title: `${typeLabel} - ${leadBase.firstName} ${leadBase.lastName}`, // Starts with appointment type
+                title: `${typeLabel} - ${leadBase.firstName || 'Cliente'} ${leadBase.lastName || ''}`,
                 description: `Appuntamento fissato dal CRM. Note: ${data.notes || 'nessuna'}`,
                 location: data.appointmentType === 'showroom' ? "Showroom" : "Richiamata Telefonica",
                 startDateTime: startDate.toISOString(),
@@ -148,5 +145,34 @@ export async function deleteAllLeads() {
     } catch (error) {
         console.error("Error deleting leads:", error);
         return { success: false, error };
+    }
+}
+
+export async function updateLeadDetails(id: string, data: any) {
+    try {
+        await prisma.lead.update({
+            where: { id },
+            data: {
+                eventCity: data.eventCity || null,
+                eventProvince: data.eventProvince || null,
+                eventRegion: data.eventRegion || null,
+                eventLocation: data.eventLocation || null,
+                locationName: data.locationName || null,
+                firstName: data.firstName || null,
+                lastName: data.lastName || null,
+                email: data.email || null,
+                phoneRaw: data.phone || null,
+                eventType: data.eventType || null,
+                eventDate: data.eventDate ? new Date(data.eventDate) : null,
+                updatedAt: new Date(),
+            } as any
+        });
+
+        revalidatePath(`/leads/${id}`);
+        revalidatePath('/leads');
+        return { success: true };
+    } catch (error: any) {
+        console.error("SERVER ERROR: Failed to update lead details:", error);
+        return { success: false, error: error.message || "Unknown Prisma Error" };
     }
 }
