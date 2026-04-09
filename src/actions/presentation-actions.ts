@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma"
 import { serializePrisma } from "@/lib/serialize"
 
 /**
- * Crea la tabella per i file di presentazione se non esiste
+ * Crea la tabella per i file di presentazione se non esiste via SQL puro
  */
 async function ensurePresentationTable() {
     try {
@@ -12,26 +12,28 @@ async function ensurePresentationTable() {
             CREATE TABLE IF NOT EXISTS "PresentationItem" (
                 "id" TEXT NOT NULL PRIMARY KEY,
                 "name" TEXT NOT NULL,
-                "type" TEXT NOT NULL, -- "FILE", "FOLDER"
-                "kind" TEXT, -- "IMAGE", "VIDEO", "PDF", "OTHER"
-                "url" TEXT, -- Base64 for images or Link for videos/PDFs
-                "parentId" TEXT, -- For folder structure
+                "type" TEXT NOT NULL,
+                "kind" TEXT,
+                "url" TEXT,
+                "parentId" TEXT,
                 "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
         `);
     } catch (e) {
-        // console.log("Table exists or error");
+        // Ignora se la tabella esiste già o c'è un errore non critico
     }
 }
 
 export async function getFiles(parentId: string | null = null) {
     try {
         await ensurePresentationTable();
-        const items = await (prisma as any).presentationItem.findMany({
-            where: { parentId: parentId || undefined },
-            orderBy: [{ type: 'desc' }, { createdAt: 'desc' }]
-        });
+        
+        // Uso queryRaw per evitare errori di compilazione Prisma
+        const items = parentId 
+            ? await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" = $1 ORDER BY "type" DESC, "createdAt" DESC`, parentId)
+            : await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" IS NULL ORDER BY "type" DESC, "createdAt" DESC`);
+            
         return serializePrisma(items);
     } catch (error) {
         console.error("getFiles error:", error);
@@ -42,16 +44,16 @@ export async function getFiles(parentId: string | null = null) {
 export async function createFolder(name: string, parentId: string | null = null) {
     try {
         await ensurePresentationTable();
-        const folder = await (prisma as any).presentationItem.create({
-            data: {
-                id: `folder-${Date.now()}`,
-                name,
-                type: 'FOLDER',
-                parentId: parentId || null
-            }
-        });
-        return { success: true, folder: serializePrisma(folder) };
+        const id = `folder-${Date.now()}`;
+        
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO "PresentationItem" (id, name, type, "parentId") VALUES ($1, $2, $3, $4)`,
+            id, name, 'FOLDER', parentId
+        );
+        
+        return { success: true };
     } catch (error) {
+        console.error("createFolder error:", error);
         return { success: false, error: "Errore creazione cartella" };
     }
 }
@@ -59,17 +61,14 @@ export async function createFolder(name: string, parentId: string | null = null)
 export async function saveFile(data: { name: string, kind: string, url: string, parentId: string | null }) {
     try {
         await ensurePresentationTable();
-        const file = await (prisma as any).presentationItem.create({
-            data: {
-                id: `file-${Date.now()}`,
-                name: data.name,
-                type: 'FILE',
-                kind: data.kind,
-                url: data.url,
-                parentId: data.parentId || null
-            }
-        });
-        return { success: true, file: serializePrisma(file) };
+        const id = `file-${Date.now()}`;
+        
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO "PresentationItem" (id, name, type, kind, url, "parentId") VALUES ($1, $2, $3, $4, $5, $6)`,
+            id, data.name, 'FILE', data.kind, data.url, data.parentId
+        );
+        
+        return { success: true };
     } catch (error) {
         console.error("Save file error:", error);
         return { success: false, error: "Errore salvataggio nel database" };
@@ -78,11 +77,7 @@ export async function saveFile(data: { name: string, kind: string, url: string, 
 
 export async function deleteEntry(id: string) {
     try {
-        // Se è una cartella, dovremmo cancellare ricorsivamente, 
-        // ma per semplicità ora cancelliamo solo l'id selezionato
-        await (prisma as any).presentationItem.delete({
-            where: { id }
-        });
+        await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE id = $1`, id);
         return { success: true };
     } catch (error) {
         return { success: false, error: "Errore eliminazione" };
