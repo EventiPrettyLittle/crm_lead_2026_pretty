@@ -111,7 +111,7 @@ export function QuotePreviewDialog({ quote, autoPrint = false }: { quote: any, a
                     {isClient ? (
                         <PDFDownloadLink
                             document={<QuoteDocument quote={quote} />}
-                            fileName={`preventivo_${quote.number || 'bozza'}.pdf`}
+                            fileName={`preventivo_${(quote.number || 'bozza').replace(/[^a-z0-9]/gi, '_')}.pdf`}
                             className="flex-1"
                         >
                             {({ loading }) => (
