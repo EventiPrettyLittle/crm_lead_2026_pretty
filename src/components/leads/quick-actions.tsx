@@ -159,87 +159,145 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[500px] border-none shadow-2xl rounded-[2.5rem] p-8 gap-0 overflow-hidden">
                     <DialogHeader>
-                        <DialogTitle>
-                            {actionType === 'contacted' && "Log Contatto"}
-                            {actionType === 'no-answer' && "⏰ Reminder di Ricontatto"}
-                            {actionType === 'schedule' && "Programma Appuntamento"}
-                            {actionType === 'cancelled' && "Cancella Lead / Perso"}
+                        <DialogTitle className="hidden">
+                            {actionType === 'schedule' ? "Programma Appuntamento" : "Azione Lead"}
                         </DialogTitle>
                     </DialogHeader>
 
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="notes">Note</Label>
-                            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Riassunto della conversazione..." />
-                        </div>
+                    <div className="grid gap-6 py-4">
+                        {/* Google Calendar Style Title Input */}
+                        {actionType === 'schedule' && (
+                            <div className="space-y-6">
+                                <div className="relative group">
+                                    <Input 
+                                        placeholder="Aggiungi titolo" 
+                                        value={notes} 
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        className="text-3xl font-bold border-none border-b-2 border-slate-100 focus-visible:ring-0 focus-visible:border-indigo-600 rounded-none px-0 py-2 h-auto placeholder:text-slate-200 transition-all bg-transparent"
+                                    />
+                                    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-slate-100 group-focus-within:bg-indigo-600 scale-x-0 group-focus-within:scale-x-100 transition-transform origin-left" />
+                                </div>
+
+                                {/* Caselle di spunta rapide (Presets) */}
+                                <div className="flex flex-wrap gap-3">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        type="button"
+                                        className={cn(
+                                            "rounded-2xl border-slate-100 text-[10px] font-black uppercase tracking-widest h-11 px-6 shadow-sm transition-all flex items-center gap-2",
+                                            notes.includes("APPUNTAMENTO SHOWROOM") ? "bg-indigo-600 border-indigo-600 text-white shadow-indigo-200 shadow-xl" : "hover:border-indigo-600 hover:text-indigo-600 bg-white"
+                                        )}
+                                        onClick={() => setNotes(`APPUNTAMENTO SHOWROOM - ${lead.firstName?.toUpperCase()} ${lead.lastName?.toUpperCase()}`)}
+                                    >
+                                        🏠 Appuntamento Showroom
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        type="button"
+                                        className={cn(
+                                            "rounded-2xl border-slate-100 text-[10px] font-black uppercase tracking-widest h-11 px-6 shadow-sm transition-all flex items-center gap-2",
+                                            notes.includes("RICHIAMATA") ? "bg-amber-500 border-amber-500 text-white shadow-amber-200 shadow-xl" : "hover:border-amber-500 hover:text-amber-500 bg-white"
+                                        )}
+                                        onClick={() => setNotes(`RICHIAMATA - ${lead.firstName?.toUpperCase()} ${lead.lastName?.toUpperCase()}`)}
+                                    >
+                                        📞 Richiamata
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {actionType !== 'schedule' && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="notes" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Note Attività</Label>
+                                <Textarea 
+                                    id="notes" 
+                                    value={notes} 
+                                    onChange={(e) => setNotes(e.target.value)} 
+                                    placeholder={actionType === 'cancelled' ? "Perché il lead è stato perso?" : "Riassunto della conversazione..."}
+                                    className="rounded-3xl border-slate-100 min-h-[120px] bg-slate-50/50 p-5 focus-visible:ring-indigo-500/20 focus-visible:border-indigo-200"
+                                />
+                            </div>
+                        )}
 
                         {(actionType === 'no-answer' || actionType === 'schedule') && (
-                            <div className="grid gap-2">
-                                <Label className="text-indigo-600 font-bold">
-                                    {actionType === 'no-answer' ? "⏰ Quando vuoi richiamarlo?" : "Data Prossimo Contatto / Appuntamento"}
-                                </Label>
-                                <div className="flex gap-2">
+                            <div className="grid gap-5 p-6 bg-indigo-50/30 rounded-[2rem] border border-indigo-100/50">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
+                                        <Clock className="w-4 h-4 text-indigo-600" />
+                                    </div>
+                                    <span className="text-[11px] font-black uppercase tracking-widest text-indigo-900">Programmazione</span>
+                                </div>
+                                
+                                <div className="flex flex-wrap gap-4 items-center">
                                     <Popover>
                                         <PopoverTrigger asChild>
                                             <Button
                                                 variant={"outline"}
                                                 className={cn(
-                                                    "w-[240px] justify-start text-left font-normal",
+                                                    "flex-1 min-w-[200px] justify-start text-left font-black text-xs h-12 rounded-[1.2rem] border-white shadow-sm hover:shadow-md transition-all",
                                                     !date && "text-muted-foreground"
                                                 )}
                                             >
-                                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                                {date ? format(date, "PPP") : <span>Scegli data</span>}
+                                                {date ? format(date, "EEEE, d MMMM", { locale: require('date-fns/locale').it }) : <span>Scegli data</span>}
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
+                                        <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-3xl" align="start">
                                             <Calendar
                                                 mode="single"
                                                 selected={date}
                                                 onSelect={setDate}
                                                 initialFocus
+                                                className="p-4"
                                             />
                                         </PopoverContent>
                                     </Popover>
-                                    <Input
-                                        type="time"
-                                        className="w-32"
-                                        value={time}
-                                        onChange={(e) => setTime(e.target.value)}
-                                    />
+                                    
+                                    <div className="flex items-center gap-2 bg-white p-1 rounded-[1.2rem] shadow-sm border border-slate-50">
+                                        <Input
+                                            type="time"
+                                            className="w-28 border-none focus-visible:ring-0 text-center font-black h-10 text-lg"
+                                            value={time}
+                                            onChange={(e) => setTime(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
 
-                        {(actionType === 'contacted' || actionType === 'no-answer') && (
-                            <div className="flex items-center space-x-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 transition-all hover:bg-indigo-50">
+                        {(actionType === 'contacted' || actionType === 'no-answer' || actionType === 'schedule') && (
+                            <div className="flex items-center space-x-4 p-5 bg-emerald-50/50 rounded-[2rem] border border-emerald-100 group transition-all hover:bg-emerald-100/50">
                                 <Checkbox 
                                     id="whatsapp" 
                                     checked={sendWhatsapp} 
                                     onCheckedChange={(checked: boolean) => setSendWhatsapp(checked)}
-                                    className="h-5 w-5 rounded-lg border-indigo-200 data-[state=checked]:bg-indigo-600"
+                                    className="h-6 w-6 rounded-xl border-emerald-200 data-[state=checked]:bg-emerald-500 shadow-sm"
                                 />
-                                <div className="grid gap-0.5 leading-none">
+                                <div className="grid gap-1 leading-none">
                                     <Label 
                                         htmlFor="whatsapp" 
-                                        className="text-sm font-bold text-indigo-900 cursor-pointer flex items-center gap-2"
+                                        className="text-[11px] font-black text-emerald-900 cursor-pointer flex items-center gap-2 uppercase tracking-tight"
                                     >
                                         <MessageSquare className="h-4 w-4 text-emerald-500" />
-                                        Invia Template WhatsApp
+                                        Invia Notifica WhatsApp al Cliente
                                     </Label>
-                                    <p className="text-[10px] text-indigo-500 font-medium italic opacity-70">
-                                        Il messaggio userà il template predefinito di Meta.
-                                    </p>
+                                    <p className="text-[9px] text-emerald-600/70 font-bold uppercase tracking-tighter">Verrà usato il template ufficiale di Meta</p>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    <DialogFooter>
-                        <Button onClick={submitAction} disabled={loading}>
-                            {loading ? "Salvataggio..." : "Conferma"}
+                    <DialogFooter className="mt-6 flex gap-3">
+                        <Button variant="ghost" onClick={() => setIsOpen(false)} className="flex-1 rounded-2xl h-14 text-[11px] font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50">Annulla</Button>
+                        <Button 
+                            onClick={submitAction} 
+                            disabled={loading || (actionType === 'schedule' && !notes)}
+                            className="flex-[2] rounded-2xl h-14 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-600/30 transition-all hover:scale-[1.02]"
+                        >
+                            {loading ? "Salvataggio..." : "Salva Appuntamento"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
