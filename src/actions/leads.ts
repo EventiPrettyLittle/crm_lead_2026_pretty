@@ -61,6 +61,7 @@ export async function importLeadsAction(leads: ParsedLead[]): Promise<ImportResu
                         email: lead.email,
                         preferredContactTime: lead.preferredContactTime,
                         stage: 'NUOVO',
+                        deletedAt: null, // Ensure any re-imported lead is not deleted
                     }
                 });
             }
@@ -82,6 +83,7 @@ export async function importLeadsAction(leads: ParsedLead[]): Promise<ImportResu
 export const getLeads = unstable_cache(
     async (limit = 100) => {
         const leads = await prisma.lead.findMany({
+            where: { deletedAt: null }, // Only fetch non-deleted leads
             orderBy: { createdAt: 'desc' },
             take: limit,
         });
@@ -95,6 +97,7 @@ export async function searchLeads(query: string) {
     if (!query || query.length < 2) return [];
     const leads = await prisma.lead.findMany({
         where: {
+            deletedAt: null, // Only search non-deleted leads
             OR: [
                 { firstName: { contains: query, mode: 'insensitive' } },
                 { lastName: { contains: query, mode: 'insensitive' } },
@@ -196,24 +199,30 @@ export async function syncLeadsFromGoogleSheet(url: string): Promise<ImportResul
 
 export async function deleteAllLeads() {
     try {
-        await prisma.lead.deleteMany();
+        // Soft delete all leads instead of deleting them
+        await prisma.lead.updateMany({
+            where: { deletedAt: null },
+            data: { deletedAt: new Date() }
+        });
         revalidatePath('/leads');
         return { success: true };
     } catch (error) {
-        console.error("Failed to delete all leads:", error);
+        console.error("Failed to soft delete all leads:", error);
         return { success: false, error };
     }
 }
 
 export async function deleteLead(id: string) {
     try {
-        await prisma.lead.delete({
-            where: { id }
+        // Soft delete specific lead
+        await prisma.lead.update({
+            where: { id },
+            data: { deletedAt: new Date() }
         });
         revalidatePath('/leads');
         return { success: true };
     } catch (error) {
-        console.error("Failed to delete lead:", error);
+        console.error("Failed to soft delete lead:", error);
         return { success: false, error };
     }
 }
