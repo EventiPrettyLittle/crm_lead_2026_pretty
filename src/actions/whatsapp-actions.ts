@@ -7,8 +7,8 @@ import { revalidatePath } from "next/cache"
 
 export async function sendLeadWhatsAppAction(
     leadId: string, 
-    actionType: 'contacted' | 'no-answer' | 'schedule',
-    context?: { type?: string, date?: string, time?: string }
+    actionType: 'contacted' | 'no-answer' | 'appointment',
+    context?: { appointmentType?: string, appointmentDate?: string }
 ) {
     try {
         const lead = await getLeadById(leadId);
@@ -16,7 +16,7 @@ export async function sendLeadWhatsAppAction(
             return { success: false, error: "Lead o numero di telefono non trovato" };
         }
 
-        // Nomi template reali su SendApp – fallback hardcoded se le env var non sono impostate
+        // Nomi template reali su SendApp
         const templateName = actionType === 'contacted' 
             ? (process.env.WHATSAPP_TEMPLATE_NAME_CONTACTED || 'contattato')
             : actionType === 'no-answer'
@@ -27,16 +27,17 @@ export async function sendLeadWhatsAppAction(
             return { success: false, error: "Template non configurato" };
         }
 
-        // Prepare variables
+        // Prepare variables: [Nome, Evento, Tipo, Data/Ora]
         const variables = [
-            lead.firstName || "Cliente"
+            lead.firstName || "Cliente",
+            lead.eventType || "Evento"
         ];
 
-        // If it's an appointment, add type, date and time
-        if (actionType === 'schedule' && context) {
-            variables.push(context.type || "Appuntamento");
-            variables.push(context.date || "-");
-            variables.push(context.time || "-");
+        // Se è un appuntamento, aggiungo tipo e data
+        if (actionType === 'appointment' && context) {
+            const typeLabel = context.appointmentType === 'showroom' ? "In Showroom" : "Richiamata Telefonica";
+            variables.push(typeLabel);
+            variables.push(context.appointmentDate || "-");
         }
 
         const res = await sendWhatsAppTemplate({
@@ -48,18 +49,18 @@ export async function sendLeadWhatsAppAction(
         if (res.success) {
             const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
             
-            // 1. Log activity in the DB (Timeline)
+            // Log activity
             await prisma.activity.create({
                 data: {
                     leadId: lead.id,
                     type: "WHATSAPP",
-                    notes: `Inviato template WhatsApp: ${templateName}`
+                    notes: `Inviato WhatsApp: ${actionType.toUpperCase()} (${variables.join(', ')})`
                 }
             });
 
-            // 2. Sync to Internal Notes box (Top)
+            // Sync to Internal Notes
             const currentNotes = lead.notesInternal || "";
-            const systemNote = `[Sistema - ${timestamp}]: Inviato WhatsApp (${templateName})\n\n`;
+            const systemNote = `[WhatsApp - ${timestamp}]: ${actionType.toUpperCase()} inviato a ${lead.firstName} per ${lead.eventType}\n\n`;
             await prisma.lead.update({
                 where: { id: leadId },
                 data: { notesInternal: systemNote + currentNotes }
@@ -90,7 +91,6 @@ export async function sendFreeWhatsAppMessageAction(leadId: string, message: str
         if (res.success) {
             const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
             
-            // 1. Log activity in the DB
             await prisma.activity.create({
                 data: {
                     leadId: lead.id,
@@ -99,7 +99,6 @@ export async function sendFreeWhatsAppMessageAction(leadId: string, message: str
                 }
             });
 
-            // 2. Sync to Internal Notes box (Top)
             const currentNotes = lead.notesInternal || "";
             const systemNote = `[WhatsApp - ${timestamp}]: ${message}\n\n`;
             await prisma.lead.update({
