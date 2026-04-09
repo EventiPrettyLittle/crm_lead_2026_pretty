@@ -28,7 +28,7 @@ async function ensurePresentationTable() {
 export async function getFiles(parentId: string | null = null) {
     try {
         await ensurePresentationTable();
-        const items = await prisma.presentationItem.findMany({
+        const items = await (prisma as any).presentationItem.findMany({
             where: { parentId: parentId || undefined },
             orderBy: [{ type: 'desc' }, { createdAt: 'desc' }]
         });
@@ -42,7 +42,7 @@ export async function getFiles(parentId: string | null = null) {
 export async function createFolder(name: string, parentId: string | null = null) {
     try {
         await ensurePresentationTable();
-        const folder = await prisma.presentationItem.create({
+        const folder = await (prisma as any).presentationItem.create({
             data: {
                 id: `folder-${Date.now()}`,
                 name,
@@ -59,7 +59,7 @@ export async function createFolder(name: string, parentId: string | null = null)
 export async function saveFile(data: { name: string, kind: string, url: string, parentId: string | null }) {
     try {
         await ensurePresentationTable();
-        const file = await prisma.presentationItem.create({
+        const file = await (prisma as any).presentationItem.create({
             data: {
                 id: `file-${Date.now()}`,
                 name: data.name,
@@ -80,7 +80,7 @@ export async function deleteEntry(id: string) {
     try {
         // Se è una cartella, dovremmo cancellare ricorsivamente, 
         // ma per semplicità ora cancelliamo solo l'id selezionato
-        await prisma.presentationItem.delete({
+        await (prisma as any).presentationItem.delete({
             where: { id }
         });
         return { success: true };
