@@ -6,13 +6,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Phone, PhoneOff, FileText, XCircle, MessageSquare, Loader2, Sparkles, Plus, Calendar } from "lucide-react"
+import { Phone, PhoneOff, FileText, XCircle, MessageSquare, Loader2, Sparkles, Plus, Calendar, Home, PhoneForwarded } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { updateLeadQuickAction } from "@/actions/lead-actions"
 import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
 import { Lead } from "@prisma/client"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
+import { Select, SelectContent, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface QuickActionsProps {
     lead: Lead;
@@ -22,6 +23,7 @@ interface QuickActionsProps {
 export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [actionType, setActionType] = useState<'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | 'appointment' | null>(null);
+    const [appointmentType, setAppointmentType] = useState<'showroom' | 'call'>('call');
     const [notes, setNotes] = useState("");
     const [appointmentDate, setAppointmentDate] = useState("");
     const [loading, setLoading] = useState(false);
@@ -51,13 +53,18 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 return;
             }
 
+            const finalNotes = actionType === 'appointment' 
+                ? `[${appointmentType.toUpperCase()}] Fissato per: ${appointmentDate}. ${notes}` 
+                : notes;
+
             await updateLeadQuickAction(lead.id, actionType as any, {
-                notes: actionType === 'appointment' ? `Appuntamento fissato per il: ${appointmentDate}. ${notes}` : notes,
+                notes: finalNotes,
             });
 
             if (sendWhatsapp) {
                 const waRes = await sendLeadWhatsAppAction(lead.id, actionType as any, {
-                    appointmentDate: actionType === 'appointment' ? appointmentDate : undefined
+                    appointmentDate: actionType === 'appointment' ? appointmentDate : undefined,
+                    appointmentType: actionType === 'appointment' ? appointmentType : undefined
                 });
                 if (waRes.success) {
                     toast.success("Messaggio WhatsApp inviato!");
@@ -149,10 +156,10 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogContent className="sm:max-w-[450px] border-none shadow-2xl rounded-[2.5rem] p-8 space-y-6">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-black italic text-slate-900 uppercase tracking-tight">
+                        <DialogTitle className="text-2xl font-black italic text-slate-900 uppercase tracking-tight text-center">
                             {actionType === 'contacted' && "📞 Registra Contatto"}
                             {actionType === 'no-answer' && "🔇 Non Risponde"}
-                            {actionType === 'appointment' && "📅 Fissa Appuntamento"}
+                            {actionType === 'appointment' && "📅 Prossimo Step"}
                             {actionType === 'preventivo' && "📑 Passa a Preventivo"}
                             {actionType === 'cancelled' && "❌ Cancella Lead"}
                         </DialogTitle>
@@ -160,14 +167,45 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
 
                     <div className="space-y-4">
                         {actionType === 'appointment' && (
-                            <div className="grid gap-2 p-5 bg-indigo-50/50 rounded-[2rem] border border-indigo-100">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Data e Ora Appuntamento</Label>
-                                <Input 
-                                    type="datetime-local" 
-                                    value={appointmentDate}
-                                    onChange={(e) => setAppointmentDate(e.target.value)}
-                                    className="rounded-2xl border-indigo-100 bg-white"
-                                />
+                            <div className="space-y-4 p-6 bg-indigo-50/50 rounded-[2rem] border border-indigo-100">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Tipo Appuntamento</Label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Button 
+                                            type="button"
+                                            variant={appointmentType === 'showroom' ? 'default' : 'outline'}
+                                            onClick={() => setAppointmentType('showroom')}
+                                            className={cn(
+                                                "rounded-2xl h-12 font-bold uppercase text-[10px] flex items-center gap-2",
+                                                appointmentType === 'showroom' ? "bg-indigo-600 sky-shadow" : "bg-white border-indigo-100 text-indigo-400"
+                                            )}
+                                        >
+                                            <Home className="h-4 w-4" />
+                                            Showroom
+                                        </Button>
+                                        <Button 
+                                            type="button"
+                                            variant={appointmentType === 'call' ? 'default' : 'outline'}
+                                            onClick={() => setAppointmentType('call')}
+                                            className={cn(
+                                                "rounded-2xl h-12 font-bold uppercase text-[10px] flex items-center gap-2",
+                                                appointmentType === 'call' ? "bg-indigo-600 sky-shadow" : "bg-white border-indigo-100 text-indigo-400"
+                                            )}
+                                        >
+                                            <PhoneForwarded className="h-4 w-4" />
+                                            Richiamata
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Data e Ora</Label>
+                                    <Input 
+                                        type="datetime-local" 
+                                        value={appointmentDate}
+                                        onChange={(e) => setAppointmentDate(e.target.value)}
+                                        className="rounded-2xl border-indigo-100 bg-white h-12 font-bold"
+                                    />
+                                </div>
                             </div>
                         )}
 
@@ -175,8 +213,8 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                             <div className="bg-indigo-50/50 p-6 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center gap-4 text-center">
                                 <Sparkles className="h-10 w-10 text-indigo-500" />
                                 <div>
-                                    <p className="text-sm font-black text-indigo-900 uppercase">Configurazione Preventivo</p>
-                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">Cambia lo stato qui e poi usa la tab 'Preventivi' per costruirlo</p>
+                                    <p className="text-sm font-black text-indigo-900 uppercase">Redirect Preventivo</p>
+                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">Ti porterò nella sezione preventivi per costruirlo ora</p>
                                 </div>
                             </div>
                         )}
@@ -186,8 +224,8 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                             <Textarea 
                                 value={notes} 
                                 onChange={(e) => setNotes(e.target.value)} 
-                                placeholder="Dettagli dell'azione effettuata..."
-                                className="rounded-3xl border-slate-100 min-h-[120px] bg-slate-50/50 p-5 focus-visible:ring-indigo-500/20"
+                                placeholder="Scrivi qui eventuali dettagli..."
+                                className="rounded-3xl border-slate-100 min-h-[100px] bg-slate-50/50 p-5 focus-visible:ring-indigo-500/20"
                             />
                         </div>
 
@@ -208,12 +246,12 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                     </div>
 
                     <DialogFooter className="flex gap-3 mt-4">
-                        <Button variant="ghost" onClick={() => setIsOpen(false)} className="flex-1 rounded-2xl h-14 font-black uppercase tracking-widest text-slate-400">Annulla</Button>
+                        <Button variant="ghost" onClick={() => setIsOpen(false)} className="flex-1 rounded-2xl h-14 font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Annulla</Button>
                         <Button 
                             onClick={submitAction} 
-                            disabled={loading}
+                            disabled={loading || (actionType === 'appointment' && !appointmentDate)}
                             className={cn(
-                                "flex-[2] rounded-full h-14 px-8 font-black text-[11px] uppercase tracking-[0.2em] shadow-xl transition-all",
+                                "flex-[2] rounded-full h-14 px-8 font-black text-[11px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95",
                                 actionType === 'cancelled' ? "bg-rose-600 hover:bg-rose-700" : "bg-indigo-600 hover:bg-indigo-700",
                                 "text-white"
                             )}
