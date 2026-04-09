@@ -289,8 +289,8 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                                         </TableCell>
                                         <TableCell className="py-2.5">
                                             {lead.preferredContactTime ? (
-                                                <span className="text-[9px] font-black text-indigo-500 uppercase">
-                                                    {lead.preferredContactTime.split('(')[0]}
+                                                <span className="text-[9px] font-black text-slate-500 uppercase leading-tight block max-w-[120px]">
+                                                    {lead.preferredContactTime}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-400 font-black text-[9px] uppercase italic">Sempre</span>
