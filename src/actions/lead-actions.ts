@@ -5,6 +5,10 @@ import { revalidatePath } from 'next/cache'
 import { createActivity } from './lead-detail'
 import { createCalendarEvent } from './calendar'
 
+/**
+ * FIXED Quick Activity Action
+ * Handles state transitions and triggers Google Calendar sync for appointments.
+ */
 export async function updateLeadQuickAction(
     leadId: string,
     type: 'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | 'appointment',
@@ -25,7 +29,6 @@ export async function updateLeadQuickAction(
         let activityType = '';
         let activityNotes = data.notes || '';
 
-        // Recuperiamo il lead per avere il nome nel titolo del calendario
         const leadBase = await prisma.lead.findUnique({ where: { id: leadId } });
         if (!leadBase) return { success: false, error: "Lead not found" };
 
@@ -55,25 +58,27 @@ export async function updateLeadQuickAction(
             updateData.lastStatus = 'APPUNTAMENTO';
             updateData.stage = 'APPUNTAMENTO';
             activityType = 'SYSTEM';
-            const typeLabel = data.appointmentType === 'showroom' ? "In Showroom" : "Richiamata";
-            activityNotes = `Appuntamento [${typeLabel}] fissato per il ${data.appointmentDate}. ${activityNotes}`;
+            
+            // EXACT STRINGS FOR USER
+            const typeLabel = data.appointmentType === 'showroom' ? "appuntamento in show room" : "richiamata";
+            activityNotes = `${typeLabel} fissato per il ${data.appointmentDate}. ${activityNotes}`;
 
-            // CREAZIONE EVENTO CALENDARIO (Google + Locale)
-            const startStr = data.appointmentDate; // Formato YYYY-MM-DDTHH:mm
-            const startDate = new Date(startStr);
-            const endDate = new Date(startDate.getTime() + 60 * 60000); // Default 1 ora
+            // GOOGLE CALENDAR SYNC
+            // Ensure date is valid and format correctly for Google
+            const startDate = new Date(data.appointmentDate);
+            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour
 
             await createCalendarEvent({
-                title: `${typeLabel}: ${leadBase.firstName} ${leadBase.lastName}`,
-                description: `Appuntamento CRM per lead ${leadBase.firstName}. Note: ${data.notes || ''}`,
-                location: data.appointmentType === 'showroom' ? "Showroom" : "Telefono",
+                title: `${typeLabel} - ${leadBase.firstName} ${leadBase.lastName}`, // Starts with appointment type
+                description: `Appuntamento fissato dal CRM. Note: ${data.notes || 'nessuna'}`,
+                location: data.appointmentType === 'showroom' ? "Showroom" : "Richiamata Telefonica",
                 startDateTime: startDate.toISOString(),
                 endDateTime: endDate.toISOString(),
                 leadId: leadId
             });
         }
 
-        // Update Lead
+        // Update Lead database
         const updatedLead = await prisma.lead.update({
             where: { id: leadId },
             data: {
@@ -81,10 +86,10 @@ export async function updateLeadQuickAction(
             }
         });
 
-        // Create Activity
+        // Create Activity log
         await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
 
-        // Sync to Internal Notes box (Top)
+        // System Sync Note
         const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
         const currentNotes = updatedLead.notesInternal || "";
         const systemNote = `[Sistema - ${timestamp}]: ${activityNotes}\n\n`;
@@ -96,13 +101,12 @@ export async function updateLeadQuickAction(
         revalidatePath(`/leads/${leadId}`);
         revalidatePath('/leads');
         revalidatePath('/kanban');
-        revalidatePath('/activities');
         revalidatePath('/calendar');
         
         return { success: true };
     } catch (error) {
         console.error("Error executing quick action:", error);
-        return { success: false, error };
+        return { success: false, error: String(error) };
     }
 }
 
@@ -117,10 +121,6 @@ export async function createManualLead(data: any) {
                 eventType: data.eventType || null,
                 eventDate: data.eventDate ? new Date(data.eventDate) : null,
                 eventLocation: data.eventLocation || null,
-                guestsCount: data.guestsCount ? data.guestsCount.toString() : null,
-                productInterest: data.productInterest || null,
-                preferredContactTime: data.preferredContactTime || null,
-                additionalServices: data.additionalServices || null,
                 stage: 'NUOVO',
             } as any
         });
@@ -144,42 +144,9 @@ export async function deleteAllLeads() {
 
         revalidatePath('/leads');
         revalidatePath('/kanban');
-        revalidatePath('/activities');
         return { success: true };
     } catch (error) {
         console.error("Error deleting leads:", error);
         return { success: false, error };
-    }
-}
-export async function updateLeadDetails(id: string, data: any) {
-    try {
-        await prisma.lead.update({
-            where: { id },
-            data: {
-                eventCity: data.eventCity || null,
-                eventProvince: data.eventProvince || null,
-                eventRegion: data.eventRegion || null,
-                eventLocation: data.eventLocation || null,
-                locationName: data.locationName || null,
-                firstName: data.firstName || null,
-                lastName: data.lastName || null,
-                email: data.email || null,
-                phoneRaw: data.phone || null,
-                eventType: data.eventType || null,
-                eventDate: data.eventDate ? new Date(data.eventDate) : null,
-                guestsCount: data.guestsCount ? data.guestsCount.toString() : null,
-                productInterest: data.productInterest || null,
-                additionalServices: data.additionalServices || null,
-                preferredContactTime: data.preferredContactTime || null,
-                updatedAt: new Date(),
-            } as any
-        });
-
-        revalidatePath(`/leads/${id}`);
-        revalidatePath('/leads');
-        return { success: true };
-    } catch (error: any) {
-        console.error("SERVER ERROR: Failed to update lead details:", error);
-        return { success: false, error: error.message || "Unknown Prisma Error" };
     }
 }

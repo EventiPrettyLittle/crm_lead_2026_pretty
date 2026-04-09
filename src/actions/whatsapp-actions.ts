@@ -9,10 +9,11 @@ import { it } from "date-fns/locale"
 
 /**
  * Sends a WhatsApp template based on the lead's current stage/action.
- * Variables MUST match the order in SendApp templates.
- * Based on user feedback:
- * 1. Must use "appuntamento in show room" or "richiamata" based on selection.
- * 2. Date format must be human-readable (IT).
+ * FIXED VARIABLE MAPPING FOR SENDAPP:
+ * {{1}}: Nome del cliente.
+ * {{2}}: Tipo di appuntamento (appuntamento in show room / richiamata).
+ * {{3}}: Data dell'appuntamento (es: 15 Aprile).
+ * {{4}}: Ora dell'appuntamento (es: 10:30).
  */
 export async function sendLeadWhatsAppAction(
     leadId: string, 
@@ -35,27 +36,29 @@ export async function sendLeadWhatsAppAction(
             return { success: false, error: "Template non configurato" };
         }
 
-        // Formattazione data corretta per l'utente (es: 15/04/2026 alle 10:30)
-        let formattedDate = "-";
+        // Formattazione specifica per le variabili richieste
+        let dayFormatted = "-";
+        let timeFormatted = "-";
+        
         if (context?.date) {
             try {
                 const dateObj = new Date(context.date);
-                formattedDate = format(dateObj, "dd/MM/yyyy 'alle' HH:mm", { locale: it });
+                dayFormatted = format(dateObj, "d MMMM", { locale: it }); // es: 15 Aprile
+                timeFormatted = format(dateObj, "HH:mm", { locale: it }); // es: 10:30
             } catch (e) {
-                formattedDate = context.date;
+                dayFormatted = context.date;
             }
         }
 
-        // Definizione variabili dinamiche in base alla scelta
+        // Definizione variabili dinamiche in base alla scelta esatta dell'utente
         const typeValue = context?.type === 'showroom' ? "appuntamento in show room" : "richiamata";
         
-        // Ordine variabili SendApp (adeguiamo in base al feedback "copi matrimonio il giorno")
-        // Se il template è: "Ciao {1}, il tuo evento {2} è un {3} il giorno {4}"
+        // Costruzione array variabili SECONDO LO SCHEMA RICHIESTO
         const variables = [
-            lead.firstName || "Cliente",
-            lead.eventType || "Evento",
-            typeValue,
-            formattedDate
+            lead.firstName || "Cliente", // {{1}}
+            typeValue,                   // {{2}}
+            dayFormatted,                // {{3}}
+            timeFormatted                // {{4}}
         ];
 
         const res = await sendWhatsAppTemplate({
@@ -71,13 +74,12 @@ export async function sendLeadWhatsAppAction(
                 data: {
                     leadId: lead.id,
                     type: "WHATSAPP",
-                    notes: `Inviato WhatsApp: ${typeValue.toUpperCase()} per ${formattedDate}`
+                    notes: `Inviato WhatsApp: ${typeValue} per il ${dayFormatted} alle ${timeFormatted}`
                 }
             });
 
-            // Aggiornamento note interne senza sporcare con titoli inutili
             const currentNotes = lead.notesInternal || "";
-            const systemNote = `[WhatsApp - ${timestamp}]: Inviato "${typeValue}" per il ${formattedDate}\n\n`;
+            const systemNote = `[WhatsApp - ${timestamp}]: Inviato "${typeValue}" (${dayFormatted} ore ${timeFormatted})\n\n`;
             await prisma.lead.update({
                 where: { id: leadId },
                 data: { notesInternal: systemNote + currentNotes }
