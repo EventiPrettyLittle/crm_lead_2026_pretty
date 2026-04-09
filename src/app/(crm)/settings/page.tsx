@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from '@/components/ui/badge'
 import { Building2, MapPin, CreditCard, User, Phone, Mail, Save, Loader2, Sparkles, ShieldCheck, Lock, Key, Fingerprint, Users, UserPlus, Trash2, ShieldAlert, Image as ImageIcon, Maximize2 } from 'lucide-react'
 import { getSystemSettings, updateSystemSettings } from '@/actions/settings-actions'
+import { uploadLogoAction } from '@/actions/upload-logo'
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -334,15 +335,47 @@ export default function SettingsPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
                                     <div className="space-y-6">
                                         <div className="space-y-3">
-                                            <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">URL Logo Aziendale</Label>
-                                            <Input 
-                                                value={systemSettings.logoUrl} 
-                                                onChange={e => setSystemSettings({...systemSettings, logoUrl: e.target.value})}
-                                                disabled={!isAdmin}
-                                                placeholder="https://esempio.it/logo.png"
-                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white"
-                                            />
-                                            <p className="text-[10px] text-slate-400 italic font-medium px-1">Inserisci il link del logo (formato PNG o SVG trasparente consigliato).</p>
+                                            <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Logo Aziendale</Label>
+                                            
+                                            <div className="flex flex-col gap-3">
+                                                <div className="flex gap-2">
+                                                    <Input 
+                                                        value={systemSettings.logoUrl} 
+                                                        onChange={e => setSystemSettings({...systemSettings, logoUrl: e.target.value})}
+                                                        disabled={!isAdmin}
+                                                        placeholder="URL del logo o carica file..."
+                                                        className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white flex-1"
+                                                    />
+                                                    <div className="relative">
+                                                        <input 
+                                                            type="file" 
+                                                            accept="image/*"
+                                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                            disabled={!isAdmin || saving}
+                                                            onChange={async (e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    setSaving(true);
+                                                                    const formData = new FormData();
+                                                                    formData.append('file', file);
+                                                                    const res = await uploadLogoAction(formData);
+                                                                    if (res.success && res.url) {
+                                                                        setSystemSettings({...systemSettings, logoUrl: res.url});
+                                                                        toast.success("Logo caricato con successo");
+                                                                    } else {
+                                                                        toast.error(res.error || "Errore upload");
+                                                                    }
+                                                                    setSaving(false);
+                                                                }
+                                                            }}
+                                                        />
+                                                        <Button variant="outline" className="h-12 rounded-xl border-dashed border-slate-200 hover:bg-slate-50 font-black text-[10px] uppercase">
+                                                            Sfoglia
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 italic font-medium px-1">Puoi inserire un link esterno o caricare un file PNG/SVG dal tuo PC.</p>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-4">
