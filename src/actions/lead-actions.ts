@@ -3,13 +3,16 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from 'next/cache'
 import { createActivity } from './lead-detail'
+import { createCalendarEvent } from './calendar'
 
 export async function updateLeadQuickAction(
     leadId: string,
-    type: 'contacted' | 'no-answer' | 'preventivo' | 'cancelled',
+    type: 'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | 'appointment',
     data: {
         notes?: string;
         nextFollowup?: Date;
+        appointmentDate?: string;
+        appointmentType?: string;
     }
 ) {
     try {
@@ -21,6 +24,10 @@ export async function updateLeadQuickAction(
 
         let activityType = '';
         let activityNotes = data.notes || '';
+
+        // Recuperiamo il lead per avere il nome nel titolo del calendario
+        const leadBase = await prisma.lead.findUnique({ where: { id: leadId } });
+        if (!leadBase) return { success: false, error: "Lead not found" };
 
         if (type === 'contacted') {
             updateData.lastStatus = 'CONTATTATO';
@@ -44,10 +51,30 @@ export async function updateLeadQuickAction(
             updateData.stage = 'CANCELLATO';
             activityType = 'NOTE';
             activityNotes = `Lead segnato come Cancellato. ${activityNotes}`;
+        } else if (type === 'appointment' && data.appointmentDate) {
+            updateData.lastStatus = 'APPUNTAMENTO';
+            updateData.stage = 'APPUNTAMENTO';
+            activityType = 'SYSTEM';
+            const typeLabel = data.appointmentType === 'showroom' ? "In Showroom" : "Richiamata";
+            activityNotes = `Appuntamento [${typeLabel}] fissato per il ${data.appointmentDate}. ${activityNotes}`;
+
+            // CREAZIONE EVENTO CALENDARIO (Google + Locale)
+            const startStr = data.appointmentDate; // Formato YYYY-MM-DDTHH:mm
+            const startDate = new Date(startStr);
+            const endDate = new Date(startDate.getTime() + 60 * 60000); // Default 1 ora
+
+            await createCalendarEvent({
+                title: `${typeLabel}: ${leadBase.firstName} ${leadBase.lastName}`,
+                description: `Appuntamento CRM per lead ${leadBase.firstName}. Note: ${data.notes || ''}`,
+                location: data.appointmentType === 'showroom' ? "Showroom" : "Telefono",
+                startDateTime: startDate.toISOString(),
+                endDateTime: endDate.toISOString(),
+                leadId: leadId
+            });
         }
 
         // Update Lead
-        const lead = await prisma.lead.update({
+        const updatedLead = await prisma.lead.update({
             where: { id: leadId },
             data: {
                 ...updateData,
@@ -59,7 +86,7 @@ export async function updateLeadQuickAction(
 
         // Sync to Internal Notes box (Top)
         const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
-        const currentNotes = lead.notesInternal || "";
+        const currentNotes = updatedLead.notesInternal || "";
         const systemNote = `[Sistema - ${timestamp}]: ${activityNotes}\n\n`;
         await prisma.lead.update({
             where: { id: leadId },
@@ -70,6 +97,8 @@ export async function updateLeadQuickAction(
         revalidatePath('/leads');
         revalidatePath('/kanban');
         revalidatePath('/activities');
+        revalidatePath('/calendar');
+        
         return { success: true };
     } catch (error) {
         console.error("Error executing quick action:", error);

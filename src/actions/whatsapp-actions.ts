@@ -5,6 +5,11 @@ import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
+/**
+ * Sends a WhatsApp template based on the lead's current stage/action.
+ * IMPORTANT: Variable order for 'appointment' template must be: [Nome Cliente, Nome Evento, Tipo Appuntamento, Data/Ora]
+ * Appointment types requested: "appuntamento in show room" | "richiamata"
+ */
 export async function sendLeadWhatsAppAction(
     leadId: string, 
     actionType: 'contacted' | 'no-answer' | 'appointment',
@@ -16,7 +21,7 @@ export async function sendLeadWhatsAppAction(
             return { success: false, error: "Lead o numero di telefono non trovato" };
         }
 
-        // Nomi template reali su SendApp
+        // Real template names from environment or defaults
         const templateName = actionType === 'contacted' 
             ? (process.env.WHATSAPP_TEMPLATE_NAME_CONTACTED || 'contattato')
             : actionType === 'no-answer'
@@ -27,15 +32,15 @@ export async function sendLeadWhatsAppAction(
             return { success: false, error: "Template non configurato" };
         }
 
-        // Prepare variables: [Nome, Evento, Tipo, Data/Ora]
+        // Base variables: [Nome Cliente, Nome Evento]
         const variables = [
             lead.firstName || "Cliente",
             lead.eventType || "Evento"
         ];
 
-        // Se è un appuntamento, aggiungo tipo e data
+        // Specific handling for appointment to match user's exact requested strings
         if (actionType === 'appointment' && context) {
-            const typeLabel = context.type === 'showroom' ? "In Showroom" : "Richiamata Telefonica";
+            const typeLabel = context.type === 'showroom' ? "appuntamento in show room" : "richiamata";
             variables.push(typeLabel);
             variables.push(context.date || "-");
         }
@@ -49,18 +54,18 @@ export async function sendLeadWhatsAppAction(
         if (res.success) {
             const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
             
-            // Log activity
+            // Log to activity timeline
             await prisma.activity.create({
                 data: {
                     leadId: lead.id,
                     type: "WHATSAPP",
-                    notes: `Inviato WhatsApp: ${actionType.toUpperCase()} (${variables.join(', ')})`
+                    notes: `Inviato WhatsApp: ${actionType.toUpperCase()} - Dati: ${variables.join(', ')}`
                 }
             });
 
-            // Sync to Internal Notes
+            // Sync to Internal Notes for immediate visibility
             const currentNotes = lead.notesInternal || "";
-            const systemNote = `[WhatsApp - ${timestamp}]: ${actionType.toUpperCase()} inviato a ${lead.firstName} per ${lead.eventType}\n\n`;
+            const systemNote = `[WhatsApp - ${timestamp}]: ${actionType.toUpperCase()} inviato (Msg: ${variables[2] || actionType} per ${lead.eventType})\n\n`;
             await prisma.lead.update({
                 where: { id: leadId },
                 data: { notesInternal: systemNote + currentNotes }
@@ -72,7 +77,7 @@ export async function sendLeadWhatsAppAction(
         return res;
     } catch (error) {
         console.error("Action WhatsApp Error:", error);
-        return { success: false, error: "Errore durante l'esecuzione dell'azione" };
+        return { success: false, error: "Errore durante l'invio del messaggio" };
     }
 }
 
@@ -95,7 +100,7 @@ export async function sendFreeWhatsAppMessageAction(leadId: string, message: str
                 data: {
                     leadId: lead.id,
                     type: "WHATSAPP",
-                    notes: `Messaggio WhatsApp inviato: ${message}`
+                    notes: `Messaggio libero WhatsApp inviato: ${message}`
                 }
             });
 
@@ -112,6 +117,6 @@ export async function sendFreeWhatsAppMessageAction(leadId: string, message: str
         return res;
     } catch (error) {
         console.error("Action Free WhatsApp Error:", error);
-        return { success: false, error: "Errore durante l'invio del messaggio" };
+        return { success: false, error: "Errore durante l'invio del messaggio libero" };
     }
 }

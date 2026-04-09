@@ -59,10 +59,12 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
 
             await updateLeadQuickAction(lead.id, actionType as any, {
                 notes: finalNotes,
+                appointmentDate: actionType === 'appointment' ? appointmentDate : undefined,
+                appointmentType: actionType === 'appointment' ? appointmentType : undefined
             });
 
-            if (sendWhatsapp) {
-                const waRes = await sendLeadWhatsAppAction(lead.id, actionType as any, {
+            if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'appointment')) {
+                const waRes = await sendLeadWhatsAppAction(lead.id, actionType, {
                     date: actionType === 'appointment' ? appointmentDate : undefined,
                     type: actionType === 'appointment' ? appointmentType : undefined
                 });
