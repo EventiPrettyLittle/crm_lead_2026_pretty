@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { loginWithCredentials } from "@/actions/auth"
+import { loginWithCredentials, getCurrentUser } from "@/actions/auth"
+import { getSystemSettings } from "@/actions/settings-actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -13,7 +14,19 @@ import { LogIn, Sparkles, ShieldCheck, Zap, Globe, Loader2 } from "lucide-react"
 export default function LoginPage() {
     const [mode, setMode] = useState<'selection' | 'credentials'>('selection');
     const [loading, setLoading] = useState(false);
+    const [logoSettings, setLogoSettings] = useState({ logoUrl: '', companyName: 'Lead Events 2026' });
     const router = useRouter();
+
+    useEffect(() => {
+        getSystemSettings().then(settings => {
+            if (settings) {
+                setLogoSettings({
+                    logoUrl: settings.logoUrl || '',
+                    companyName: settings.companyName || 'Lead Events 2026'
+                });
+            }
+        });
+    }, []);
 
     async function handleCredentialLogin(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -47,15 +60,23 @@ export default function LoginPage() {
                     <div className="space-y-6">
                         {/* Logo Container */}
                         <div className="flex justify-center lg:justify-start">
-                            <div className="h-20 w-20 bg-white rounded-3xl shadow-2xl shadow-indigo-100 flex items-center justify-center border border-slate-100 group hover:scale-105 transition-transform duration-500">
-                                <Globe className="h-10 w-10 text-indigo-600 animate-pulse" />
+                            <div className="h-20 w-20 bg-white rounded-3xl shadow-2xl shadow-indigo-100 flex items-center justify-center border border-slate-100 group hover:scale-105 transition-transform duration-500 overflow-hidden p-2">
+                                {logoSettings.logoUrl ? (
+                                    <img 
+                                        src={logoSettings.logoUrl} 
+                                        alt="Logo" 
+                                        className="h-full w-full object-contain"
+                                    />
+                                ) : (
+                                    <Globe className="h-10 w-10 text-indigo-600 animate-pulse" />
+                                )}
                             </div>
                         </div>
 
                         <div className="space-y-4">
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 backdrop-blur-sm border border-indigo-100 shadow-sm">
                                 <Sparkles className="h-4 w-4 text-indigo-600" />
-                                <span className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">Lead Events 2026</span>
+                                <span className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">{logoSettings.companyName}</span>
                             </div>
                             <h1 className="text-6xl lg:text-8xl font-black tracking-tighter text-slate-900 leading-[0.9] italic uppercase">
                                 Your Event <br/> <span className="text-indigo-600 relative inline-block">
