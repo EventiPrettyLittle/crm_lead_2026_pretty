@@ -6,7 +6,7 @@ import { createActivity } from './lead-detail'
 
 export async function updateLeadQuickAction(
     leadId: string,
-    type: 'contacted' | 'no-answer' | 'schedule' | 'cancelled',
+    type: 'contacted' | 'no-answer' | 'preventivo' | 'cancelled',
     data: {
         notes?: string;
         nextFollowup?: Date;
@@ -33,18 +33,17 @@ export async function updateLeadQuickAction(
             updateData.nextFollowupAt = data.nextFollowup;
             updateData.stage = 'NON_RISPONDE';
             activityType = 'RICHIAMO';
-            activityNotes = `Non risponde. Reminder ricontatto impostato. ${activityNotes}`;
-        } else if (type === 'schedule') {
-            updateData.lastStatus = 'DA_RICONTATTARE';
-            updateData.nextFollowupAt = data.nextFollowup;
-            updateData.stage = 'DA_RICONTATTARE'; // Changed from APPUNTAMENTO to match requested filters
-            activityType = 'NOTE';
-            activityNotes = `Appuntamento fissato/Pianificato. ${activityNotes}`;
+            activityNotes = `Non risponde. ${activityNotes}`;
+        } else if (type === 'preventivo') {
+            updateData.lastStatus = 'PREVENTIVO';
+            updateData.stage = 'PREVENTIVO';
+            activityType = 'QUOTE';
+            activityNotes = `Passato a stato Preventivo. ${activityNotes}`;
         } else if (type === 'cancelled') {
             updateData.lastStatus = 'CANCELLATO';
-            updateData.stage = 'PERSO'; // Changed to PERSO to match requested filters
+            updateData.stage = 'CANCELLATO';
             activityType = 'NOTE';
-            activityNotes = `Lead cancellato/Perso. ${activityNotes}`;
+            activityNotes = `Lead segnato come Cancellato. ${activityNotes}`;
         }
 
         // Update Lead

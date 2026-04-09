@@ -8,6 +8,7 @@ import { format } from "date-fns"
 import { formatITDate, formatITDateTime, formatITTime } from "@/lib/utils"
 import { Mail, Phone, MapPin, Calendar, User, FileText, ArrowRight, ArrowLeft, MessageSquare, ExternalLink } from "lucide-react"
 import QuoteBuilder from "@/components/quotes/quote-builder"
+import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog"
 import { LeadLocationActions } from "@/components/leads/lead-location-actions"
 import { EditLeadDialog } from "@/components/leads/edit-lead-dialog"
 import { DeleteLeadButton } from "@/components/leads/delete-lead-button"
@@ -226,7 +227,11 @@ export default async function LeadDetailPage(props: PageProps) {
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-2xl font-black text-slate-900">€{Number(quote.totalAmount).toFixed(2)}</p>
-                                                            <QuoteBuilder leadId={lead.id} quoteId={quote.id} existingQuote={quote} />
+                                                                <div className="flex items-center gap-2">
+                                                                    <QuotePreviewDialog quote={quote} autoPrint={true} />
+                                                                    <QuotePreviewDialog quote={quote} />
+                                                                    <QuoteBuilder leadId={lead.id} quoteId={quote.id} existingQuote={quote} />
+                                                                </div>
                                                         </div>
                                                     </div>
                                                 </CardContent>
@@ -244,15 +249,15 @@ export default async function LeadDetailPage(props: PageProps) {
                                 <CardTitle className="text-sm font-bold opacity-70 uppercase tracking-[0.2em]">Stato Operativo</CardTitle>
                                 <div className="mt-2">
                                     <Badge className={cn(
-                                        "py-1.5 px-6 rounded-full text-[11px] font-black uppercase tracking-widest shadow-sm",
-                                        lead.stage === 'NUOVO' && "bg-blue-500 text-white",
+                                        "py-1.5 px-6 rounded-full text-[11px] font-black uppercase tracking-widest shadow-sm border-none",
+                                        lead.stage === 'NUOVO' && "bg-blue-600 text-white",
                                         lead.stage === 'CONTATTATO' && "bg-emerald-500 text-white",
-                                        lead.stage === 'NON_RISPONDE' && "bg-amber-500 text-white",
-                                        lead.stage === 'APPUNTAMENTO' && "bg-indigo-400 text-white animate-pulse",
-                                        lead.stage === 'PERSO' && "bg-slate-500 text-white",
-                                        lead.stage === 'GESTITO' && "bg-indigo-600 text-white",
+                                        lead.stage === 'NON_RISPONDE' && "bg-rose-500 text-white",
+                                        lead.stage === 'APPUNTAMENTO' && "bg-indigo-500 text-white animate-pulse",
+                                        lead.stage === 'PREVENTIVO' && "bg-violet-600 text-white",
+                                        lead.stage === 'CANCELLATO' && "bg-slate-500 text-white",
                                     )}>
-                                        {lead.stage}
+                                        {lead.stage?.replace('_', ' ')}
                                     </Badge>
                                 </div>
                             </CardHeader>
