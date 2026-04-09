@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Phone, PhoneOff, FileText, XCircle, MessageSquare, Loader2 } from "lucide-react"
+import { Phone, PhoneOff, FileText, XCircle, MessageSquare, Loader2, Sparkles, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { updateLeadQuickAction } from "@/actions/lead-actions"
 import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
 import { Lead } from "@prisma/client"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
+import QuoteBuilder from "@/components/quotes/quote-builder"
 
 interface QuickActionsProps {
     lead: Lead;
@@ -36,7 +37,6 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
         setLoading(true);
 
         try {
-            // Mapping to DB stages
             const stageMap = {
                 'contacted': 'CONTATTATO',
                 'no-answer': 'NON_RISPONDE',
@@ -65,42 +65,62 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
         }
     };
 
+    const btnClass = showLabels 
+        ? "h-9 px-3 flex items-center gap-2 rounded-xl" 
+        : "h-7 w-7 p-0 flex items-center justify-center rounded-lg";
+
     return (
-        <div className="flex gap-2 items-center justify-end">
+        <div className="flex gap-1.5 items-center justify-end">
             <Button
                 variant="ghost"
-                className="bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-xl shadow-sm transition-all h-9 px-3 flex items-center gap-2 border border-emerald-100"
+                className={cn(
+                    "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white shadow-sm transition-all border border-emerald-100",
+                    btnClass
+                )}
                 onClick={() => handleAction('contacted')}
+                title="Contattato"
             >
-                <Phone className="h-4 w-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest leading-none">Contattato</span>
+                <Phone className={showLabels ? "h-4 w-4" : "h-3.5 w-3.5"} />
+                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest leading-none">Contattato</span>}
             </Button>
 
             <Button
                 variant="ghost"
-                className="bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white rounded-xl shadow-sm transition-all h-9 px-3 flex items-center gap-2 border border-amber-100"
+                className={cn(
+                    "bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white shadow-sm transition-all border border-amber-100",
+                    btnClass
+                )}
                 onClick={() => handleAction('no-answer')}
+                title="Non Risponde"
             >
-                <PhoneOff className="h-4 w-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest leading-none">Non Risponde</span>
+                <PhoneOff className={showLabels ? "h-4 w-4" : "h-3.5 w-3.5"} />
+                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest leading-none">Non Risponde</span>}
             </Button>
 
             <Button
                 variant="ghost"
-                className="bg-violet-50 text-violet-600 hover:bg-violet-600 hover:text-white rounded-xl shadow-sm transition-all h-9 px-3 flex items-center gap-2 border border-violet-100"
+                className={cn(
+                    "bg-violet-50 text-violet-600 hover:bg-violet-600 hover:text-white shadow-sm transition-all border border-violet-100",
+                    btnClass
+                )}
                 onClick={() => handleAction('preventivo')}
+                title="Preventivo"
             >
-                <FileText className="h-4 w-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest leading-none">Preventivo</span>
+                <FileText className={showLabels ? "h-4 w-4" : "h-3.5 w-3.5"} />
+                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest leading-none">Preventivo</span>}
             </Button>
 
             <Button
                 variant="ghost"
-                className="bg-slate-50 text-slate-500 hover:bg-slate-600 hover:text-white rounded-xl shadow-sm transition-all h-9 px-3 flex items-center gap-2 border border-slate-200"
+                className={cn(
+                    "bg-slate-50 text-slate-500 hover:bg-slate-600 hover:text-white shadow-sm transition-all border border-slate-200",
+                    btnClass
+                )}
                 onClick={() => handleAction('cancelled')}
+                title="Cancellato"
             >
-                <XCircle className="h-4 w-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest leading-none">Cancellato</span>
+                <XCircle className={showLabels ? "h-4 w-4" : "h-3.5 w-3.5"} />
+                {showLabels && <span className="text-[10px] font-black uppercase tracking-widest leading-none">Cancellato</span>}
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -115,6 +135,17 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                     </DialogHeader>
 
                     <div className="space-y-4">
+                        {actionType === 'preventivo' && (
+                            <div className="bg-indigo-50/50 p-6 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center gap-4 text-center">
+                                <Sparkles className="h-10 w-10 text-indigo-500" />
+                                <div>
+                                    <p className="text-sm font-black text-indigo-900 uppercase">Configurazione Rapida</p>
+                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">Puoi creare il preventivo ora o solo cambiare lo stato</p>
+                                </div>
+                                <QuoteBuilder leadId={lead.id} onClose={() => setIsOpen(false)} />
+                            </div>
+                        )}
+
                         <div className="grid gap-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Note Attività</Label>
                             <Textarea 
