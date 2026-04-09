@@ -50,7 +50,7 @@ export default function PresentationPage() {
         setLoading(true)
         try {
             const data = await getFiles(currentParentId)
-            setEntries(data)
+            setEntries(data as any)
         } catch (error) {
             toast.error("Errore nel caricamento dei file")
         } finally {
@@ -62,7 +62,7 @@ export default function PresentationPage() {
         setLoadingProducts(true)
         try {
             const data = await getProducts()
-            setProducts(data as any[])
+            setProducts(data as any)
         } catch (error) {
             console.error("Error loading products:", error)
         } finally {
