@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createQuote, addItemToQuote, getQuote, deleteQuoteItem, deleteQuote, sendQuoteByEmail, getLeadsMini, updateQuoteLead } from '@/actions/quotes'
-import { updateLeadDetails } from '@/actions/lead-actions'
+import { updateLeadQuickAction, updateLeadDetails } from '@/actions/lead-actions'
 import { getProducts } from '@/actions/products'
 import { markQuoteAsSent } from '@/actions/quote-actions'
 import { Button } from '@/components/ui/button'
@@ -39,10 +39,11 @@ interface QuoteBuilderProps {
     quoteId?: string
     existingQuote?: any
     onClose?: () => void
+    defaultOpen?: boolean
 }
 
-export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQuote, onClose }: QuoteBuilderProps) {
-    const [open, setOpen] = useState(false);
+export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQuote, onClose, defaultOpen = false }: QuoteBuilderProps) {
+    const [open, setOpen] = useState(defaultOpen);
     const [qId, setQId] = useState<string | null>(quoteId || null);
     const [quote, setQuote] = useState<any>(existingQuote || null);
     const [currentLeadId, setCurrentLeadId] = useState(initialLeadId);
@@ -270,7 +271,13 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                 const newQuote = await createQuote(initialLeadId);
                 setQId(newQuote.id);
                 setQuote(newQuote);
-                toast.success("Nuovo preventivo creato");
+                
+                // Auto-update lead stage to PREVENTIVO
+                await updateLeadQuickAction(initialLeadId, 'preventivo', { 
+                    notes: "Creato nuovo preventivo (automatico)" 
+                });
+                
+                toast.success("Nuovo preventivo creato e stato aggiornato 📑");
             } catch (error) {
                 console.error("Create quote error:", error);
                 toast.error("Errore durante la creazione del preventivo");

@@ -18,9 +18,9 @@ import { QuoteRowActions } from "@/components/quotes/quote-row-actions";
 export default async function QuotesPage({
     searchParams,
 }: {
-    searchParams: Promise<{ q?: string }>;
+    searchParams: Promise<{ q?: string, createFor?: string }>;
 }) {
-    const { q } = await searchParams;
+    const { q, createFor } = await searchParams;
     const quotes = await getQuotes(q);
     const products = await getProducts() as any[];
 
@@ -211,6 +211,13 @@ export default async function QuotesPage({
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* Auto-open builder if createFor is present */}
+            {createFor && (
+                <div className="hidden">
+                    <QuoteBuilder leadId={createFor} defaultOpen={true} />
+                </div>
+            )}
         </div>
     );
 }

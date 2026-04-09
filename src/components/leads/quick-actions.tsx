@@ -44,6 +44,11 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 'cancelled': 'CANCELLATO'
             };
 
+            if (actionType === 'preventivo') {
+                window.location.href = `/quotes?createFor=${lead.id}`;
+                return;
+            }
+
             await updateLeadQuickAction(lead.id, actionType as any, {
                 notes,
             });
