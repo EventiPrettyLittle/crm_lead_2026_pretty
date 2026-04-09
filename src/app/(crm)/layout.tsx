@@ -4,6 +4,7 @@ import { GlobalSearch } from "@/components/global-search"
 import { NotificationCenter } from "@/components/layout/notification-center"
 import { UserNav } from "@/components/layout/user-nav"
 import { LiveClock } from "@/components/layout/live-clock"
+import { ReminderNotifier } from "@/components/layout/reminder-notifier"
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -35,6 +36,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+      <ReminderNotifier />
     </SidebarProvider>
   )
 }

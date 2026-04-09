@@ -37,3 +37,16 @@ export async function getDueRemindersAction() {
         return { success: false, reminders: [] };
     }
 }
+
+export async function completeReminderAction(leadId: string) {
+    try {
+        await prisma.lead.update({
+            where: { id: leadId },
+            data: { nextFollowupAt: null }
+        });
+        return { success: true };
+    } catch (error) {
+        console.error("Error completing reminder:", error);
+        return { success: false };
+    }
+}

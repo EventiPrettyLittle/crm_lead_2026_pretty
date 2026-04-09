@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState, useRef } from "react"
-import { getDueRemindersAction } from "@/actions/reminder-actions"
+import { getDueRemindersAction, completeReminderAction } from "@/actions/reminder-actions"
 import { toast } from "sonner"
-import { Bell, Phone, ArrowUpRight } from "lucide-react"
+import { Bell, Phone, ArrowUpRight, Check } from "lucide-react"
 import Link from "next/link"
 
 export function ReminderNotifier() {
@@ -59,6 +59,18 @@ export function ReminderNotifier() {
                                         >
                                             Vedi Lead <ArrowUpRight className="h-3 w-3" />
                                         </Link>
+                                        <button 
+                                            onClick={async () => {
+                                                const res = await completeReminderAction(rem.id);
+                                                if (res.success) {
+                                                    toast.success("Ricontatto completato!");
+                                                    toast.dismiss(t);
+                                                }
+                                            }}
+                                            className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 hover:bg-emerald-100 transition-all"
+                                        >
+                                            <Check className="h-3 w-3" /> Completato
+                                        </button>
                                     </div>
                                 </div>
                                 <button 

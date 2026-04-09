@@ -16,7 +16,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="it">
       <body className={inter.className}>
         {children}
-        <ReminderNotifier />
         <Toaster />
       </body>
     </html>
