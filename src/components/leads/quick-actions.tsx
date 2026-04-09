@@ -95,11 +95,12 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
         if (actionType === 'schedule' && nextFollowup) {
             const endTime = new Date(nextFollowup.getTime() + 60 * 60 * 1000); // +1 ora
             const calRes = await createCalendarEvent({
-                title: `Appuntamento: ${lead.firstName} ${lead.lastName}`,
+                title: notes || `Appuntamento con ${lead.firstName} ${lead.lastName}`,
                 description: notes || `Appuntamento con ${lead.firstName} ${lead.lastName}`,
                 startDateTime: nextFollowup.toISOString(),
                 endDateTime: endTime.toISOString(),
                 location: (lead as any).eventLocation || '',
+                leadId: lead.id,
             });
             if (calRes.success) {
                 toast.success("Appuntamento salvato su Google Calendar! 📅");

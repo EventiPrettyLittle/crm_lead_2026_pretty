@@ -35,8 +35,49 @@ async function getGoogleTokens(): Promise<any | null> {
 export async function getCalendarEvents() {
     const tokens = await getGoogleTokens();
 
+    const prisma = (await import("@/lib/prisma")).default;
+    const cookieStore = await cookies();
+    const session = cookieStore.get('user_session');
+    let ownerId: string | null = null;
+    let localAppointments: any[] = [];
+    
+    if (session) {
+        try {
+            const sessionData = JSON.parse(session.value);
+            const user = await prisma.user.findUnique({ where: { email: sessionData.email } });
+            ownerId = user?.id || null;
+
+            if (ownerId) {
+                // RECUPERO APPUNTAMENTI DAL DATABASE CRM
+                const apps = await prisma.appointment.findMany({
+                    where: { ownerId: ownerId },
+                    include: { lead: true },
+                    orderBy: { startTime: 'asc' }
+                });
+                localAppointments = apps.map(app => ({
+                    id: `local-${app.id}`,
+                    title: app.title || `App. ${app.lead.firstName}`,
+                    start: app.startTime.toISOString(),
+                    end: new Date(app.startTime.getTime() + app.duration * 60000).toISOString(),
+                    location: app.location,
+                    description: app.notes,
+                    calendarName: 'CRM Interno',
+                    calendarColor: '#4f46e5', // Colore indigo per distinguere
+                    leadId: app.leadId
+                }));
+            }
+        } catch (e) {
+            console.error("Error fetching local appointments:", e);
+        }
+    }
+
     if (!tokens) {
-        return { error: 'Not authenticated', authenticated: false };
+        // Se non è connesso a Google, mostriamo almeno quelli locali
+        return { 
+            authenticated: false, 
+            events: localAppointments,
+            calendars: [{ id: 'crm-local', summary: 'CRM Interno', primary: true }] 
+        };
     }
 
     try {
@@ -51,8 +92,8 @@ export async function getCalendarEvents() {
             try {
                 const res = await calendar.events.list({
                     calendarId: cal.id || 'primary',
-                    timeMin: new Date().toISOString(),
-                    maxResults: 15,
+                    timeMin: new Date(new Date().setMonth(new Date().getMonth() - 2)).toISOString(),
+                    maxResults: 100,
                     singleEvents: true,
                     orderBy: 'startTime',
                 });
@@ -73,9 +114,19 @@ export async function getCalendarEvents() {
         });
 
         const allEventsResults = await Promise.all(eventPromises);
-        let allEvents = allEventsResults.flat();
+        let googleEvents = allEventsResults.flat();
 
-        // 3. Ordiniamo tutti gli eventi per data di inizio
+        // 3. UNIAMO GLI EVENTI LOCALI E QUELLI DI GOOGLE
+        // Evitiamo duplicati se l'evento Google ha lo stesso googleEventId che abbiamo salvato in locale
+        const googleEventIdsInLocal = localAppointments
+            .filter(a => a.googleEventId)
+            .map(a => a.googleEventId);
+            
+        const uniqueGoogleEvents = googleEvents.filter(ge => !googleEventIdsInLocal.includes(ge.id));
+        
+        const allEvents = [...localAppointments, ...uniqueGoogleEvents];
+
+        // 4. Ordiniamo tutti gli eventi per data di inizio
         allEvents.sort((a, b) => {
             const dateA = new Date(a.start || 0).getTime();
             const dateB = new Date(b.start || 0).getTime();
@@ -85,11 +136,15 @@ export async function getCalendarEvents() {
         return {
             authenticated: true,
             calendars: calendarList.map(c => ({ id: c.id, summary: c.summary, primary: c.primary })),
-            events: allEvents.slice(0, 30)
+            events: allEvents
         };
     } catch (error) {
         console.error('Error fetching calendar events:', error);
-        return { error: 'Failed to fetch events', authenticated: false };
+        return { 
+            error: 'Failed to fetch Google events', 
+            authenticated: true, // we still have local ones
+            events: localAppointments 
+        };
     }
 }
 
@@ -99,6 +154,7 @@ export async function createCalendarEvent(eventData: {
     startDateTime: string;
     endDateTime: string;
     location?: string;
+    leadId?: string;
 }) {
     const tokens = await getGoogleTokens();
     if (!tokens) {
@@ -106,6 +162,17 @@ export async function createCalendarEvent(eventData: {
     }
 
     try {
+        const prisma = (await import("@/lib/prisma")).default;
+        const cookieStore = await cookies();
+        const session = cookieStore.get('user_session');
+        let ownerId: string | null = null;
+        
+        if (session) {
+            const sessionData = JSON.parse(session.value);
+            const user = await prisma.user.findUnique({ where: { email: sessionData.email } });
+            ownerId = user?.id || null;
+        }
+
         const calendar = getGoogleCalendarClient(tokens);
         const response = await calendar.events.insert({
             calendarId: 'primary',
@@ -117,6 +184,27 @@ export async function createCalendarEvent(eventData: {
                 end: { dateTime: eventData.endDateTime, timeZone: 'Europe/Rome' },
             },
         });
+
+        // SALVATAGGIO NEL DATABASE LOCALE CRM
+        if (ownerId && eventData.leadId) {
+            const start = new Date(eventData.startDateTime);
+            const end = new Date(eventData.endDateTime);
+            const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+
+            await prisma.appointment.create({
+                data: {
+                    title: eventData.title,
+                    notes: eventData.description,
+                    location: eventData.location,
+                    startTime: start,
+                    duration: duration,
+                    leadId: eventData.leadId,
+                    ownerId: ownerId,
+                    googleEventId: response.data.id || null
+                }
+            });
+        }
+
         return { success: true, eventId: response.data.id };
     } catch (error: any) {
         console.error('Error creating calendar event:', error);

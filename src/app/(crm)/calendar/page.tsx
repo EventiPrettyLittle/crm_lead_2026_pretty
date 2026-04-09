@@ -1,10 +1,9 @@
-import GoogleCalendar from "@/components/calendar/google-calendar";
+import PremiumCalendar from "@/components/calendar/custom-calendar";
 
 export default function CalendarPage() {
     return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold">Appointments & Calendar</h1>
-            <GoogleCalendar />
+        <div className="h-full">
+            <PremiumCalendar />
         </div>
     )
 }
