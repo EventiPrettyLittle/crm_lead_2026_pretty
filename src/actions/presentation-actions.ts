@@ -8,50 +8,63 @@ const PRESENTATION_ROOT = path.join(process.cwd(), 'public', 'presentation');
 
 // Assicura che la cartella root esista
 async function ensureRoot() {
-    if (!fs.existsSync(PRESENTATION_ROOT)) {
-        await mkdir(PRESENTATION_ROOT, { recursive: true });
+    try {
+        if (!fs.existsSync(PRESENTATION_ROOT)) {
+            await mkdir(PRESENTATION_ROOT, { recursive: true });
+        }
+    } catch (e) {
+        console.error("Critical: Cannot create presentation root", e);
     }
 }
 
 /**
- * Ottiene la lista di file e cartelle in un determinato percorso
+ * Ottiene la lista di file e cartelle
  */
 export async function getFiles(currentPath: string = '') {
-    await ensureRoot();
-    const fullPath = path.join(PRESENTATION_ROOT, currentPath);
-    
-    if (!fs.existsSync(fullPath)) return [];
+    try {
+        await ensureRoot();
+        const fullPath = path.join(PRESENTATION_ROOT, currentPath);
+        
+        if (!fs.existsSync(fullPath)) return [];
 
-    const entries = await readdir(fullPath, { withFileTypes: true });
-    
-    return entries.map(entry => ({
-        name: entry.name,
-        isDir: entry.isDirectory(),
-        size: 0, // Opzionale
-        ext: path.extname(entry.name).toLowerCase(),
-        url: `/presentation/${currentPath ? currentPath + '/' : ''}${entry.name}`
-    })).sort((a, b) => b.isDir ? 1 : -1);
+        const entries = await readdir(fullPath, { withFileTypes: true });
+        
+        return entries.map(entry => ({
+            name: entry.name,
+            isDir: entry.isDirectory(),
+            size: 0,
+            ext: path.extname(entry.name).toLowerCase(),
+            url: `/presentation/${currentPath ? currentPath + '/' : ''}${entry.name}`
+        })).sort((a, b) => b.isDir ? 1 : -1);
+    } catch (error) {
+        console.error("getFiles error:", error);
+        return [];
+    }
 }
 
 /**
  * Crea una nuova cartella
  */
 export async function createFolder(folderName: string, currentPath: string = '') {
-    await ensureRoot();
-    const newPath = path.join(PRESENTATION_ROOT, currentPath, folderName);
-    if (!fs.existsSync(newPath)) {
-        await mkdir(newPath, { recursive: true });
-        return { success: true };
+    try {
+        await ensureRoot();
+        const newPath = path.join(PRESENTATION_ROOT, currentPath, folderName);
+        if (!fs.existsSync(newPath)) {
+            await mkdir(newPath, { recursive: true });
+            return { success: true };
+        }
+        return { success: false, error: "Cartella già esistente" };
+    } catch (error) {
+        return { success: false, error: "Errore permessi server" };
     }
-    return { success: false, error: "Cartella già esistente" };
 }
 
 /**
  * Carica un file
  */
 export async function uploadFile(formData: FormData, currentPath: string = '') {
-    await ensureRoot();
     try {
+        await ensureRoot();
         const file = formData.get('file') as File;
         if (!file) throw new Error("File mancante");
 
@@ -65,7 +78,7 @@ export async function uploadFile(formData: FormData, currentPath: string = '') {
         return { success: true };
     } catch (error) {
         console.error("Upload error:", error);
-        return { success: false, error: "Errore durante l'upload" };
+        return { success: false, error: "Errore permessi disco" };
     }
 }
 
@@ -73,8 +86,8 @@ export async function uploadFile(formData: FormData, currentPath: string = '') {
  * Elimina un file o cartella
  */
 export async function deleteEntry(name: string, currentPath: string = '', isDir: boolean = false) {
-    const targetPath = path.join(PRESENTATION_ROOT, currentPath, name);
     try {
+        const targetPath = path.join(PRESENTATION_ROOT, currentPath, name);
         if (isDir) {
             await rmdir(targetPath, { recursive: true });
         } else {
@@ -82,6 +95,6 @@ export async function deleteEntry(name: string, currentPath: string = '', isDir:
         }
         return { success: true };
     } catch (error) {
-        return { success: false, error: "Errore durante l'eliminazione" };
+        return { success: false, error: "Errore eliminazione" };
     }
 }
