@@ -26,9 +26,11 @@ export async function sendLeadWhatsAppAction(
             return { success: false, error: "Lead o numero di telefono non trovato" };
         }
 
+        const isCall = actionType === 'no-answer' || context?.type === 'call';
+        
         const templateName = actionType === 'contacted' 
             ? (process.env.WHATSAPP_TEMPLATE_NAME_CONTACTED || 'contattato')
-            : actionType === 'no-answer'
+            : isCall
             ? (process.env.WHATSAPP_TEMPLATE_NAME_NO_ANSWER || 'non_risponde')
             : (process.env.WHATSAPP_TEMPLATE_NAME_APPOINTMENT || 'notifica_cliente');
 

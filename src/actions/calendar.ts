@@ -63,7 +63,8 @@ export async function getCalendarEvents() {
                     description: app.notes,
                     calendarName: 'CRM Interno',
                     calendarColor: '#4f46e5', // Colore indigo per distinguere
-                    leadId: app.leadId
+                    leadId: app.leadId,
+                    googleEventId: app.googleEventId
                 }));
             }
         } catch (e) {
