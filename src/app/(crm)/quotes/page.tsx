@@ -200,27 +200,8 @@ export default async function QuotesPage({
                                             €{Number(quote.totalAmount).toLocaleString('it-IT', { minimumFractionDigits: 2 })}
                                         </TableCell>
                                         <TableCell className="text-right pr-8">
-                                            <div className="flex justify-end gap-2 items-center">
+                                            <div className="flex justify-end items-center">
                                                 <QuoteRowActions quote={quote} />
-                                                
-                                                {/* Stampa Rapida */}
-                                                <QuotePreviewDialog quote={quote} autoPrint={true} />
-
-                                                {/* Anteprima (Pop-up) */}
-                                                <QuotePreviewDialog quote={quote} />
-
-                                                {/* Profilo Cliente (User) */}
-                                                <Button variant="ghost" size="icon" asChild className="rounded-xl h-10 w-10 hover:bg-white hover:shadow-md transition-all group/btn">
-                                                    <Link href={`/leads/${quote.leadId}`}>
-                                                        <User className="h-5 w-5 text-slate-400 group-hover/btn:text-indigo-600" />
-                                                    </Link>
-                                                </Button>
-
-                                                <QuoteBuilder
-                                                    leadId={quote.leadId}
-                                                    quoteId={quote.id}
-                                                    existingQuote={quote}
-                                                />
                                             </div>
                                         </TableCell>
                                     </TableRow>
