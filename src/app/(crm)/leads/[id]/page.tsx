@@ -60,7 +60,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                         <Separator orientation="vertical" className="h-4" />
                                         <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium">
                                             <Calendar className="h-3.5 w-3.5" />
-                                                Creato il {formatITDate(lead.createdAt)}
+                                                Creato il {formatITDateTime(lead.createdAt)}
                                         </div>
                                     </div>
                                 </div>

@@ -11,10 +11,11 @@ export async function getDashboardStats() {
     // 1. Total Leads
     const totalLeads = await prisma.lead.count();
 
-    // 2. Today's Tasks (Follow-ups due today + Missed status)
     const todayTasks = await prisma.lead.count({
         where: {
+            deletedAt: null,
             OR: [
+                { stage: 'NUOVO' },
                 {
                     nextFollowupAt: {
                         gte: todayStart,
@@ -55,13 +56,16 @@ export async function getDashboardStats() {
         take: 6
     });
 
-    // 6. Check Chiamate (Oggi)
-    const callsDone = await prisma.activity.count({
+    // 6. Check Gestione (Oggi)
+    // Contiamo i lead UNICI che hanno avuto almeno un'attività oggi
+    const activitiesToday = await prisma.activity.findMany({
         where: {
-            type: 'CALL',
             createdAt: { gte: todayStart, lte: todayEnd }
-        }
+        },
+        select: { leadId: true },
+        distinct: ['leadId']
     });
+    const callsDone = activitiesToday.length;
 
     // 7. Programmazione (In base all'orario di preferenza)
     // Filtriamo i lead che hanno una preferenza e non sono ancora chiusi
