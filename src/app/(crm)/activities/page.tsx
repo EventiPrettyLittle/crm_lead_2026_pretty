@@ -5,6 +5,9 @@ import { AlertCircle, Calendar as CalendarIcon, CheckCircle2, FileText, UserChec
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format, isToday } from "date-fns";
 import { it } from "date-fns/locale";
+import { RefreshButton } from "@/components/common/refresh-button";
+
+export const dynamic = 'force-dynamic';
 
 export default async function ActivitiesPage() {
     // Lead categories
@@ -32,7 +35,9 @@ export default async function ActivitiesPage() {
                     </p>
                 </div>
                 
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
+                    <RefreshButton />
+                    
                     <div className="bg-orange-50 px-6 py-4 rounded-3xl border border-orange-100 flex items-center gap-4">
                         <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center shadow-sm">
                             <PhoneMissed className="h-6 w-6 text-orange-500" />
