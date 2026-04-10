@@ -66,8 +66,7 @@ export async function getLeadsByListType(type: LeadListType) {
         case 'pending-quotes':
             // "Clienti che hanno ricevuto un preventivo ma non ancora approvato"
             whereClause = {
-                stage: 'PREVENTIVO',
-                // quotes are linked, but existence of stage PREVENTIVO is our trigger
+                stage: 'PREVENTIVO'
             };
             orderBy = { updatedAt: 'desc' };
             break;

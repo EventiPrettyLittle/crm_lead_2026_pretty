@@ -47,14 +47,58 @@ export function LeadList({ title, leads, emptyMessage = "Nessun cliente trovato.
                         {leads.map((lead) => {
                             const isExpired = lead.nextFollowupAt && isPast(new Date(lead.nextFollowupAt)) && !isToday(new Date(lead.nextFollowupAt));
                             
+                            // 7-Day Timeline Logic (Expanded to all categories)
+                            const startDate = (
+                                lead.lastStatus === 'NON_RISPONDE' ? lead.lastStatusAt :
+                                lead.stage === 'CONTATTATO' ? lead.contactedAt :
+                                lead.stage === 'PREVENTIVO' ? (lead.quoteSentAt || lead.lastStatusAt) :
+                                lead.lastStatusAt || lead.updatedAt
+                            ) || lead.createdAt;
+
+                            const lastStatusDate = startDate ? new Date(startDate) : null;
+                            const updatedAtDate = lead.updatedAt ? new Date(lead.updatedAt) : null;
+                            
+                            // An action happened if updated after status set
+                            const actionTaken = updatedAtDate && lastStatusDate && updatedAtDate.getTime() > (lastStatusDate.getTime() + 1000);
+                            
+                            const daysElapsed = lastStatusDate ? Math.floor((new Date().getTime() - lastStatusDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+                            const timelinePercent = Math.min((daysElapsed / 7) * 100, 100);
+                            const isOverdue = daysElapsed >= 7 && !actionTaken;
+
                             return (
-                                <div key={lead.id} className="group flex flex-col p-5 hover:bg-slate-50/50 transition-all gap-3">
+                                <div key={lead.id} className={cn(
+                                    "group flex flex-col p-5 transition-all gap-3 border-l-4",
+                                    isOverdue ? "bg-rose-50/50 border-l-rose-500 hover:bg-rose-100/50" : "hover:bg-slate-50/50 border-items-transparent"
+                                )}>
                                     <div className="flex justify-between items-start">
-                                        <div className="space-y-1">
-                                            <Link href={`/leads/${lead.id}`} className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors flex items-center gap-2 text-base">
-                                                {lead.firstName} {lead.lastName}
-                                                <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            </Link>
+                                        <div className="space-y-1 flex-1">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <Link href={`/leads/${lead.id}`} className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors flex items-center gap-2 text-base">
+                                                    {lead.firstName} {lead.lastName}
+                                                    <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </Link>
+                                                
+                                                <div className="flex-1 max-w-[120px] px-2 flex flex-col gap-1">
+                                                    <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-400">
+                                                        <span>Status {daysElapsed}gg</span>
+                                                        <span className={cn(actionTaken ? "text-green-500" : isOverdue ? "text-rose-600 font-black" : "text-orange-500")}>
+                                                            {actionTaken ? "Gestito" : isOverdue ? "SCADUTO" : `${daysElapsed}gg`}
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className={cn(
+                                                                "h-full transition-all duration-1000",
+                                                                actionTaken ? "bg-green-500 w-full" : 
+                                                                isOverdue ? "bg-rose-600" :
+                                                                daysElapsed >= 4 ? "bg-orange-500" : "bg-indigo-500"
+                                                            )}
+                                                            style={{ width: actionTaken ? '100%' : `${timelinePercent}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
                                             <div className="flex flex-wrap gap-2">
                                                 {lead.productInterest && (
                                                     <Badge variant="outline" className="text-[9px] font-black uppercase bg-indigo-50 text-indigo-500 border-indigo-100 rounded-lg px-2">
@@ -68,9 +112,10 @@ export function LeadList({ title, leads, emptyMessage = "Nessun cliente trovato.
                                                 )}
                                             </div>
                                         </div>
+                                        
                                         {lead.nextFollowupAt && (
                                             <div className={cn(
-                                                "text-[10px] font-black uppercase px-3 py-1 rounded-full border flex items-center gap-1.5",
+                                                "text-[10px] font-black uppercase px-3 py-1 rounded-full border flex items-center gap-1.5 shrink-0",
                                                 isExpired ? "bg-rose-50 text-rose-500 border-rose-100" : "bg-orange-50 text-orange-600 border-orange-100"
                                             )}>
                                                 <Calendar className="h-3 w-3" />
@@ -79,7 +124,7 @@ export function LeadList({ title, leads, emptyMessage = "Nessun cliente trovato.
                                         )}
                                     </div>
 
-                                    <div className="flex items-center justify-between mt-2">
+                                    <div className="flex items-center justify-between mt-1">
                                         <div className="flex items-center gap-1">
                                             {lead.phoneRaw && (
                                                 <Button 

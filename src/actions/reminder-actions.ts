@@ -1,7 +1,7 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import prisma from "@/lib/prisma"
-
 export async function getDueRemindersAction() {
     try {
         const now = new Date();
@@ -44,6 +44,11 @@ export async function completeReminderAction(leadId: string) {
             where: { id: leadId },
             data: { nextFollowupAt: null }
         });
+        
+        revalidatePath('/leads');
+        revalidatePath('/');
+        revalidatePath('/activities');
+        
         return { success: true };
     } catch (error) {
         console.error("Error completing reminder:", error);

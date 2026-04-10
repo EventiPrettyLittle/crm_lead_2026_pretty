@@ -31,11 +31,7 @@ export function ProductManager() {
 
     useEffect(() => {
         if (open) {
-            const setup = async () => {
-                await initDatabase();
-                await fetchProducts();
-            };
-            setup();
+            fetchProducts();
         }
     }, [open])
 

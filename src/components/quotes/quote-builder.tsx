@@ -56,6 +56,7 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
     const [leadQuery, setLeadQuery] = useState("");
     const [products, setProducts] = useState<any[]>([]);
     const [user, setUser] = useState<any>(null);
+    const [pdfReady, setPdfReady] = useState(false);
 
     const isAdmin = user?.role === 'SUPER_ADMIN' || user?.email === 'eventiprettylittle@gmail.com';
 
@@ -79,8 +80,12 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
         if (qId) {
             fetchQuote(qId);
         }
-        fetchProducts();
-        fetchUser();
+        if (products.length === 0) {
+            fetchProducts();
+        }
+        if (!user) {
+            fetchUser();
+        }
     }, [qId]);
 
     const fetchUser = async () => {
@@ -138,6 +143,7 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
     const handleAddItem = async () => {
         if (!qId || !desc) return;
         setLoading(true);
+        setPdfReady(false);
         try {
             await addItemToQuote(qId, { 
                 description: desc, 
@@ -170,6 +176,7 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
         if (!qId) return;
         try {
             await updateQuoteLead(qId, lId);
+            setPdfReady(false);
             await fetchQuote(qId);
             toast.success("Destinatario aggiornato");
         } catch (error) {
@@ -191,6 +198,7 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                 email: clientEmail
             });
             
+            setPdfReady(false);
             await fetchQuote(qId!);
             setEditClient(false);
             toast.success("Anagrafica cliente salvata");
@@ -210,6 +218,7 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
     const handleDeleteItem = async (itemId: string) => {
         if (!qId) return;
         setLoading(true);
+        setPdfReady(false);
         try {
             await deleteQuoteItem(itemId, qId);
             await fetchQuote(qId);
@@ -222,6 +231,7 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
 
     const handleSaveDetails = async () => {
         if (!qId) return;
+        setPdfReady(false);
         try {
             await updateQuoteDetails(qId, {
                 paymentMethod,
@@ -587,17 +597,28 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
 
                         {quote?.items?.length > 0 && (
                             <>
-                                <PDFDownloadLink 
-                                    document={<QuoteDocument quote={quote} />} 
-                                    fileName={`PRV${quote.number}-${(quote.lead?.firstName || 'CLIENTE').toUpperCase()}_${(quote.lead?.lastName || '').toUpperCase()}-${new Date().toLocaleDateString('it-IT', {day: '2-digit', month: '2-digit'}).replace('/', '_')}.pdf`}
-                                >
-                                    {({ blob, url, loading: pdfLoading }) => (
-                                        <Button variant="outline" className="rounded-[1.8rem] border-slate-200 font-black tracking-widest text-[10px] uppercase px-8 h-14 shadow-sm hover:bg-slate-50">
-                                            {pdfLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4 text-indigo-600" />}
-                                            Esporta PDF
-                                        </Button>
-                                    )}
-                                </PDFDownloadLink>
+                                {!pdfReady ? (
+                                    <Button 
+                                        variant="outline" 
+                                        className="rounded-[1.8rem] border-slate-200 font-black tracking-widest text-[10px] uppercase px-8 h-14 shadow-sm hover:bg-slate-50"
+                                        onClick={() => setPdfReady(true)}
+                                    >
+                                        <FileDown className="mr-2 h-4 w-4 text-slate-400" />
+                                        Prepara PDF
+                                    </Button>
+                                ) : (
+                                    <PDFDownloadLink 
+                                        document={<QuoteDocument quote={quote} />} 
+                                        fileName={`PRV${quote.number}-${(quote.lead?.firstName || 'CLIENTE').toUpperCase()}_${(quote.lead?.lastName || '').toUpperCase()}-${new Date().toLocaleDateString('it-IT', {day: '2-digit', month: '2-digit'}).replace('/', '_')}.pdf`}
+                                    >
+                                        {({ blob, url, loading: pdfLoading }) => (
+                                            <Button variant="outline" className="rounded-[1.8rem] border-indigo-200 bg-indigo-50/50 font-black tracking-widest text-[10px] uppercase px-8 h-14 shadow-sm hover:bg-indigo-100/50">
+                                                {pdfLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4 text-indigo-600" />}
+                                                Scarica PDF
+                                            </Button>
+                                        )}
+                                    </PDFDownloadLink>
+                                )}
                                 
                                 <Button 
                                     onClick={handleSendEmailAndMark} 

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createActivity } from './lead-detail'
 import prisma from "@/lib/prisma"
 import { serializePrisma } from "@/lib/serialize"
+import { getCurrentUser } from './auth'
 import { getCompanySettings } from './settings'
 
 export async function getLeadsMini(search?: string) {
@@ -17,7 +18,7 @@ export async function getLeadsMini(search?: string) {
         } : {},
         select: { id: true, firstName: true, lastName: true, email: true },
         orderBy: { updatedAt: 'desc' },
-        take: 20
+        take: 30 // Aumentato un po' ma limitato
     });
     return serializePrisma(leads);
 }
@@ -62,9 +63,9 @@ export async function getQuotes(search?: string) {
     const quotes = await prisma.quote.findMany({
         where: search ? {
             OR: [
-                { lead: { firstName: { contains: search } } },
-                { lead: { lastName: { contains: search } } },
-                { lead: { email: { contains: search } } },
+                { lead: { firstName: { contains: search, mode: 'insensitive' as any } } },
+                { lead: { lastName: { contains: search, mode: 'insensitive' as any } } },
+                { lead: { email: { contains: search, mode: 'insensitive' as any } } },
                 { number: isNaN(parseInt(search)) ? undefined : parseInt(search) }
             ]
         } : {},
@@ -72,7 +73,8 @@ export async function getQuotes(search?: string) {
             lead: true,
             items: true
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        take: 50 // Limitiamo per velocità
     });
     return serializePrisma(quotes);
 }
@@ -80,7 +82,7 @@ export async function getQuotes(search?: string) {
 export async function createQuote(leadId: string) {
     // 1. Chiamate in parallelo per velocità massima
     const [userResult, settings, maxResult, currentLead] = await Promise.all([
-        import("./auth").then(m => m.getCurrentUser()),
+        getCurrentUser(),
         getCompanySettings(),
         prisma.quote.aggregate({ _max: { number: true } }),
         prisma.lead.findUnique({ where: { id: leadId } })
@@ -268,6 +270,8 @@ export async function sendQuoteByEmail(quoteId: string) {
 }
 
 export async function updateQuoteStatus(id: string, status: string, leadId: string) {
+    const isAccepted = status === 'ACCETTATO' || status === 'ACCEPTED';
+    
     // Eseguiamo tutto in parallelo per la massima velocità
     await Promise.all([
         prisma.$executeRawUnsafe(
@@ -283,7 +287,11 @@ export async function updateQuoteStatus(id: string, status: string, leadId: stri
         }),
         prisma.lead.update({
             where: { id: leadId },
-            data: { updatedAt: new Date() }
+            data: { 
+                updatedAt: new Date(),
+                // Se accettato, il lead diventa VINTO e sparisce dalle attività
+                ...(isAccepted ? { stage: 'VINTO', lastStatus: 'CONFERMATO' } : {})
+            }
         })
     ]);
 
