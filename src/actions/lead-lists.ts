@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma"
 import { startOfDay, endOfDay, subDays, addDays } from 'date-fns'
 
-export type LeadListType = 'today' | 'missed' | 'scheduled' | 'expired' | 'quote-followup';
+export type LeadListType = 'today' | 'missed' | 'scheduled' | 'expired' | 'quote-followup' | 'contacted' | 'pending-quotes';
 
 export async function getLeadsByListType(type: LeadListType) {
     const now = new Date();
@@ -21,18 +21,24 @@ export async function getLeadsByListType(type: LeadListType) {
                     gte: todayStart,
                     lte: todayEnd,
                 },
-                OR: [
-                    { lastStatus: { not: 'CONTATTATO' } }, // Optional: exclude if already contacted today? Per specs: "Da contattare oggi"
-                    { lastStatus: null }
-                ]
+                stage: { notIn: ['VINTO', 'PERSO'] }
             };
+            break;
+
+        case 'contacted':
+            // "Lista di CONTATTATI"
+            whereClause = {
+                lastStatus: 'CONTATTATO',
+                stage: { notIn: ['VINTO', 'PERSO'] }
+            };
+            orderBy = { lastStatusAt: 'desc' };
             break;
 
         case 'missed':
             // "Non risponde – da richiamare"
             whereClause = {
                 lastStatus: 'NON_RISPONDE',
-                // Usually these have a nextFollowup set, but we specifically look for the status
+                stage: { notIn: ['VINTO', 'PERSO'] }
             };
             break;
 
@@ -43,6 +49,7 @@ export async function getLeadsByListType(type: LeadListType) {
                 nextFollowupAt: {
                     gt: todayEnd,
                 },
+                stage: { notIn: ['VINTO', 'PERSO'] }
             };
             break;
 
@@ -52,20 +59,26 @@ export async function getLeadsByListType(type: LeadListType) {
                 nextFollowupAt: {
                     lt: todayStart,
                 },
-                stage: { notIn: ['VINTO', 'PERSO'] } // Don't show closed leads
+                stage: { notIn: ['VINTO', 'PERSO'] }
             };
             break;
 
-        case 'quote-followup':
-            // "Follow-up preventivi"
+        case 'pending-quotes':
+            // "Clienti che hanno ricevuto un preventivo ma non ancora approvato"
             whereClause = {
-                stage: 'PREVENTIVO', // or 'INVIATO' if we use a specific status
+                stage: 'PREVENTIVO',
+                // quotes are linked, but existence of stage PREVENTIVO is our trigger
+            };
+            orderBy = { updatedAt: 'desc' };
+            break;
+
+        case 'quote-followup':
+            // "Follow-up preventivi" - specific follow-up items
+            whereClause = {
+                stage: 'PREVENTIVO',
                 quoteSentAt: { not: null },
-                // Logic: maybe sent > 7 days ago? Or just all quotes pending?
-                // User spec: "Quando un preventivo viene segnato come INVIATO... Crea automaticamente un follow-up a +7 giorni"
-                // So we just rely on nextFollowupAt
                 nextFollowupAt: {
-                    lte: todayEnd, // Show if due today or past
+                    lte: todayEnd,
                 }
             }
             break;
