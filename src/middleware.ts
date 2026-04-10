@@ -13,13 +13,16 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
+    /*
     const session = request.cookies.get('user_session');
 
     // Se non c'è sessione e non siamo in login, vai a login
     if (!session) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
+    */
 
+    // Deployment Refresh: 2026-04-10 19:03
     return NextResponse.next();
 }
 
