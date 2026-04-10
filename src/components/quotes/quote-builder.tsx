@@ -55,11 +55,14 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
     const [leadQuery, setLeadQuery] = useState("");
     const [products, setProducts] = useState<any[]>([]);
     const [leads, setLeads] = useState<any[]>([]);
+    const [user, setUser] = useState<any>(null);
 
     const filteredLeads = leads.filter(l => 
         (l.firstName + ' ' + l.lastName).toLowerCase().includes(leadQuery.toLowerCase()) ||
         (l.email || '').toLowerCase().includes(leadQuery.toLowerCase())
     );
+
+    const isAdmin = user?.role === 'SUPER_ADMIN' || user?.email === 'eventiprettylittle@gmail.com';
 
     // Item form state
     const [desc, setDesc] = useState("");
@@ -83,7 +86,13 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
         }
         fetchProducts();
         fetchLeads();
+        fetchUser();
     }, [qId]);
+
+    const fetchUser = async () => {
+        const u = await getCurrentUser();
+        setUser(u);
+    }
 
     // Handle auto-calculations for item form
     useEffect(() => {
@@ -108,11 +117,11 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                 setClientEmail(data.lead?.email || "");
                 setCurrentLeadId(data.leadId);
                 
-                // Fallback a cascata: Quote -> Company Settings -> Session
-                let creator = data.createdBy || data.companySettings?.referente;
+                // Fallback a cascata: Quote -> Session -> Company Settings
+                let creator = data.createdBy;
                 if (!creator) {
                     const user = await getCurrentUser();
-                    creator = user?.name || "Luca Vitale";
+                    creator = user?.name || data.companySettings?.referente || "Luca Vitale";
                 }
                 setCreatedBy(creator);
             }
@@ -524,7 +533,8 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                                                 value={createdBy} 
                                                 onChange={(e) => setCreatedBy(e.target.value)}
                                                 onBlur={handleSaveDetails}
-                                                className="border-none shadow-none font-black p-0 h-auto focus-visible:ring-0 text-slate-700 bg-transparent text-sm"
+                                                disabled={!isAdmin}
+                                                className="border-none shadow-none font-black p-0 h-auto focus-visible:ring-0 text-slate-700 bg-transparent text-sm disabled:opacity-100"
                                                 placeholder="Nome del referente..."
                                             />
                                         </div>
@@ -603,6 +613,9 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                 </div>
 
                 <DialogFooter className="p-8 border-t border-slate-100 bg-white shrink-0 flex items-center justify-between sm:justify-between w-full">
+                    {(() => {
+                        return (
+                            <>
                     <Button variant="ghost" size="sm" onClick={handleDeleteQuote} className="rounded-xl text-slate-400 hover:text-rose-500 font-black tracking-widest text-[10px] uppercase">
                         <Trash2 className="mr-2 h-4 w-4" /> Elimina
                     </Button>
@@ -622,7 +635,10 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
 
                         {quote?.items?.length > 0 && (
                             <>
-                                <PDFDownloadLink document={<QuoteDocument quote={quote} />} fileName={`preventivo_${quote.number || '00'}.pdf`}>
+                                <PDFDownloadLink 
+                                    document={<QuoteDocument quote={quote} />} 
+                                    fileName={`PRV${quote.number}-${(quote.lead?.firstName || 'CLIENTE').toUpperCase()}_${(quote.lead?.lastName || '').toUpperCase()}-${new Date().toLocaleDateString('it-IT', {day: '2-digit', month: '2-digit'}).replace('/', '_')}.pdf`}
+                                >
                                     {({ blob, url, loading: pdfLoading }) => (
                                         <Button variant="outline" className="rounded-[1.8rem] border-slate-200 font-black tracking-widest text-[10px] uppercase px-8 h-14 shadow-sm hover:bg-slate-50">
                                             {pdfLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4 text-indigo-600" />}
@@ -642,6 +658,9 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                             </>
                         )}
                     </div>
+                            </>
+                        );
+                    })()}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

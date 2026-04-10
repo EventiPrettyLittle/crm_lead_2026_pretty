@@ -118,7 +118,7 @@ export function QuotePreviewDialog({ quote, autoPrint = false }: { quote: any, a
                     {isClient && isOpened ? (
                         <PDFDownloadLink
                             document={<QuoteDocument quote={quote} />}
-                            fileName={`preventivo_${(quote.number || 'bozza').toString().replace(/[^a-z0-9]/gi, '_')}.pdf`}
+                            fileName={`PRV${quote.number}-${(quote.lead?.firstName || 'CLIENTE').toUpperCase()}_${(quote.lead?.lastName || '').toUpperCase()}-${new Date().toLocaleDateString('it-IT', {day: '2-digit', month: '2-digit'}).replace('/', '_')}.pdf`}
                             className="flex-1"
                         >
                             {({ loading }) => (

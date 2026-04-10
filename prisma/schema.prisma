@@ -16,6 +16,7 @@ model User {
   email        String        @unique
   name         String?
   role         String        @default("OPERATOR") // ADMIN, OPERATOR
+  phone        String?
   leads        Lead[]
   appointments Appointment[]
   createdAt    DateTime      @default(now())
@@ -96,6 +97,7 @@ model Quote {
   payments      Payment[]
   sentAt        DateTime?
   createdBy     String?
+  creatorPhone  String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }

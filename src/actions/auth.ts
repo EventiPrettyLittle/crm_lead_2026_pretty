@@ -19,7 +19,7 @@ export async function getCurrentUser() {
         try {
             const session = JSON.parse(userCookie.value);
             // Invece di fidarci del cookie per il nome, lo chiediamo al DB per essere sicuri
-            const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role FROM "User" WHERE email = $1 LIMIT 1`, session.email);
+            const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone FROM "User" WHERE email = $1 LIMIT 1`, session.email);
             
             if (users.length > 0) {
                 const user = users[0];
@@ -88,7 +88,7 @@ export async function loginWithCredentials(formData: FormData) {
     }
 }
 
-export async function updateUser(data: { name?: string, password?: string }) {
+export async function updateUser(data: { name?: string, password?: string, phone?: string }) {
     const user = await getCurrentUser();
     if (!user) return { success: false, error: "Non autorizzato" };
 
@@ -105,6 +105,10 @@ export async function updateUser(data: { name?: string, password?: string }) {
                 secure: process.env.NODE_ENV === 'production',
                 maxAge: 60 * 60 * 24 * 7
             });
+        }
+
+        if (data.phone !== undefined) {
+            await prisma.$executeRawUnsafe(`UPDATE "User" SET phone = $1 WHERE email = $2`, data.phone, user.email);
         }
         
         if (data.password && data.password.trim() !== "") {
@@ -125,7 +129,7 @@ export async function getAllUsers() {
     if (admin?.role !== 'SUPER_ADMIN') return [];
 
     try {
-        const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, "createdAt" FROM "User" ORDER BY "createdAt" DESC`);
+        const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM "User" ORDER BY "createdAt" DESC`);
         return users;
     } catch (e) {
         return [];
@@ -164,15 +168,15 @@ export async function deleteUser(userId: string) {
     }
 }
 
-export async function createUser(data: { email: string, name: string, role: string, password?: string }) {
+export async function createUser(data: { email: string, name: string, role: string, phone?: string, password?: string }) {
     const admin = await getCurrentUser();
     if (admin?.role !== 'SUPER_ADMIN') return { success: false, error: "Non autorizzato" };
 
     try {
         const id = Math.random().toString(36).substring(7);
         await prisma.$executeRawUnsafe(
-            `INSERT INTO "User" (id, email, name, role, password, "updatedAt") VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
-            id, data.email, data.name, data.role, data.password || null
+            `INSERT INTO "User" (id, email, name, role, phone, password, "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
+            id, data.email, data.name, data.role, data.phone || null, data.password || null
         );
         revalidatePath('/settings');
         return { success: true };

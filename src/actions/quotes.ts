@@ -45,6 +45,7 @@ function mapRawToPrisma(raw: any) {
         if (lower === 'createdat') mapped.createdAt = val;
         if (lower === 'updatedat') mapped.updatedAt = val;
         if (lower === 'createdby') mapped.createdBy = val;
+        if (lower === 'creatorphone') mapped.creatorPhone = val;
     });
 
     return mapped;
@@ -82,14 +83,17 @@ export async function createQuote(leadId: string) {
 
     // Usiamo Raw SQL per creare il preventivo includendo createdBy (che non è nello schema Prisma generato)
     const id = Math.random().toString(36).substring(2);
+    const creatorName = userSession?.name || settings?.referente || "Luca Vitale";
+    const creatorPhone = userSession?.phone || settings?.phone || "";
+
     await prisma.$executeRawUnsafe(
-        `INSERT INTO "Quote" (id, number, "leadId", status, "createdBy", "totalAmount", "discountTotal", "createdAt", "updatedAt") 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        id, nextNumber, leadId, 'BOZZA', creator, 0, 0
+        `INSERT INTO "Quote" (id, number, "leadId", status, "createdBy", "creatorPhone", "totalAmount", "discountTotal", "createdAt", "updatedAt") 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        id, nextNumber, leadId, 'BOZZA', creatorName, creatorPhone, 0, 0
     );
 
     revalidatePath(`/leads/${leadId}`);
-    return serializePrisma({ id, number: nextNumber, leadId, status: 'BOZZA', createdBy: creator });
+    return serializePrisma({ id, number: nextNumber, leadId, status: 'BOZZA', createdBy: creatorName, creatorPhone });
 }
 
 export async function getQuote(id: string) {
@@ -109,6 +113,11 @@ export async function getQuote(id: string) {
     // Fetch company settings for PDF
     const settings = await getCompanySettings();
     quote.companySettings = settings;
+
+    // Fetch system settings (for logo)
+    const { getSystemSettings } = await import('./settings-actions');
+    const systemSettings = await getSystemSettings();
+    quote.systemSettings = systemSettings;
     
     return serializePrisma(quote);
 }
@@ -190,12 +199,14 @@ export async function sendQuoteByEmail(quoteId: string) {
         const doc = React.createElement(QuoteDocument, { quote }) as any;
         const buffer = await renderToBuffer(doc);
 
+        const fileName = `PRV${quote.number}-${(quote.lead?.firstName || 'CLIENTE').toUpperCase()}_${(quote.lead?.lastName || '').toUpperCase()}-${new Date().toLocaleDateString('it-IT', {day: '2-digit', month: '2-digit'}).replace('/', '_')}.pdf`;
+
         await sendEmail({
             to: quote.lead.email,
-            subject: `Preventivo #${quote.number} - PLATINUM CRM`,
-            body: `Gentile ${quote.lead.firstName},\n\nin allegato il preventivo #${quote.number} richiesto.\n\nCordiali saluti,\nPlatinum CRM`,
+            subject: `Preventivo #${quote.number} - PRETTY LITTLE SRL`,
+            body: `Gentile ${quote.lead.firstName},\n\nin allegato il preventivo #${quote.number} richiesto.\n\nCordiali saluti,\n${quote.createdBy || 'PRETTY LITTLE SRL'}`,
             attachment: {
-                filename: `preventivo_${quote.number}.pdf`,
+                filename: fileName,
                 content: buffer
             }
         });

@@ -16,7 +16,7 @@ import { getSystemSettings, updateSystemSettings } from '@/actions/settings-acti
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [user, setUser] = useState<{name: string, email: string, role?: string} | null>(null);
+    const [user, setUser] = useState<{name: string, email: string, role?: string, phone?: string} | null>(null);
     const [team, setTeam] = useState<any[]>([]);
     const [settings, setSettings] = useState({
         companyName: '',
@@ -29,6 +29,7 @@ export default function SettingsPage() {
     });
     const [accountData, setAccountData] = useState({
         name: '',
+        phone: '',
         password: ''
     });
     const [newUserData, setNewUserData] = useState({
@@ -73,7 +74,7 @@ export default function SettingsPage() {
             const u = await getCurrentUser();
             setUser(u);
             if (u) {
-                setAccountData({ name: u.name || '', password: '' });
+                setAccountData({ name: u.name || '', phone: u.phone || '', password: '' });
                 if (u.role === 'SUPER_ADMIN') {
                     const users = await getAllUsers();
                     setTeam(users);
@@ -269,16 +270,30 @@ export default function SettingsPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-8">
-                                    <div className="space-y-4">
-                                        <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome e Cognome Referente</Label>
-                                        <Input 
-                                            value={settings.referente} 
-                                            onChange={e => setSettings({...settings, referente: e.target.value})}
-                                            disabled={!isAdmin}
-                                            placeholder="Luca Vitale"
-                                            className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white disabled:opacity-50"
-                                        />
-                                        <p className="text-[10px] text-slate-400 italic">Usato in Dashboard e preventivi.</p>
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome e Cognome Referente</Label>
+                                            <Input 
+                                                value={isAdmin ? settings.referente : (user?.name || '')} 
+                                                onChange={e => setSettings({...settings, referente: e.target.value})}
+                                                disabled={!isAdmin}
+                                                placeholder="Luca Vitale"
+                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white disabled:opacity-80"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Cellulare Referente</Label>
+                                            <Input 
+                                                value={isAdmin ? settings.phone : (user?.phone || '')} 
+                                                disabled={true}
+                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold disabled:opacity-80"
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-slate-400 italic font-medium">
+                                            {isAdmin 
+                                                ? "Questi sono i dati predefiniti dell'azienda." 
+                                                : "Questi dati vengono presi dal tuo profilo e inseriti nei preventivi che crei."}
+                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -458,6 +473,15 @@ export default function SettingsPage() {
                                         <Input 
                                             value={accountData.name} 
                                             onChange={e => setAccountData({...accountData, name: e.target.value})}
+                                            className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Cellulare (Per Preventivi)</Label>
+                                        <Input 
+                                            value={accountData.phone} 
+                                            onChange={e => setAccountData({...accountData, phone: e.target.value})}
+                                            placeholder="333 1234567"
                                             className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white"
                                         />
                                     </div>

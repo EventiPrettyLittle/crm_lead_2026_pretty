@@ -195,8 +195,17 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
             <Page size="A4" style={styles.page}>
                 <View style={styles.header}>
                     <View style={styles.logoSection}>
-                        <Text style={styles.logoText}>{settings.companyName || 'PLATINUM CRM'}</Text>
-                        <Text style={styles.companyTagline}>CRM LOGISTICS & BUSINESS SOLUTIONS</Text>
+                        {quote.systemSettings?.logoUrl ? (
+                            <Image 
+                                src={quote.systemSettings.logoUrl} 
+                                style={{ width: quote.systemSettings.logoWidth || 100, maxHeight: 60, objectFit: 'contain' }} 
+                            />
+                        ) : (
+                            <>
+                                <Text style={styles.logoText}>{settings.companyName || 'PRETTY LITTLE SRL'}</Text>
+                                <Text style={styles.companyTagline}>EVENTI & BRAND EXPERIENCE</Text>
+                            </>
+                        )}
                     </View>
                     <View style={styles.quoteInfo}>
                         <Text style={styles.quoteTitle}>PREVENTIVO</Text>
@@ -208,11 +217,11 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                 <View style={styles.detailsSection}>
                     <View style={styles.infoBlock}>
                         <Text style={styles.label}>EMESSO DA</Text>
-                        <Text style={[styles.infoValue, { fontWeight: 'bold' }]}>{settings.companyName || 'Platinum Logistics SRL'}</Text>
-                        <Text style={styles.infoValue}>{settings.address || 'Via delle Aziende 123, Roma'}</Text>
+                        <Text style={[styles.infoValue, { fontWeight: 'bold' }]}>{settings.companyName || 'PRETTY LITTLE SRL'}</Text>
+                        <Text style={styles.infoValue}>{settings.address || 'Via delle Aziende, Italia'}</Text>
                         <Text style={styles.infoValue}>P.IVA: {settings.vatNumber || '-'}</Text>
-                        {settings.phone && <Text style={styles.infoValue}>Tel: {settings.phone}</Text>}
-                        {settings.email && <Text style={styles.infoValue}>Email: {settings.email}</Text>}
+                        <Text style={styles.infoValue}>Tel: {settings.phone || '-'}</Text>
+                        <Text style={styles.infoValue}>Email: {settings.email || '-'}</Text>
                     </View>
                     <View style={styles.infoBlock}>
                         <Text style={styles.label}>DESTINATARIO</Text>
@@ -330,14 +339,17 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                                 <Text style={[styles.infoValue, { textAlign: 'right', fontWeight: 'bold', marginTop: 5, fontSize: 13, color: '#0055AA' }]}>
                                     {quote.createdBy || settings.referente || 'Luca Vitale'}
                                 </Text>
-                                <Text style={[styles.signatureText, { marginTop: 2 }]}>Referente Commerciale</Text>
+                                {quote.creatorPhone && (
+                                    <Text style={[styles.signatureText, { marginTop: 2 }]}>{quote.creatorPhone}</Text>
+                                )}
+                                <Text style={[styles.signatureText, { marginTop: 2 }]}>Referente Platform</Text>
                             </View>
                         </View>
                     </View>
                 </View>
 
                 <View style={styles.footer}>
-                    <Text style={styles.footerText}>Documento generato da PLATINUM CRM per {settings.companyName || 'il cliente'}.</Text>
+                    <Text style={styles.footerText}>Documento generato da {settings.companyName || 'PRETTY LITTLE SRL'} per {lead.firstName} {lead.lastName}.</Text>
                     <Text style={styles.footerText}>Si prega di conservare una copia del presente documento.</Text>
                 </View>
 
