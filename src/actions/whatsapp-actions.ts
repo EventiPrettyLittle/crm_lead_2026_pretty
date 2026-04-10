@@ -53,7 +53,11 @@ export async function sendLeadWhatsAppAction(
         }
 
         // Definizione variabili dinamiche in base alla scelta esatta dell'utente
-        const typeValue = context?.type === 'showroom' ? "appuntamento in show room" : "richiamata";
+        const typeValue = context?.type === 'showroom' 
+            ? "appuntamento in show room" 
+            : context?.type === 'video'
+            ? "videochiamata"
+            : "richiamata";
         
         // Costruzione array variabili SECONDO LO SCHEMA RICHIESTO
         const variables = [

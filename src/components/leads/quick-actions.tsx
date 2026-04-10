@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Phone, PhoneOff, FileText, XCircle, MessageSquare, Loader2, Sparkles, Plus, Calendar, Home, PhoneForwarded } from "lucide-react"
+import { Phone, PhoneOff, FileText, XCircle, MessageSquare, Loader2, Sparkles, Plus, Calendar, Home, PhoneForwarded, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { updateLeadQuickAction } from "@/actions/lead-actions"
 import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
@@ -22,9 +22,11 @@ interface QuickActionsProps {
 export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [actionType, setActionType] = useState<'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | 'appointment' | null>(null);
-    const [appointmentType, setAppointmentType] = useState<'showroom' | 'call'>('call');
+    const [appointmentType, setAppointmentType] = useState<'showroom' | 'call' | 'video'>('showroom');
+    const [appointmentTitle, setAppointmentTitle] = useState("");
     const [notes, setNotes] = useState("");
     const [appointmentDate, setAppointmentDate] = useState("");
+    const [appointmentHour, setAppointmentHour] = useState("10:00");
     const [loading, setLoading] = useState(false);
     const [sendWhatsapp, setSendWhatsapp] = useState(true);
 
@@ -52,19 +54,23 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 return;
             }
 
+            const combinedDateTime = actionType === 'appointment' && appointmentDate 
+                ? `${appointmentDate}T${appointmentHour}` 
+                : appointmentDate;
+
             const finalNotes = actionType === 'appointment' 
-                ? `[${appointmentType.toUpperCase()}] Fissato per: ${appointmentDate}. ${notes}` 
+                ? `[${appointmentType.toUpperCase()}] ${appointmentTitle ? appointmentTitle + ' - ' : ''} Fissato per: ${combinedDateTime}. ${notes}` 
                 : notes;
 
             await updateLeadQuickAction(lead.id, actionType as any, {
                 notes: finalNotes,
-                appointmentDate: actionType === 'appointment' ? appointmentDate : undefined,
+                appointmentDate: actionType === 'appointment' ? combinedDateTime : undefined,
                 appointmentType: actionType === 'appointment' ? appointmentType : undefined
             });
 
             if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'appointment')) {
                 const waRes = await sendLeadWhatsAppAction(lead.id, actionType, {
-                    date: actionType === 'appointment' ? appointmentDate : undefined,
+                    date: actionType === 'appointment' ? combinedDateTime : undefined,
                     type: actionType === 'appointment' ? appointmentType : undefined
                 });
                 if (waRes.success) {
@@ -155,116 +161,197 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             </Button>
 
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                <DialogContent className="sm:max-w-[450px] border-none shadow-2xl rounded-[2.5rem] p-8 space-y-6">
+                <DialogContent className="sm:max-w-[450px] border-none shadow-2xl rounded-[2.5rem] p-8 space-y-6 bg-white overflow-hidden">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-black italic text-slate-900 uppercase tracking-tight text-center">
-                            {actionType === 'contacted' && "📞 Registra Contatto"}
-                            {actionType === 'no-answer' && "🔇 Non Risponde"}
-                            {actionType === 'appointment' && "📅 Prossimo Step"}
-                            {actionType === 'preventivo' && "📑 Passa a Preventivo"}
-                            {actionType === 'cancelled' && "❌ Cancella Lead"}
+                        <DialogTitle className="sr-only">
+                            {actionType === 'appointment' ? "Fissa Appuntamento" : "Registra Attività"}
                         </DialogTitle>
-                        <div className="flex justify-center items-center gap-2">
-                           <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 italic">
-                                {lead.firstName} {lead.lastName}
-                           </span>
-                        </div>
                     </DialogHeader>
 
-                    <div className="space-y-4">
-                        {actionType === 'appointment' && (
-                            <div className="space-y-4 p-6 bg-indigo-50/50 rounded-[2rem] border border-indigo-100">
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Tipo Appuntamento</Label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Button 
-                                            type="button"
-                                            variant={appointmentType === 'showroom' ? 'default' : 'outline'}
-                                            onClick={() => setAppointmentType('showroom')}
-                                            className={cn(
-                                                "rounded-2xl h-12 font-bold uppercase text-[10px] flex items-center gap-2",
-                                                appointmentType === 'showroom' ? "bg-indigo-600 sky-shadow" : "bg-white border-indigo-100 text-indigo-400"
-                                            )}
-                                        >
-                                            <Home className="h-4 w-4" />
-                                            Showroom
-                                        </Button>
-                                        <Button 
-                                            type="button"
-                                            variant={appointmentType === 'call' ? 'default' : 'outline'}
-                                            onClick={() => setAppointmentType('call')}
-                                            className={cn(
-                                                "rounded-2xl h-12 font-bold uppercase text-[10px] flex items-center gap-2",
-                                                appointmentType === 'call' ? "bg-indigo-600 sky-shadow" : "bg-white border-indigo-100 text-indigo-400"
-                                            )}
-                                        >
-                                            <PhoneForwarded className="h-4 w-4" />
-                                            Richiamata
-                                        </Button>
+                    {actionType === 'appointment' ? (
+                        <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                            {/* Title Input */}
+                            <div className="relative group px-1">
+                                <Input 
+                                    placeholder="Aggiungi titolo"
+                                    value={appointmentTitle}
+                                    onChange={(e) => setAppointmentTitle(e.target.value)}
+                                    className="border-0 border-b-2 border-indigo-100 rounded-none bg-transparent h-14 text-2xl font-black text-indigo-900 placeholder:text-slate-200 focus-visible:ring-0 focus-visible:border-indigo-500 transition-all px-0"
+                                />
+                            </div>
+
+                            {/* Type Selector */}
+                            <div className="flex flex-wrap gap-2.5">
+                                <button
+                                    onClick={() => setAppointmentType('showroom')}
+                                    className={cn(
+                                        "flex-1 flex items-center justify-center gap-2 h-14 px-3 rounded-[1.3rem] text-[9px] font-black uppercase tracking-tight transition-all",
+                                        appointmentType === 'showroom' 
+                                            ? "bg-white text-slate-900 shadow-xl shadow-slate-200 border border-slate-100" 
+                                            : "bg-white text-slate-400 border border-slate-50 opacity-60 hover:opacity-100"
+                                    )}
+                                >
+                                    <span className="text-base">🏠</span> APPUNTAMENTO SHOWROOM
+                                </button>
+                                <button
+                                    onClick={() => setAppointmentType('call')}
+                                    className={cn(
+                                        "flex-1 flex items-center justify-center gap-2 h-14 px-3 rounded-[1.3rem] text-[9px] font-black uppercase tracking-tight transition-all",
+                                        appointmentType === 'call' 
+                                            ? "bg-white text-slate-900 shadow-xl shadow-slate-200 border border-slate-100" 
+                                            : "bg-white text-slate-400 border border-slate-50 opacity-60 hover:opacity-100"
+                                    )}
+                                >
+                                    <span className="text-base">📞</span> RICHIAMATA
+                                </button>
+                                <button
+                                    onClick={() => setAppointmentType('video')}
+                                    className={cn(
+                                        "w-full flex items-center justify-center gap-2 h-14 px-3 rounded-[1.3rem] text-[9px] font-black uppercase tracking-tight transition-all mt-0.5",
+                                        appointmentType === 'video' 
+                                            ? "bg-white text-slate-900 shadow-xl shadow-slate-200 border border-slate-100" 
+                                            : "bg-white text-slate-400 border border-slate-50 opacity-60 hover:opacity-100"
+                                    )}
+                                >
+                                    <span className="text-base">📹</span> VIDEOCHIAMATA
+                                </button>
+                            </div>
+
+                            {/* Programming Section */}
+                            <div className="bg-indigo-50/30 rounded-[2.5rem] p-7 space-y-6 border border-indigo-100/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-9 w-9 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                        <Clock className="h-4 w-4" />
+                                    </div>
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.1em] text-indigo-900">Programmazione</h3>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <div className="flex-1 bg-white rounded-[1.3rem] p-3.5 flex items-center shadow-sm border border-slate-100">
+                                        <Input 
+                                            type="date"
+                                            value={appointmentDate}
+                                            onChange={(e) => setAppointmentDate(e.target.value)}
+                                            className="border-none bg-transparent font-bold text-slate-900 focus-visible:ring-0 p-0 text-sm h-auto"
+                                        />
+                                    </div>
+                                    <div className="w-[125px] bg-white rounded-[1.3rem] p-3.5 flex items-center justify-between shadow-sm border border-slate-100">
+                                        <Input 
+                                            type="time"
+                                            value={appointmentHour}
+                                            onChange={(e) => setAppointmentHour(e.target.value)}
+                                            className="border-none bg-transparent font-bold text-slate-900 focus-visible:ring-0 p-0 text-sm h-auto flex-1"
+                                        />
+                                        <Clock className="h-3.5 w-3.5 text-slate-300 ml-1.5" />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-400 ml-1">Data e Ora</Label>
-                                    <Input 
-                                        type="datetime-local" 
-                                        value={appointmentDate}
-                                        onChange={(e) => setAppointmentDate(e.target.value)}
-                                        className="rounded-2xl border-indigo-100 bg-white h-12 font-bold"
-                                    />
-                                </div>
                             </div>
-                        )}
 
-                        {actionType === 'preventivo' && (
-                            <div className="bg-indigo-50/50 p-6 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center gap-4 text-center">
-                                <Sparkles className="h-10 w-10 text-indigo-500" />
-                                <div>
-                                    <p className="text-sm font-black text-indigo-900 uppercase">Redirect Preventivo</p>
-                                    <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">Ti porterò nella sezione preventivi per costruirlo ora</p>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="grid gap-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Note Attività</Label>
-                            <Textarea 
-                                value={notes} 
-                                onChange={(e) => setNotes(e.target.value)} 
-                                placeholder="Scrivi qui eventuali dettagli..."
-                                className="rounded-3xl border-slate-100 min-h-[100px] bg-slate-50/50 p-5 focus-visible:ring-indigo-500/20"
-                            />
-                        </div>
-
-                        {actionType !== 'cancelled' && (
-                            <div className="flex items-center space-x-4 p-5 bg-emerald-50/50 rounded-[2rem] border border-emerald-100">
+                            {/* WhatsApp Notification */}
+                            <div className="flex items-center gap-4 p-5 bg-emerald-50/30 rounded-[2.5rem] border border-emerald-100/50">
                                 <Checkbox 
                                     id="whatsapp" 
                                     checked={sendWhatsapp} 
                                     onCheckedChange={(checked: boolean) => setSendWhatsapp(checked)}
-                                    className="h-6 w-6 rounded-xl border-emerald-200 data-[state=checked]:bg-emerald-500"
+                                    className="h-7 w-7 rounded-full border-emerald-200 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-none shadow-sm shadow-emerald-100"
                                 />
-                                <Label htmlFor="whatsapp" className="text-[11px] font-black text-emerald-900 cursor-pointer flex items-center gap-2 uppercase tracking-tight">
-                                    <MessageSquare className="h-4 w-4 text-emerald-500" />
-                                    Invia Template WhatsApp
-                                </Label>
+                                <div className="flex-1 cursor-pointer" onClick={() => setSendWhatsapp(!sendWhatsapp)}>
+                                    <div className="flex items-center gap-2">
+                                        <MessageSquare className="h-4 w-4 text-emerald-500" />
+                                        <Label className="text-[10px] font-black text-emerald-900 uppercase tracking-tight leading-none">
+                                            Invia notifica WhatsApp al cliente
+                                        </Label>
+                                    </div>
+                                    <p className="text-[8px] font-bold text-emerald-600/50 uppercase mt-1 tracking-tighter">Verrà usato il template ufficiale di Meta</p>
+                                </div>
                             </div>
-                        )}
-                    </div>
 
-                    <DialogFooter className="flex gap-3 mt-4">
-                        <Button variant="ghost" onClick={() => setIsOpen(false)} className="flex-1 rounded-2xl h-14 font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Annulla</Button>
-                        <Button 
-                            onClick={submitAction} 
-                            disabled={loading || (actionType === 'appointment' && !appointmentDate)}
-                            className={cn(
-                                "flex-[2] rounded-full h-14 px-8 font-black text-[11px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95",
-                                actionType === 'cancelled' ? "bg-rose-600 hover:bg-rose-700" : "bg-indigo-600 hover:bg-indigo-700",
-                                "text-white"
-                            )}
-                        >
-                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conferma Stato"}
-                        </Button>
-                    </DialogFooter>
+                            <div className="flex items-center justify-between pt-2">
+                                <Button 
+                                    variant="ghost" 
+                                    onClick={() => setIsOpen(false)} 
+                                    className="rounded-2xl h-14 px-6 font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all text-[10px]"
+                                >
+                                    Annulla
+                                </Button>
+                                <Button 
+                                    onClick={submitAction} 
+                                    disabled={loading || !appointmentDate}
+                                    className="bg-[#B4B1FF] hover:bg-indigo-400 text-white rounded-[1.3rem] h-14 px-10 font-black uppercase tracking-[0.15em] shadow-xl shadow-indigo-100 transition-all hover:scale-[1.02] active:scale-95 text-[10px]"
+                                >
+                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salva Appuntamento"}
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            <DialogHeader>
+                                <DialogTitle className="text-2xl font-black italic text-slate-900 uppercase tracking-tight">
+                                    {actionType === 'contacted' && "📞 Registra Contatto"}
+                                    {actionType === 'no-answer' && "🔇 Non Risponde"}
+                                    {actionType === 'preventivo' && "📑 Passa a Preventivo"}
+                                    {actionType === 'cancelled' && "❌ Cancella Lead"}
+                                </DialogTitle>
+                                <div className="flex items-center gap-2">
+                                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 italic">
+                                        {lead.firstName} {lead.lastName}
+                                   </span>
+                                </div>
+                            </DialogHeader>
+                            
+                            <div className="space-y-4">
+                                {actionType === 'preventivo' && (
+                                    <div className="bg-indigo-50/50 p-6 rounded-[2rem] border-2 border-dashed border-indigo-200 flex flex-col items-center gap-4 text-center">
+                                        <Sparkles className="h-10 w-10 text-indigo-500" />
+                                        <div>
+                                            <p className="text-sm font-black text-indigo-900 uppercase">Redirect Preventivo</p>
+                                            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">Ti porterò nella sezione preventivi per costruirlo ora</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid gap-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Note Attività</Label>
+                                    <Textarea 
+                                        value={notes} 
+                                        onChange={(e) => setNotes(e.target.value)} 
+                                        placeholder="Scrivi qui eventuali dettagli..."
+                                        className="rounded-3xl border-slate-100 min-h-[100px] bg-slate-50/50 p-5 focus-visible:ring-indigo-500/20"
+                                    />
+                                </div>
+
+                                {actionType !== 'cancelled' && (
+                                    <div className="flex items-center space-x-4 p-5 bg-emerald-50/50 rounded-[2rem] border border-emerald-100">
+                                        <Checkbox 
+                                            id="whatsapp-alt" 
+                                            checked={sendWhatsapp} 
+                                            onCheckedChange={(checked: boolean) => setSendWhatsapp(checked)}
+                                            className="h-6 w-6 rounded-xl border-emerald-200 data-[state=checked]:bg-emerald-500"
+                                        />
+                                        <Label htmlFor="whatsapp-alt" className="text-[11px] font-black text-emerald-900 cursor-pointer flex items-center gap-2 uppercase tracking-tight">
+                                            <MessageSquare className="h-4 w-4 text-emerald-500" />
+                                            Invia Template WhatsApp
+                                        </Label>
+                                    </div>
+                                )}
+                            </div>
+
+                            <DialogFooter className="flex gap-3">
+                                <Button variant="ghost" onClick={() => setIsOpen(false)} className="flex-1 rounded-2xl h-14 font-black uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all">Annulla</Button>
+                                <Button 
+                                    onClick={submitAction} 
+                                    disabled={loading}
+                                    className={cn(
+                                        "flex-[2] rounded-full h-14 px-8 font-black text-[11px] uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95",
+                                        actionType === 'cancelled' ? "bg-rose-600 hover:bg-rose-700" : "bg-indigo-600 hover:bg-indigo-700",
+                                        "text-white"
+                                    )}
+                                >
+                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Conferma Stato"}
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    )}
                 </DialogContent>
             </Dialog>
         </div>
