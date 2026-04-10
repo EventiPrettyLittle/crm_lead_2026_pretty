@@ -157,16 +157,12 @@ export async function createCalendarEvent(eventData: {
     location?: string;
     leadId?: string;
 }) {
-    const tokens = await getGoogleTokens();
-    if (!tokens) {
-        return { success: false, error: 'Non connesso a Google Calendar' };
-    }
+    let ownerId: string | null = null;
+    const prisma = (await import("@/lib/prisma")).default;
 
     try {
-        const prisma = (await import("@/lib/prisma")).default;
         const cookieStore = await cookies();
         const session = cookieStore.get('user_session');
-        let ownerId: string | null = null;
         
         if (session) {
             const sessionData = JSON.parse(session.value);
@@ -174,25 +170,36 @@ export async function createCalendarEvent(eventData: {
             ownerId = user?.id || null;
         }
 
-        const calendar = getGoogleCalendarClient(tokens);
-        const response = await calendar.events.insert({
-            calendarId: 'primary',
-            requestBody: {
-                summary: eventData.title,
-                description: eventData.description,
-                location: eventData.location,
-                start: { dateTime: eventData.startDateTime, timeZone: 'Europe/Rome' },
-                end: { dateTime: eventData.endDateTime, timeZone: 'Europe/Rome' },
-            },
-        });
+        if (!ownerId) {
+            return { success: false, error: 'Sessione utente non trovata' };
+        }
 
-        // SALVATAGGIO NEL DATABASE LOCALE CRM
-        if (ownerId && eventData.leadId) {
-            const start = new Date(eventData.startDateTime);
-            const end = new Date(eventData.endDateTime);
-            const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+        // 1. PREVENZIONE DOPPIONI (Raddoppio eventi)
+        // Se esiste già un appuntamento per questo lead alla stessa ora (+/- 1 minuto), saltiamo creazione
+        if (eventData.leadId) {
+            const startTime = new Date(eventData.startDateTime);
+            const existing = await prisma.appointment.findFirst({
+                where: {
+                    leadId: eventData.leadId,
+                    startTime: {
+                        gte: new Date(startTime.getTime() - 60000),
+                        lte: new Date(startTime.getTime() + 60000)
+                    }
+                }
+            });
+            if (existing) {
+                return { success: true, eventId: existing.googleEventId || existing.id, updated: true };
+            }
+        }
 
-            await prisma.appointment.create({
+        // 2. SALVATAGGIO LOCALE (Sempre eseguito)
+        let localAppointmentId = "";
+        const start = new Date(eventData.startDateTime);
+        const end = new Date(eventData.endDateTime);
+        const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+
+        if (eventData.leadId) {
+            const app = await prisma.appointment.create({
                 data: {
                     title: eventData.title,
                     notes: eventData.description,
@@ -201,12 +208,43 @@ export async function createCalendarEvent(eventData: {
                     duration: duration,
                     leadId: eventData.leadId,
                     ownerId: ownerId,
-                    googleEventId: response.data.id || null
                 }
             });
+            localAppointmentId = app.id;
         }
 
-        return { success: true, eventId: response.data.id };
+        // 3. SINCRONIZZAZIONE GOOGLE (Orizionata)
+        const tokens = await getGoogleTokens();
+        let googleEventId = null;
+
+        if (tokens) {
+            try {
+                const calendar = getGoogleCalendarClient(tokens);
+                const response = await calendar.events.insert({
+                    calendarId: 'primary',
+                    requestBody: {
+                        summary: eventData.title,
+                        description: eventData.description,
+                        location: eventData.location,
+                        start: { dateTime: eventData.startDateTime, timeZone: 'Europe/Rome' },
+                        end: { dateTime: eventData.endDateTime, timeZone: 'Europe/Rome' },
+                    },
+                });
+                googleEventId = response.data.id;
+
+                // Aggiorniamo il local con l'id di Google se riuscito
+                if (localAppointmentId && googleEventId) {
+                    await prisma.appointment.update({
+                        where: { id: localAppointmentId },
+                        data: { googleEventId }
+                    });
+                }
+            } catch (googleError) {
+                console.warn('Google Calendar Sync failed, appointment kept locally:', googleError);
+            }
+        }
+
+        return { success: true, eventId: googleEventId || localAppointmentId };
     } catch (error: any) {
         console.error('Error creating calendar event:', error);
         return { success: false, error: error.message };
