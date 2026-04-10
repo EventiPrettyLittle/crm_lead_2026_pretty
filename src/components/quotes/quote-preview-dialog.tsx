@@ -18,6 +18,7 @@ import { QuoteDocument } from './quote-pdf';
 
 export function QuotePreviewDialog({ quote, autoPrint = false }: { quote: any, autoPrint?: boolean }) {
     const [isClient, setIsClient] = useState(false);
+    const [isOpened, setIsOpened] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
@@ -32,7 +33,10 @@ export function QuotePreviewDialog({ quote, autoPrint = false }: { quote: any, a
     }
 
     return (
-        <Dialog onOpenChange={(open) => { if(open && autoPrint) setTimeout(handlePrint, 500) }}>
+        <Dialog onOpenChange={(open) => { 
+            setIsOpened(open);
+            if(open && autoPrint) setTimeout(handlePrint, 500);
+        }}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 hover:bg-white hover:shadow-md transition-all group/btn">
                     {autoPrint ? <Printer className="h-5 w-5 text-slate-400 group-hover/btn:text-indigo-600" /> : <Eye className="h-5 w-5 text-slate-400 group-hover/btn:text-indigo-600" />}
@@ -73,7 +77,7 @@ export function QuotePreviewDialog({ quote, autoPrint = false }: { quote: any, a
                                     <div className="text-xs font-bold uppercase tracking-widest">Data Emissione</div>
                                 </div>
                                 <div className="text-sm font-black text-slate-900 ml-7">
-                                    {format(new Date(quote.createdAt), 'dd MMMM yyyy')}
+                                    {quote.createdAt ? format(new Date(quote.createdAt), 'dd MMMM yyyy') : '-'}
                                 </div>
                             </div>
                             <div className="space-y-4 text-right">
@@ -102,16 +106,19 @@ export function QuotePreviewDialog({ quote, autoPrint = false }: { quote: any, a
                                         </div>
                                     </div>
                                 ))}
+                                {(!quote.items || quote.items.length === 0) && (
+                                    <p className="text-xs text-slate-400 italic text-center p-4">Nessun servizio inserito</p>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="p-8 pt-0 flex gap-3 print:hidden">
-                    {isClient ? (
+                    {isClient && isOpened ? (
                         <PDFDownloadLink
                             document={<QuoteDocument quote={quote} />}
-                            fileName={`preventivo_${(quote.number || 'bozza').replace(/[^a-z0-9]/gi, '_')}.pdf`}
+                            fileName={`preventivo_${(quote.number || 'bozza').toString().replace(/[^a-z0-9]/gi, '_')}.pdf`}
                             className="flex-1"
                         >
                             {({ loading }) => (
@@ -126,8 +133,8 @@ export function QuotePreviewDialog({ quote, autoPrint = false }: { quote: any, a
                         </PDFDownloadLink>
                     ) : (
                         <Button disabled className="flex-1 rounded-2xl bg-slate-100 h-12 font-black text-[10px] uppercase gap-2">
-                            <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
-                            Preparazione...
+                             <Download className="w-4 h-4 text-slate-300" />
+                            Scarica PDF
                         </Button>
                     )}
                     

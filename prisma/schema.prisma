@@ -60,6 +60,7 @@ model Lead {
   lastStatusAt    DateTime?
   lostReason      String?   // Nessuna risposta, Prezzo alto, Perso vs competitor, ecc.
   quoteSentAt     DateTime?
+  createdBy       String?   // Referente che ha creato o gestisce
 
   // Relations
   activities   Activity[]
@@ -94,6 +95,7 @@ model Quote {
   items         QuoteItem[]
   payments      Payment[]
   sentAt        DateTime?
+  createdBy     String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }

@@ -229,7 +229,7 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                     <View style={{ backgroundColor: '#F8FAFC', padding: 15, borderRadius: 12, marginBottom: 30, borderLeftWidth: 3, borderLeftColor: '#0055AA' }}>
                         <Text style={[styles.label, { color: '#0055AA', marginBottom: 10 }]}>Dettagli Logistici Evento</Text>
                         <View style={{ flexDirection: 'row', gap: 40 }}>
-                            {lead.eventDate && (
+                            {lead.eventDate && !isNaN(new Date(lead.eventDate).getTime()) && (
                                 <View>
                                     <Text style={[styles.label, { fontSize: 7, marginBottom: 2 }]}>Data Evento</Text>
                                     <Text style={[styles.infoValue, { fontWeight: 'bold' }]}>{new Date(lead.eventDate).toLocaleDateString('it-IT')}</Text>

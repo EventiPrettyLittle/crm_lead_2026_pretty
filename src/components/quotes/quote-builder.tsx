@@ -5,6 +5,7 @@ import { createQuote, addItemToQuote, getQuote, deleteQuoteItem, deleteQuote, se
 import { updateLeadQuickAction, updateLeadDetails } from '@/actions/lead-actions'
 import { getProducts } from '@/actions/products'
 import { markQuoteAsSent } from '@/actions/quote-actions'
+import { getCurrentUser } from '@/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -110,7 +111,6 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                 // Fallback a cascata: Quote -> Company Settings -> Session
                 let creator = data.createdBy || data.companySettings?.referente;
                 if (!creator) {
-                    const { getCurrentUser } = await import("@/actions/auth");
                     const user = await getCurrentUser();
                     creator = user?.name || "Luca Vitale";
                 }

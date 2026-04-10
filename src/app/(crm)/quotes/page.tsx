@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import Link from "next/link";
-import { Plus, Search, FileText, Eye, MoreHorizontal, Filter, Download, Mail, IndianRupee, Euro, TrendingUp, Clock, CheckCircle2, User, Sparkles } from "lucide-react";
+import { Plus, Search, FileText, Eye, MoreHorizontal, Filter, Download, Mail, Euro, TrendingUp, Clock, CheckCircle2, User, Sparkles, XCircle } from "lucide-react";
 import QuoteBuilder from "@/components/quotes/quote-builder";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -20,14 +20,29 @@ export default async function QuotesPage({
 }: {
     searchParams: Promise<{ q?: string, createFor?: string }>;
 }) {
-    const { q, createFor } = await searchParams;
-    const quotes = await getQuotes(q);
-    const products = await getProducts() as any[];
+    let quotes: any[] = [];
+    let products: any[] = [];
+    let error: string | null = null;
 
-    // Calculate basic stats
+    try {
+        const { q: searchQuery } = await searchParams;
+        const [quotesRes, productsRes] = await Promise.all([
+            getQuotes(searchQuery),
+            getProducts()
+        ]);
+        quotes = quotesRes || [];
+        products = (productsRes as any[]) || [];
+    } catch (e: any) {
+        console.error("Error loading quotes page:", e);
+        error = e.message || "Errore nel caricamento dei dati";
+    }
+
+    const { q, createFor } = await searchParams;
+
+    // Calculate basic stats safely
     const totalRevenue = quotes
-        .filter((q: any) => q.status === 'ACCETTATO')
-        .reduce((acc, q: any) => acc + Number(q.totalAmount), 0);
+        .filter((q: any) => q.status === 'ACCETTATO' && q.totalAmount)
+        .reduce((acc, q: any) => acc + Number(q.totalAmount || 0), 0);
         
     const acceptedQuotes = quotes.filter((q: any) => q.status === 'ACCETTATO').length;
     const pendingQuotes = quotes.filter((q: any) => q.status === 'BOZZA' || q.status === 'INVIATO').length;
@@ -43,6 +58,13 @@ export default async function QuotesPage({
                     </h1>
                     <p className="text-slate-500 font-medium">Gestisci le offerte commerciali e monitora le conversioni.</p>
                 </div>
+                
+                {error && (
+                    <div className="bg-rose-50 border border-rose-100 text-rose-600 px-6 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 animate-in slide-in-from-top-4 duration-500">
+                         <XCircle className="h-5 w-5" />
+                         {error}
+                    </div>
+                )}
                 
                 <div className="flex items-center gap-3">
                     <ProductManager />

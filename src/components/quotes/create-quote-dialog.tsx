@@ -151,8 +151,10 @@ export function CreateQuoteDialog() {
             {/* Hidden QuoteBuilder that opens when quote is created */}
             {builderOpen && newQuoteId && selectedLead && (
                 <QuoteBuilder 
+                    key={newQuoteId}
                     leadId={selectedLead.id} 
                     quoteId={newQuoteId} 
+                    defaultOpen={true}
                     onClose={() => {
                         setBuilderOpen(false)
                         setNewQuoteId(null)
