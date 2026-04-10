@@ -275,14 +275,13 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
 
     const handleOpenChange = async (val: boolean) => {
         setOpen(val);
-        if (val && !qId && initialLeadId) {
+        if (val && !qId && initialLeadId && !loading) {
             setLoading(true);
             try {
                 const newQuote = await createQuote(initialLeadId);
                 setQId(newQuote.id);
                 setQuote(newQuote);
-                
-                toast.success("Nuovo preventivo creato e stato aggiornato 📑");
+                toast.success("Nuovo preventivo creato con successo!");
             } catch (error) {
                 console.error("Create quote error:", error);
                 toast.error("Errore durante la creazione del preventivo");
@@ -292,6 +291,13 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
         }
         if (!val && onClose) onClose();
     };
+
+    // Auto-create if opened by redirect
+    useEffect(() => {
+        if (defaultOpen && !qId && initialLeadId) {
+            handleOpenChange(true);
+        }
+    }, [defaultOpen]);
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -308,6 +314,19 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
             </DialogTrigger>
             
             <DialogContent className="sm:max-w-[850px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden flex flex-col max-h-[95vh] bg-white">
+                {/* Loading Overlay during creation */}
+                {loading && !qId && (
+                    <div className="absolute inset-0 z-50 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center space-y-4 animate-in fade-in duration-300">
+                        <div className="relative">
+                            <div className="h-20 w-20 rounded-full border-4 border-slate-100 border-t-indigo-600 animate-spin" />
+                            <FileText className="h-8 w-8 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                        </div>
+                        <div className="text-center">
+                            <p className="text-xl font-black text-slate-900 tracking-tight">Sto preparando il preventivo...</p>
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Quasi pronto</p>
+                        </div>
+                    </div>
+                )}
                 <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 p-8 text-white relative shrink-0">
                     <div className="absolute top-4 right-8 opacity-10">
                         <FileText className="h-32 w-32" />

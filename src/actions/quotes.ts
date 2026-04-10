@@ -80,25 +80,29 @@ export async function getQuotes(search?: string) {
 }
 
 export async function createQuote(leadId: string) {
-    // 1. Chiamate in parallelo per velocità massima
+    // 1. Recupero metadati in parallelo per velocità estrema
     const [userResult, settings, maxResult, currentLead] = await Promise.all([
         getCurrentUser(),
         getCompanySettings(),
         prisma.quote.aggregate({ _max: { number: true } }),
-        prisma.lead.findUnique({ where: { id: leadId } })
+        prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, notesInternal: true } })
     ]);
     
     const nextNumber = (maxResult._max.number || 0) + 1;
     const creatorName = userResult?.name || settings?.referente || "Luca Vitale";
     const creatorPhone = userResult?.phone || settings?.phone || "";
-    const id = `quote-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const quoteId = `quote-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
-    // 2. Creazione preventivo e aggiornamento lead in parallelo
     const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
     const systemNote = `[Sistema - ${timestamp}]: Passato a stato Preventivo. Creato nuovo preventivo (automatico)\n\n`;
 
-    const [leadUpdate] = await Promise.all([
-        // Aggiorniamo il lead direttamente qui per evitare una seconda chiamata dal client
+    // 2. Operazioni DB raggruppate in parallelo
+    await Promise.all([
+        prisma.$executeRawUnsafe(
+            `INSERT INTO "Quote" (id, number, "leadId", status, "createdBy", "creatorPhone", "totalAmount", "discountTotal", "createdAt", "updatedAt") 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            quoteId, nextNumber, leadId, 'BOZZA', creatorName, creatorPhone, 0, 0
+        ),
         prisma.lead.update({
             where: { id: leadId },
             data: {
@@ -108,20 +112,6 @@ export async function createQuote(leadId: string) {
                 notesInternal: systemNote + (currentLead?.notesInternal || "")
             }
         }),
-        // Inserimento preventivo
-        prisma.$executeRawUnsafe(
-            `INSERT INTO "Quote" (id, number, "leadId", status, "createdBy", "creatorPhone", "totalAmount", "discountTotal", "createdAt", "updatedAt") 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-            id, nextNumber, leadId, 'BOZZA', creatorName, creatorPhone, 0, 0
-        ).catch(async (e) => {
-            console.warn("Fallback Quote creation:", e.message);
-            return prisma.$executeRawUnsafe(
-                `INSERT INTO "Quote" (id, number, "leadId", status, "totalAmount", "discountTotal", "createdAt", "updatedAt") 
-                 VALUES ($1, $2, $3, $4, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-                id, nextNumber, leadId, 'BOZZA'
-            );
-        }),
-        // Creazione attività
         prisma.activity.create({
             data: {
                 leadId,
@@ -131,19 +121,22 @@ export async function createQuote(leadId: string) {
         })
     ]);
 
-    // Unica revalidazione per tutto
-    revalidatePath(`/leads/${leadId}`);
-    revalidatePath('/kanban');
-    revalidatePath('/quotes');
+    // 3. Revalidazione singola per rotte multiple (dove possibile)
+    // Non attendiamo la revalidazione se non critico per la risposta immediata
+    const reval = async () => {
+        revalidatePath(`/leads/${leadId}`);
+        revalidatePath('/quotes');
+        revalidatePath('/activities');
+    };
+    reval();
     
     return serializePrisma({ 
-        id, 
+        id: quoteId, 
         number: nextNumber, 
         leadId, 
         status: 'BOZZA', 
         createdBy: creatorName, 
-        creatorPhone,
-        lead: leadUpdate
+        creatorPhone 
     });
 }
 
