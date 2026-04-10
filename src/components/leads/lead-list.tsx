@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowRight, Calendar, Phone, Mail, MessageCircle, ExternalLink } from "lucide-react"
+import { ArrowRight, Calendar, Phone, Mail, MessageCircle, ExternalLink, Trash2, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { deleteQuote } from "@/actions/quotes"
+import { toast } from "sonner"
+import { useState } from "react"
 
 interface LeadListProps {
     title: string;
@@ -17,11 +20,26 @@ interface LeadListProps {
 }
 
 export function LeadList({ title, leads, emptyMessage = "Nessun cliente trovato.", badgeColor = "bg-primary" }: LeadListProps) {
-    const handleWhatsApp = (lead: Lead) => {
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const handleWhatsApp = (lead: any) => {
         const phone = lead.phoneNormalized || lead.phoneRaw?.replace(/\D/g, '');
         if (!phone) return;
         const text = encodeURIComponent(`Ciao ${lead.firstName}, come stai?`);
         window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+    };
+
+    const handleDeleteQuote = async (quoteId: string, leadId: string) => {
+        if (!confirm("Sei sicuro di voler eliminare definitivamente questo preventivo?")) return;
+        setDeletingId(quoteId);
+        try {
+            await deleteQuote(quoteId, leadId);
+            toast.success("Preventivo eliminato");
+        } catch (e) {
+            toast.error("Errore eliminazione");
+        } finally {
+            setDeletingId(null);
+        }
     };
 
     return (
@@ -44,8 +62,9 @@ export function LeadList({ title, leads, emptyMessage = "Nessun cliente trovato.
                     </div>
                 ) : (
                     <div className="divide-y divide-slate-50">
-                        {leads.map((lead) => {
+                        {leads.map((lead: any) => {
                             const isExpired = lead.nextFollowupAt && isPast(new Date(lead.nextFollowupAt)) && !isToday(new Date(lead.nextFollowupAt));
+                            const currentQuote = lead.quotes?.[0];
                             
                             // 7-Day Timeline Logic (Expanded to all categories)
                             const startDate = (
@@ -68,7 +87,7 @@ export function LeadList({ title, leads, emptyMessage = "Nessun cliente trovato.
                             return (
                                 <div key={lead.id} className={cn(
                                     "group flex flex-col p-5 transition-all gap-3 border-l-4",
-                                    isOverdue ? "bg-rose-50/50 border-l-rose-500 hover:bg-rose-100/50" : "hover:bg-slate-50/50 border-items-transparent"
+                                    isOverdue ? "bg-rose-50/50 border-l-rose-500 hover:bg-rose-100/50" : "hover:bg-slate-50/50 border-l-transparent"
                                 )}>
                                     <div className="flex justify-between items-start">
                                         <div className="space-y-1 flex-1">
@@ -100,6 +119,11 @@ export function LeadList({ title, leads, emptyMessage = "Nessun cliente trovato.
                                             </div>
                                             
                                             <div className="flex flex-wrap gap-2">
+                                                {currentQuote && (
+                                                    <Badge variant="outline" className="text-[9px] font-black uppercase bg-indigo-600 text-white border-none rounded-lg px-2 shadow-sm">
+                                                        #{currentQuote.number}
+                                                    </Badge>
+                                                )}
                                                 {lead.productInterest && (
                                                     <Badge variant="outline" className="text-[9px] font-black uppercase bg-indigo-50 text-indigo-500 border-indigo-100 rounded-lg px-2">
                                                         {lead.productInterest}
@@ -126,6 +150,17 @@ export function LeadList({ title, leads, emptyMessage = "Nessun cliente trovato.
 
                                     <div className="flex items-center justify-between mt-1">
                                         <div className="flex items-center gap-1">
+                                            {currentQuote && (
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    disabled={!!deletingId}
+                                                    className="h-9 w-9 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-all border border-transparent"
+                                                    onClick={() => handleDeleteQuote(currentQuote.id, lead.id)}
+                                                >
+                                                    {deletingId === currentQuote.id ? <Loader2 className="h-4 w-4 animate-spin text-rose-600" /> : <Trash2 className="h-4 w-4" />}
+                                                </Button>
+                                            )}
                                             {lead.phoneRaw && (
                                                 <Button 
                                                     variant="ghost" 
@@ -171,7 +206,7 @@ export function LeadList({ title, leads, emptyMessage = "Nessun cliente trovato.
                 )}
             </CardContent>
         </Card>
-    )
+    );
 }
 
 function Search(props: any) {

@@ -87,7 +87,11 @@ export async function getLeadsByListType(type: LeadListType) {
         where: whereClause,
         orderBy: orderBy,
         include: {
-            owner: true, // Include owner info
+            owner: true,
+            quotes: {
+                orderBy: { createdAt: 'desc' },
+                take: 1
+            }
         }
     });
 

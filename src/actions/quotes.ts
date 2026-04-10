@@ -173,11 +173,19 @@ export async function getQuote(id: string) {
     return serializePrisma(quote);
 }
 
-export async function deleteQuote(id: string, leadId: string) {
-    await prisma.quote.delete({
-        where: { id }
-    });
-    revalidatePath(`/leads/${leadId}`);
+export async function deleteQuote(id: string, leadId?: string) {
+    // Usiamo il raggruppamento delle operazioni per massimizzare la velocità
+    await prisma.$executeRawUnsafe(`DELETE FROM "Quote" WHERE id = $1`, id);
+    
+    // Revalidazioni in parallelo senza bloccare l'esecuzione se possibile
+    const paths = ['/quotes', '/activities', '/finance', '/kanban'];
+    if (leadId) paths.push(`/leads/${leadId}`);
+    
+    await Promise.all(paths.map(path => {
+        try { return revalidatePath(path); } catch { return null; }
+    }));
+    
+    return { success: true };
 }
 
 export async function addItemToQuote(quoteId: string, data: { description: string, quantity: number, originalPrice?: number, unitPrice: number, discount?: number, vatRate: number }) {
