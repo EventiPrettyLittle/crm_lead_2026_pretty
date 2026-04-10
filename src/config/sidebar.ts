@@ -50,7 +50,7 @@ export const sidebarLinks = [
         icon: MonitorPlay,
     },
     {
-        title: "Activities",
+        title: "Attività",
         href: "/activities",
         icon: Phone,
     },
