@@ -118,12 +118,32 @@ export async function getCalendarEvents() {
         let googleEvents = allEventsResults.flat();
 
         // 3. UNIAMO GLI EVENTI LOCALI E QUELLI DI GOOGLE
-        // Evitiamo duplicati se l'evento Google ha lo stesso googleEventId che abbiamo salvato in locale
-        const googleEventIdsInLocal = localAppointments
+        const googleEventIdsFetched = new Set(googleEvents.map(ge => ge.id));
+        
+        // Identifichiamo eventuali appuntamenti locali che avevano un ID Google ma che ora non esistono più (cancellati da Google)
+        // Facciamo il cleanup solo per eventi degli ultimi 3 mesi (finestra di sync)
+        const appointmentsToDelete = localAppointments.filter(app => 
+            app.googleEventId && 
+            !googleEventIdsFetched.has(app.googleEventId) &&
+            new Date(app.start) > new Date(new Date().setMonth(new Date().getMonth() - 3))
+        );
+
+        if (appointmentsToDelete.length > 0) {
+            const idsToDelete = appointmentsToDelete.map(a => a.id.replace('local-', ''));
+            await prisma.appointment.deleteMany({
+                where: { id: { in: idsToDelete } }
+            });
+            // Rimuoviamo dalla lista locale per la risposta immediata
+            const deletedFullIds = new Set(appointmentsToDelete.map(a => a.id));
+            localAppointments = localAppointments.filter(app => !deletedFullIds.has(app.id));
+        }
+
+        // Evitiamo duplicati se l'evento Google ha lo stesso googleEventId che abbiamo in locale
+        const googleEventIdsInLocal = new Set(localAppointments
             .filter(a => a.googleEventId)
-            .map(a => a.googleEventId);
+            .map(a => a.googleEventId));
             
-        const uniqueGoogleEvents = googleEvents.filter(ge => !googleEventIdsInLocal.includes(ge.id));
+        const uniqueGoogleEvents = googleEvents.filter(ge => !googleEventIdsInLocal.has(ge.id));
         
         const allEvents = [...localAppointments, ...uniqueGoogleEvents];
 
