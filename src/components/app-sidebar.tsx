@@ -28,6 +28,16 @@ export function AppSidebar() {
         getSystemSettings().then(setLogoSettings);
     }, []);
 
+    const [openIntegrations, setOpenIntegrations] = useState(false);
+
+    // Auto-apri il menu integrazioni se siamo in una delle sue pagine
+    useEffect(() => {
+        const isIntegrationActive = sidebarLinks.some(item => 
+            item.title === "Integrazioni" && item.subItems?.some(sub => pathname === sub.href)
+        );
+        if (isIntegrationActive) setOpenIntegrations(true);
+    }, [pathname]);
+
     return (
         <Sidebar className="border-r border-slate-200/60 bg-white/50 backdrop-blur-xl">
             <SidebarHeader className="py-8 px-6">
@@ -64,7 +74,64 @@ export function AppSidebar() {
                     <SidebarGroupContent>
                         <SidebarMenu className="gap-1.5">
                             {sidebarLinks.map((item) => {
-                                const isActive = pathname === item.href;
+                                const hasSubItems = item.subItems && item.subItems.length > 0;
+                                const isActive = pathname === item.href || (hasSubItems && item.subItems?.some(sub => pathname === sub.href));
+                                
+                                if (hasSubItems) {
+                                    return (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton 
+                                                onClick={() => setOpenIntegrations(!openIntegrations)}
+                                                className={cn(
+                                                    "h-12 rounded-2xl transition-all duration-300 px-4 group w-full",
+                                                    isActive 
+                                                        ? "bg-indigo-50 text-indigo-700 font-bold" 
+                                                        : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-900"
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-4 w-full">
+                                                    <div className={cn(
+                                                        "h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-300",
+                                                        isActive 
+                                                            ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" 
+                                                            : "bg-slate-50 text-slate-400 group-hover:bg-white group-hover:text-indigo-600 group-hover:shadow-sm"
+                                                    )}>
+                                                        <item.icon className="h-4.5 w-4.5" />
+                                                    </div>
+                                                    <span className="text-sm tracking-tight flex-1 text-left">{item.title}</span>
+                                                    <ChevronRight className={cn(
+                                                        "h-4 w-4 opacity-50 transition-transform duration-300",
+                                                        openIntegrations && "rotate-90"
+                                                    )} />
+                                                </div>
+                                            </SidebarMenuButton>
+
+                                            {openIntegrations && (
+                                                <div className="mt-1 ml-4 space-y-1 animate-in slide-in-from-top-2 duration-300">
+                                                    {item.subItems?.map((sub) => {
+                                                        const isSubActive = pathname === sub.href;
+                                                        return (
+                                                            <Link 
+                                                                key={sub.title} 
+                                                                href={sub.href}
+                                                                className={cn(
+                                                                    "flex items-center gap-3 h-10 px-4 rounded-xl text-[13px] transition-all",
+                                                                    isSubActive 
+                                                                        ? "bg-indigo-100/50 text-indigo-700 font-bold" 
+                                                                        : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
+                                                                )}
+                                                            >
+                                                                <sub.icon className="h-3.5 w-3.5" />
+                                                                {sub.title}
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </SidebarMenuItem>
+                                    );
+                                }
+
                                 return (
                                     <SidebarMenuItem key={item.title}>
                                         <SidebarMenuButton 
@@ -76,7 +143,7 @@ export function AppSidebar() {
                                                     : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-900"
                                             )}
                                         >
-                                            <Link href={item.href} className="flex items-center gap-4">
+                                            <Link href={item.href || '#'} className="flex items-center gap-4">
                                                 <div className={cn(
                                                     "h-8 w-8 rounded-xl flex items-center justify-center transition-all duration-300",
                                                     isActive 

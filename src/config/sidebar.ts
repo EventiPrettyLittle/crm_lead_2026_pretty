@@ -1,4 +1,17 @@
-import { Home, Users, Calendar, FileText, Settings, Phone, LayoutDashboard, MessageSquare, Database, Wallet, MonitorPlay } from "lucide-react"
+import { 
+    Home, 
+    Users, 
+    Calendar, 
+    FileText, 
+    Settings, 
+    Phone, 
+    LayoutDashboard, 
+    MessageSquare, 
+    Database, 
+    Wallet, 
+    MonitorPlay, 
+    Puzzle 
+} from "lucide-react"
 
 export const sidebarLinks = [
     {
@@ -17,9 +30,9 @@ export const sidebarLinks = [
         icon: LayoutDashboard,
     },
     {
-        title: "Google Sheets Sync",
-        href: "/sync-sheets",
-        icon: Database,
+        title: "Calendario",
+        href: "/calendar",
+        icon: Calendar,
     },
     {
         title: "Preventivi",
@@ -27,29 +40,35 @@ export const sidebarLinks = [
         icon: FileText,
     },
     {
-        title: "Presentazione",
-        href: "/presentation",
-        icon: MonitorPlay,
-    },
-    {
         title: "Incassi & Pagamenti",
         href: "/finance",
         icon: Wallet,
     },
     {
-        title: "WhatsApp",
-        href: "/whatsapp",
-        icon: MessageSquare,
-    },
-    {
-        title: "Calendario",
-        href: "/calendar",
-        icon: Calendar,
+        title: "Presentazione",
+        href: "/presentation",
+        icon: MonitorPlay,
     },
     {
         title: "Activities",
         href: "/activities",
         icon: Phone,
+    },
+    {
+        title: "Integrazioni",
+        icon: Puzzle,
+        subItems: [
+            {
+                title: "Google Sheets Sync",
+                href: "/sync-sheets",
+                icon: Database,
+            },
+            {
+                title: "WhatsApp",
+                href: "/whatsapp",
+                icon: MessageSquare,
+            }
+        ]
     },
     {
         title: "Settings",
