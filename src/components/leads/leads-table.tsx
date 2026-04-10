@@ -233,15 +233,16 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                                         <TableCell className="py-2.5">
                                             <Badge variant={
                                                 lead.stage === 'NUOVO' ? 'default' :
-                                                    lead.stage === 'PERSO' ? 'destructive' : 'secondary'
+                                                    (lead.stage === 'PERSO' || lead.stage === 'CANCELLATO') ? 'destructive' : 'secondary'
                                             } className={cn(
                                                 "font-black text-[8px] px-2 py-0.5 rounded-md tracking-widest uppercase border-none transition-all",
                                                 lead.stage === 'NUOVO' && "bg-sky-500 text-white shadow-sky-500/10",
                                                 lead.stage === 'CONTATTATO' && "bg-emerald-500 text-white shadow-emerald-500/10",
                                                 lead.stage === 'NON_RISPONDE' && "bg-amber-400 text-slate-900 shadow-amber-400/10",
-                                                lead.stage === 'DA_RICONTATTARE' && "bg-indigo-500 text-white shadow-indigo-500/10",
-                                                lead.stage === 'APPUNTAMENTO' && "bg-violet-600 text-white shadow-violet-600/10",
-                                                lead.stage === 'PERSO' && "bg-rose-500 text-white shadow-rose-500/10"
+                                                lead.stage === 'DA_RICONTATTARE' && "bg-indigo-400 text-white shadow-indigo-400/10",
+                                                lead.stage === 'APPUNTAMENTO' && "bg-indigo-600 text-white shadow-indigo-600/10",
+                                                lead.stage === 'PREVENTIVO' && "bg-violet-600 text-white shadow-violet-600/10",
+                                                (lead.stage === 'PERSO' || lead.stage === 'CANCELLATO') && "bg-rose-500 text-white shadow-rose-500/10"
                                             )}>
                                                 {lead.stage.replace('_', ' ')}
                                             </Badge>

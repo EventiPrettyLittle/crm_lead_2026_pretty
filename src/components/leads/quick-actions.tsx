@@ -164,7 +164,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             <Button
                 variant="ghost"
                 className={cn(
-                    "bg-slate-50 text-slate-500 hover:bg-slate-600 hover:text-white shadow-sm border border-slate-200",
+                    "bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white shadow-sm border border-rose-100",
                     btnClass
                 )}
                 onClick={() => handleAction('cancelled')}
