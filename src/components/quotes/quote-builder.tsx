@@ -57,11 +57,6 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
     const [leads, setLeads] = useState<any[]>([]);
     const [user, setUser] = useState<any>(null);
 
-    const filteredLeads = leads.filter(l => 
-        (l.firstName + ' ' + l.lastName).toLowerCase().includes(leadQuery.toLowerCase()) ||
-        (l.email || '').toLowerCase().includes(leadQuery.toLowerCase())
-    );
-
     const isAdmin = user?.role === 'SUPER_ADMIN' || user?.email === 'eventiprettylittle@gmail.com';
 
     // Item form state
@@ -85,7 +80,6 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
             fetchQuote(qId);
         }
         fetchProducts();
-        fetchLeads();
         fetchUser();
     }, [qId]);
 
@@ -103,6 +97,14 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
             setDiscPercent(0);
         }
     }, [origPrice, finalPrice]);
+
+    // Debounced search for leads
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchLeads(leadQuery);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [leadQuery]);
 
     const fetchQuote = async (id: string) => {
         try {
@@ -130,8 +132,8 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
         }
     };
 
-    const fetchLeads = async () => {
-        const res = await getLeadsMini();
+    const fetchLeads = async (search?: string) => {
+        const res = await getLeadsMini(search);
         setLeads(res);
     };
 
@@ -397,10 +399,10 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                                                         </div>
                                                     </div>
                                                     <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                                                        {filteredLeads.length === 0 ? (
+                                                        {leads.length === 0 ? (
                                                             <p className="p-4 text-center text-[10px] text-slate-400 uppercase font-black">Nessun risultato</p>
                                                         ) : (
-                                                            filteredLeads.map(lead => (
+                                                            leads.map(lead => (
                                                                 <DropdownMenuItem key={lead.id} onClick={() => handleChangeLead(lead.id)} className="rounded-xl p-3 cursor-pointer hover:bg-indigo-50">
                                                                     <div className="flex flex-col">
                                                                         <span className="font-black text-slate-900">{lead.firstName} {lead.lastName}</span>

@@ -6,11 +6,18 @@ import prisma from "@/lib/prisma"
 import { serializePrisma } from "@/lib/serialize"
 import { getCompanySettings } from './settings'
 
-export async function getLeadsMini() {
+export async function getLeadsMini(search?: string) {
     const leads = await prisma.lead.findMany({
+        where: search ? {
+            OR: [
+                { firstName: { contains: search, mode: 'insensitive' as any } },
+                { lastName: { contains: search, mode: 'insensitive' as any } },
+                { email: { contains: search, mode: 'insensitive' as any } },
+            ]
+        } : {},
         select: { id: true, firstName: true, lastName: true, email: true },
         orderBy: { updatedAt: 'desc' },
-        take: 50
+        take: 20
     });
     return serializePrisma(leads);
 }
@@ -89,11 +96,21 @@ export async function createQuote(leadId: string) {
     const creatorName = userSession?.name || settings?.referente || "Luca Vitale";
     const creatorPhone = userSession?.phone || settings?.phone || "";
 
-    await prisma.$executeRawUnsafe(
-        `INSERT INTO "Quote" (id, number, "leadId", status, "createdBy", "creatorPhone", "totalAmount", "discountTotal", "createdAt", "updatedAt") 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        id, nextNumber, leadId, 'BOZZA', creatorName, creatorPhone, 0, 0
-    );
+    try {
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO "Quote" (id, number, "leadId", status, "createdBy", "creatorPhone", "totalAmount", "discountTotal", "createdAt", "updatedAt") 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            id, nextNumber, leadId, 'BOZZA', creatorName, creatorPhone, 0, 0
+        );
+    } catch (e: any) {
+        console.warn("Fallback creation Quote (missing columns):", e.message);
+        // Fallback se mancano le colonne custom
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO "Quote" (id, number, "leadId", status, "totalAmount", "discountTotal", "createdAt", "updatedAt") 
+             VALUES ($1, $2, $3, $4, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            id, nextNumber, leadId, 'BOZZA'
+        );
+    }
 
     // Recuperiamo i dati del lead per restituirli subito alla UI
     const lead = await prisma.lead.findUnique({ where: { id: leadId } });
