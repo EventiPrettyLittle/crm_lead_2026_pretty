@@ -12,8 +12,8 @@ export async function getDueRemindersAction() {
             where: {
                 nextFollowupAt: {
                     lte: now,
-                    // Evitiamo di recuperare robba troppo vecchia di giorni, limitiamoci alle ultime 48h
-                    gte: new Date(now.getTime() - 48 * 60 * 60 * 1000)
+                    // Recuperiamo tutto ciò che è scaduto negli ultimi 30 giorni
+                    gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
                 },
                 stage: {
                     notIn: ['VINTO', 'PERSO', 'CANCELLATO']

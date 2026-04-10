@@ -23,7 +23,7 @@ export function NotificationCenter() {
 
     useEffect(() => {
         fetchReminders()
-        const interval = setInterval(fetchReminders, 60000) // Aggiorna ogni minuto
+        const interval = setInterval(fetchReminders, 20000) // Aggiorna ogni 20 secondi
         return () => clearInterval(interval)
     }, [])
 

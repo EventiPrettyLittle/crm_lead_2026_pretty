@@ -53,7 +53,11 @@ export async function sendLeadWhatsAppAction(
         }
 
         // Definizione variabili dinamiche in base alla scelta esatta dell'utente
-        const typeValue = context?.type === 'showroom' 
+        const typeValue = actionType === 'contacted'
+            ? "contattato"
+            : actionType === 'no-answer'
+            ? "non_risponde"
+            : context?.type === 'showroom' 
             ? "Showroom" 
             : context?.type === 'video'
             ? "videochiamata"
@@ -81,16 +85,24 @@ export async function sendLeadWhatsAppAction(
         if (res.success) {
             const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
             
+            const activityNote = actionType === 'appointment'
+                ? `Inviato WhatsApp: ${typeValue} per il ${dayFormatted} alle ${timeFormatted}`
+                : `Inviato WhatsApp: ${typeValue}`;
+
             await prisma.activity.create({
                 data: {
                     leadId: lead.id,
                     type: "WHATSAPP",
-                    notes: `Inviato WhatsApp: ${typeValue} per il ${dayFormatted} alle ${timeFormatted}`
+                    notes: activityNote
                 }
             });
 
             const currentNotes = lead.notesInternal || "";
-            const systemNote = `[WhatsApp - ${timestamp}]: Inviato "${typeValue}" (${dayFormatted} ore ${timeFormatted})\n\n`;
+            const systemNoteContent = actionType === 'appointment'
+                ? `Inviato "${typeValue}" (${dayFormatted} ore ${timeFormatted})`
+                : `Inviato template "${typeValue}"`;
+            
+            const systemNote = `[WhatsApp - ${timestamp}]: ${systemNoteContent}\n\n`;
             await prisma.lead.update({
                 where: { id: leadId },
                 data: { notesInternal: systemNote + currentNotes }

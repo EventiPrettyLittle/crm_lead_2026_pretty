@@ -86,7 +86,8 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 notes: finalNotes,
                 nextFollowup: reminderDateTime,
                 appointmentDate: actionType === 'appointment' ? combinedDateTime : undefined,
-                appointmentType: actionType === 'appointment' ? appointmentType : undefined
+                appointmentType: actionType === 'appointment' ? appointmentType : undefined,
+                title: actionType === 'appointment' ? appointmentTitle : undefined
             });
 
             if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'appointment')) {

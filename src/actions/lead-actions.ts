@@ -17,6 +17,7 @@ export async function updateLeadQuickAction(
         nextFollowup?: Date;
         appointmentDate?: string;
         appointmentType?: string;
+        title?: string;
     }
 ) {
     try {
@@ -59,18 +60,30 @@ export async function updateLeadQuickAction(
             updateData.stage = 'APPUNTAMENTO';
             activityType = 'SYSTEM';
             
-            const typeLabel = data.appointmentType === 'showroom' ? "appuntamento in show room" : "richiamata";
+            const typeLabel = data.appointmentType === 'showroom' 
+                ? "appuntamento in show room" 
+                : data.appointmentType === 'video'
+                ? "videochiamata"
+                : "richiamata";
             activityNotes = `${typeLabel} fissato per il ${data.appointmentDate}. ${activityNotes}`;
 
-            const startDate = new Date(data.appointmentDate);
-            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour
+            // Costruiamo le stringhe ISO forzando l'orario di Roma (+02:00)
+            const startISO = `${data.appointmentDate}:00+02:00`;
+            
+            // Calcoliamo l'ora di fine (start + 1 ora) gestendo il cambio ora
+            const [dPart, tPart] = data.appointmentDate.split('T');
+            const [h, m] = tPart.split(':');
+            const endH = (parseInt(h) + 1).toString().padStart(2, '0');
+            const endISO = `${dPart}T${endH}:${m}:00+02:00`;
+
+            const finalTitle = data.title || `${typeLabel.toUpperCase()} - ${leadBase.firstName || 'Cliente'} ${leadBase.lastName || ''}`;
 
             await createCalendarEvent({
-                title: `${typeLabel} - ${leadBase.firstName || 'Cliente'} ${leadBase.lastName || ''}`,
+                title: finalTitle,
                 description: `Appuntamento fissato dal CRM. Note: ${data.notes || 'nessuna'}`,
-                location: data.appointmentType === 'showroom' ? "Showroom" : "Richiamata Telefonica",
-                startDateTime: startDate.toISOString(),
-                endDateTime: endDate.toISOString(),
+                location: data.appointmentType === 'showroom' ? "Showroom" : data.appointmentType === 'video' ? "Videochiamata" : "Richiamata Telefonica",
+                startDateTime: startISO,
+                endDateTime: endISO,
                 leadId: leadId
             });
         }
