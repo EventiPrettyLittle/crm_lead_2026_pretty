@@ -60,12 +60,17 @@ export async function sendLeadWhatsAppAction(
             : "richiamata";
         
         // Costruzione array variabili SECONDO LO SCHEMA RICHIESTO
-        const variables = [
-            lead.firstName || "Cliente", // {{1}}
-            typeValue,                   // {{2}}
-            dayFormatted,                // {{3}}
-            timeFormatted                // {{4}}
-        ];
+        // Se è un appuntamento mandiamo tutte le variabili, altrimenti solo il nome
+        const variables = actionType === 'appointment' 
+            ? [
+                lead.firstName || "Cliente", // {{1}}
+                typeValue,                   // {{2}}
+                dayFormatted,                // {{3}}
+                timeFormatted                // {{4}}
+              ]
+            : [
+                lead.firstName || "Cliente"  // {{1}}
+              ];
 
         const res = await sendWhatsAppTemplate({
             to: lead.phoneRaw,

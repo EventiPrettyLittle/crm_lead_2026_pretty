@@ -27,6 +27,8 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     const [notes, setNotes] = useState("");
     const [appointmentDate, setAppointmentDate] = useState("");
     const [appointmentHour, setAppointmentHour] = useState("10:00");
+    const [reminderDate, setReminderDate] = useState("");
+    const [reminderHour, setReminderHour] = useState("09:00");
     const [loading, setLoading] = useState(false);
     const [sendWhatsapp, setSendWhatsapp] = useState(true);
     const [isTitleManual, setIsTitleManual] = useState(false);
@@ -76,8 +78,13 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 ? `[${appointmentType.toUpperCase()}] ${appointmentTitle ? appointmentTitle + ' - ' : ''} Fissato per: ${combinedDateTime}. ${notes}` 
                 : notes;
 
+            const reminderDateTime = (actionType === 'no-answer' && reminderDate)
+                ? new Date(`${reminderDate}T${reminderHour}`)
+                : undefined;
+
             await updateLeadQuickAction(lead.id, actionType as any, {
                 notes: finalNotes,
+                nextFollowup: reminderDateTime,
                 appointmentDate: actionType === 'appointment' ? combinedDateTime : undefined,
                 appointmentType: actionType === 'appointment' ? appointmentType : undefined
             });
@@ -337,6 +344,36 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                                     />
                                 </div>
 
+                                {actionType === 'no-answer' && (
+                                    <div className="bg-amber-50/30 rounded-[2.5rem] p-7 space-y-4 border border-amber-100/50">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                                                <Clock className="h-4 w-4" />
+                                            </div>
+                                            <h3 className="text-[10px] font-black uppercase tracking-[0.1em] text-amber-900">Promemoria Interno (Richiamo)</h3>
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <div className="flex-1 bg-white rounded-[1.3rem] p-3.5 flex items-center shadow-sm border border-slate-100">
+                                                <Input 
+                                                    type="date"
+                                                    value={reminderDate}
+                                                    onChange={(e) => setReminderDate(e.target.value)}
+                                                    className="border-none bg-transparent font-bold text-slate-900 focus-visible:ring-0 p-0 text-sm h-auto"
+                                                />
+                                            </div>
+                                            <div className="w-[125px] bg-white rounded-[1.3rem] p-3.5 flex items-center justify-between shadow-sm border border-slate-100">
+                                                <Input 
+                                                    type="time"
+                                                    value={reminderHour}
+                                                    onChange={(e) => setReminderHour(e.target.value)}
+                                                    className="border-none bg-transparent font-bold text-slate-900 focus-visible:ring-0 p-0 text-sm h-auto flex-1"
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-[8px] font-bold text-amber-600/50 uppercase italic px-1">Questa è una notifica interna, non verrà mandata al cliente.</p>
+                                    </div>
+                                )}
+
                                 {actionType !== 'cancelled' && (
                                     <div className="flex items-center space-x-4 p-5 bg-emerald-50/50 rounded-[2rem] border border-emerald-100">
                                         <Checkbox 
@@ -347,7 +384,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                                         />
                                         <Label htmlFor="whatsapp-alt" className="text-[11px] font-black text-emerald-900 cursor-pointer flex items-center gap-2 uppercase tracking-tight">
                                             <MessageSquare className="h-4 w-4 text-emerald-500" />
-                                            Invia Template WhatsApp
+                                            Invia Template WhatsApp al cliente
                                         </Label>
                                     </div>
                                 )}
