@@ -268,18 +268,31 @@ export async function sendQuoteByEmail(quoteId: string) {
 }
 
 export async function updateQuoteStatus(id: string, status: string, leadId: string) {
-    await prisma.$executeRawUnsafe(
-        `UPDATE "Quote" SET "status" = $1 WHERE id = $2`,
-        status, id
-    );
+    // Eseguiamo tutto in parallelo per la massima velocità
+    await Promise.all([
+        prisma.$executeRawUnsafe(
+            `UPDATE "Quote" SET "status" = $1 WHERE id = $2`,
+            status, id
+        ),
+        prisma.activity.create({
+            data: {
+                leadId,
+                type: 'SYSTEM',
+                notes: `Stato preventivo aggiornato a: ${status}`
+            }
+        }),
+        prisma.lead.update({
+            where: { id: leadId },
+            data: { updatedAt: new Date() }
+        })
+    ]);
 
-    // Registriamo l'attività nel lead
-    await createActivity(leadId, 'SYSTEM', `Stato preventivo aggiornato a: ${status}`);
-
+    // Revalidazione parallela
     revalidatePath('/quotes');
     revalidatePath(`/leads/${leadId}`);
     revalidatePath('/finance');
     revalidatePath('/kanban');
+    
     return { success: true };
 }
 
