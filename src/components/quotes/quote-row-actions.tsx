@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react';
-import { updateQuoteStatus } from "@/actions/quotes";
+import { deleteQuote, updateQuoteStatus } from "@/actions/quotes";
 import { toast } from "sonner";
-import { Check, X, Pencil, Eye, Printer, MoreHorizontal, Mail, Trash2 } from "lucide-react";
+import { Check, X, Pencil, Eye, Printer, MoreHorizontal, Mail, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -17,6 +17,7 @@ import Link from "next/link";
 
 export function QuoteRowActions({ quote }: { quote: any }) {
     const [loading, setLoading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     async function handleStatus(status: string) {
         setLoading(true);
@@ -27,6 +28,19 @@ export function QuoteRowActions({ quote }: { quote: any }) {
             toast.error("Errore aggiornamento");
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function handleDelete() {
+        if (!confirm("Sei sicuro di voler eliminare definitivamente questo preventivo?")) return;
+        setDeleting(true);
+        try {
+            await deleteQuote(quote.id, quote.leadId);
+            toast.success("Preventivo eliminato");
+        } catch (e) {
+            toast.error("Errore durante l'eliminazione");
+        } finally {
+            setDeleting(false);
         }
     }
 
@@ -68,6 +82,17 @@ export function QuoteRowActions({ quote }: { quote: any }) {
                     </Button>
                 </div>
             )}
+
+            {/* Elimina */}
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                disabled={deleting}
+                onClick={handleDelete}
+                className="rounded-xl h-10 w-10 text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-all"
+            >
+                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            </Button>
         </div>
     );
 }
