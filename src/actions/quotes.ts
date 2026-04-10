@@ -95,8 +95,19 @@ export async function createQuote(leadId: string) {
         id, nextNumber, leadId, 'BOZZA', creatorName, creatorPhone, 0, 0
     );
 
+    // Recuperiamo i dati del lead per restituirli subito alla UI
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+
     revalidatePath(`/leads/${leadId}`);
-    return serializePrisma({ id, number: nextNumber, leadId, status: 'BOZZA', createdBy: creatorName, creatorPhone });
+    return serializePrisma({ 
+        id, 
+        number: nextNumber, 
+        leadId, 
+        status: 'BOZZA', 
+        createdBy: creatorName, 
+        creatorPhone,
+        lead
+    });
 }
 
 export async function getQuote(id: string) {
