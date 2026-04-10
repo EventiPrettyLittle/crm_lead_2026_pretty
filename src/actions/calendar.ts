@@ -89,6 +89,7 @@ export async function getCalendarEvents() {
         const calendarList = calendarListResponse.data.items || [];
 
         // 2. Recuperiamo gli eventi da TUTTI i calendari (parallelo)
+        let googleFetchFailed = false;
         const eventPromises = calendarList.map(async (cal) => {
             try {
                 const res = await calendar.events.list({
@@ -110,6 +111,7 @@ export async function getCalendarEvents() {
                 }));
             } catch (e) {
                 console.error(`Error fetching events for calendar ${cal.id}:`, e);
+                googleFetchFailed = true; // Segnamo il fallimento per evitare cleanup errati
                 return [];
             }
         });
@@ -121,12 +123,14 @@ export async function getCalendarEvents() {
         const googleEventIdsFetched = new Set(googleEvents.map(ge => ge.id));
         
         // Identifichiamo eventuali appuntamenti locali che avevano un ID Google ma che ora non esistono più (cancellati da Google)
-        // Facciamo il cleanup solo per eventi degli ultimi 3 mesi (finestra di sync)
-        const appointmentsToDelete = localAppointments.filter(app => 
-            app.googleEventId && 
-            !googleEventIdsFetched.has(app.googleEventId) &&
-            new Date(app.start) > new Date(new Date().setMonth(new Date().getMonth() - 3))
-        );
+        // Facciamo il cleanup solo se la chiamata a Google è andata a buon fine al 100%
+        const appointmentsToDelete = (!googleFetchFailed && localAppointments.length > 0) 
+            ? localAppointments.filter(app => 
+                app.googleEventId && 
+                !googleEventIdsFetched.has(app.googleEventId) &&
+                new Date(app.start) > new Date(new Date().setMonth(new Date().getMonth() - 3))
+              )
+            : [];
 
         if (appointmentsToDelete.length > 0) {
             const idsToDelete = appointmentsToDelete.map(a => a.id.replace('local-', ''));
