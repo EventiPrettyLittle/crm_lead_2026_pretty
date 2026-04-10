@@ -229,6 +229,8 @@ export async function updateQuoteStatus(id: string, status: string, leadId: stri
 
     revalidatePath('/quotes');
     revalidatePath(`/leads/${leadId}`);
+    revalidatePath('/finance');
+    revalidatePath('/kanban');
     return { success: true };
 }
 
