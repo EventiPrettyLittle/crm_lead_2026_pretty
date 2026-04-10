@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
@@ -29,11 +29,25 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     const [appointmentHour, setAppointmentHour] = useState("10:00");
     const [loading, setLoading] = useState(false);
     const [sendWhatsapp, setSendWhatsapp] = useState(true);
+    const [isTitleManual, setIsTitleManual] = useState(false);
+
+    // Auto-generate title
+    useEffect(() => {
+        if (!isTitleManual && actionType === 'appointment') {
+            const typeLabels = {
+                showroom: "APPUNTAMENTO SHOWROOM",
+                call: "RICHIAMATA",
+                video: "VIDEOCHIAMATA"
+            };
+            setAppointmentTitle(`${typeLabels[appointmentType]} - ${lead.firstName} ${lead.lastName}`);
+        }
+    }, [appointmentType, actionType, lead, isTitleManual]);
 
     const handleAction = async (type: 'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | 'appointment') => {
         setActionType(type);
         setIsOpen(true);
         setSendWhatsapp(true);
+        setIsTitleManual(false); // Reset manual flag on new action
     };
 
     const submitAction = async () => {
@@ -175,7 +189,10 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                                 <Input 
                                     placeholder="Aggiungi titolo"
                                     value={appointmentTitle}
-                                    onChange={(e) => setAppointmentTitle(e.target.value)}
+                                    onChange={(e) => {
+                                        setAppointmentTitle(e.target.value);
+                                        setIsTitleManual(true);
+                                    }}
                                     className="border-0 border-b-2 border-indigo-100 rounded-none bg-transparent h-14 text-2xl font-black text-indigo-900 placeholder:text-slate-200 focus-visible:ring-0 focus-visible:border-indigo-500 transition-all px-0"
                                 />
                             </div>
