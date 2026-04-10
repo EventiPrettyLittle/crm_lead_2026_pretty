@@ -79,10 +79,9 @@ export async function saveFile(data: { name: string, kind: string, url: string, 
 
 export async function renameEntry(id: string, newName: string) {
     try {
-        const now = new Date().toISOString();
         await prisma.$executeRawUnsafe(
-            `UPDATE "PresentationItem" SET name = $1, "updatedAt" = $2 WHERE id = $3`,
-            newName, now, id
+            `UPDATE "PresentationItem" SET name = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2`,
+            newName, id
         );
         revalidatePath('/presentation');
         return { success: true };
