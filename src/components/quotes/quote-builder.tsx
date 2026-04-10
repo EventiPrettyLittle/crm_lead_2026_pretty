@@ -283,11 +283,6 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                 setQId(newQuote.id);
                 setQuote(newQuote);
                 
-                // Auto-update lead stage to PREVENTIVO
-                await updateLeadQuickAction(initialLeadId, 'preventivo', { 
-                    notes: "Creato nuovo preventivo (automatico)" 
-                });
-                
                 toast.success("Nuovo preventivo creato e stato aggiornato 📑");
             } catch (error) {
                 console.error("Create quote error:", error);

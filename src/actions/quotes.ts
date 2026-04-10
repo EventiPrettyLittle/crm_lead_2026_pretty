@@ -78,44 +78,62 @@ export async function getQuotes(search?: string) {
 }
 
 export async function createQuote(leadId: string) {
-    // Prendiamo il referente dalle credenziali di login se disponibili
-    const { getCurrentUser } = await import("./auth");
-    const userSession = await getCurrentUser();
+    // 1. Chiamate in parallelo per velocità massima
+    const [userResult, settings, maxResult, currentLead] = await Promise.all([
+        import("./auth").then(m => m.getCurrentUser()),
+        getCompanySettings(),
+        prisma.quote.aggregate({ _max: { number: true } }),
+        prisma.lead.findUnique({ where: { id: leadId } })
+    ]);
     
-    const settings = await getCompanySettings();
-    const creator = userSession?.name || settings?.referente || "Luca Vitale";
-
-    // Troviamo il numero massimo per evitare collisioni se alcuni preventivi sono stati cancellati
-    const maxQuote = await prisma.quote.aggregate({
-        _max: { number: true }
-    });
-    const nextNumber = (maxQuote._max.number || 0) + 1;
-
-    // Usiamo Raw SQL per creare il preventivo includendo createdBy (che non è nello schema Prisma generato)
+    const nextNumber = (maxResult._max.number || 0) + 1;
+    const creatorName = userResult?.name || settings?.referente || "Luca Vitale";
+    const creatorPhone = userResult?.phone || settings?.phone || "";
     const id = `quote-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    const creatorName = userSession?.name || settings?.referente || "Luca Vitale";
-    const creatorPhone = userSession?.phone || settings?.phone || "";
 
-    try {
-        await prisma.$executeRawUnsafe(
+    // 2. Creazione preventivo e aggiornamento lead in parallelo
+    const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
+    const systemNote = `[Sistema - ${timestamp}]: Passato a stato Preventivo. Creato nuovo preventivo (automatico)\n\n`;
+
+    const [leadUpdate] = await Promise.all([
+        // Aggiorniamo il lead direttamente qui per evitare una seconda chiamata dal client
+        prisma.lead.update({
+            where: { id: leadId },
+            data: {
+                stage: 'PREVENTIVO',
+                lastStatus: 'PREVENTIVO',
+                lastStatusAt: new Date(),
+                notesInternal: systemNote + (currentLead?.notesInternal || "")
+            }
+        }),
+        // Inserimento preventivo
+        prisma.$executeRawUnsafe(
             `INSERT INTO "Quote" (id, number, "leadId", status, "createdBy", "creatorPhone", "totalAmount", "discountTotal", "createdAt", "updatedAt") 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
             id, nextNumber, leadId, 'BOZZA', creatorName, creatorPhone, 0, 0
-        );
-    } catch (e: any) {
-        console.warn("Fallback creation Quote (missing columns):", e.message);
-        // Fallback se mancano le colonne custom
-        await prisma.$executeRawUnsafe(
-            `INSERT INTO "Quote" (id, number, "leadId", status, "totalAmount", "discountTotal", "createdAt", "updatedAt") 
-             VALUES ($1, $2, $3, $4, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-            id, nextNumber, leadId, 'BOZZA'
-        );
-    }
+        ).catch(async (e) => {
+            console.warn("Fallback Quote creation:", e.message);
+            return prisma.$executeRawUnsafe(
+                `INSERT INTO "Quote" (id, number, "leadId", status, "totalAmount", "discountTotal", "createdAt", "updatedAt") 
+                 VALUES ($1, $2, $3, $4, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+                id, nextNumber, leadId, 'BOZZA'
+            );
+        }),
+        // Creazione attività
+        prisma.activity.create({
+            data: {
+                leadId,
+                type: 'QUOTE',
+                notes: "Creato nuovo preventivo (automatico)"
+            }
+        })
+    ]);
 
-    // Recuperiamo i dati del lead per restituirli subito alla UI
-    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
-
+    // Unica revalidazione per tutto
     revalidatePath(`/leads/${leadId}`);
+    revalidatePath('/kanban');
+    revalidatePath('/quotes');
+    
     return serializePrisma({ 
         id, 
         number: nextNumber, 
@@ -123,7 +141,7 @@ export async function createQuote(leadId: string) {
         status: 'BOZZA', 
         createdBy: creatorName, 
         creatorPhone,
-        lead
+        lead: leadUpdate
     });
 }
 
