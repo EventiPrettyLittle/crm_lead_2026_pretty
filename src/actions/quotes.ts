@@ -78,11 +78,14 @@ export async function createQuote(leadId: string) {
     const settings = await getCompanySettings();
     const creator = userSession?.name || settings?.referente || "Luca Vitale";
 
-    const count = await prisma.quote.count();
-    const nextNumber = count + 1;
+    // Troviamo il numero massimo per evitare collisioni se alcuni preventivi sono stati cancellati
+    const maxQuote = await prisma.quote.aggregate({
+        _max: { number: true }
+    });
+    const nextNumber = (maxQuote._max.number || 0) + 1;
 
     // Usiamo Raw SQL per creare il preventivo includendo createdBy (che non è nello schema Prisma generato)
-    const id = Math.random().toString(36).substring(2);
+    const id = `quote-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const creatorName = userSession?.name || settings?.referente || "Luca Vitale";
     const creatorPhone = userSession?.phone || settings?.phone || "";
 
