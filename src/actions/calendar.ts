@@ -226,8 +226,8 @@ export async function createCalendarEvent(eventData: {
                         summary: eventData.title,
                         description: eventData.description,
                         location: eventData.location,
-                        start: { dateTime: eventData.startDateTime, timeZone: 'Europe/Rome' },
-                        end: { dateTime: eventData.endDateTime, timeZone: 'Europe/Rome' },
+                        start: { dateTime: eventData.startDateTime },
+                        end: { dateTime: eventData.endDateTime },
                     },
                 });
                 googleEventId = response.data.id;

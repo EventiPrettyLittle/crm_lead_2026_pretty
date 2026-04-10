@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { getFiles, createFolder, saveFile, deleteEntry, renameEntry } from '@/actions/presentation-actions'
+import { getFiles, createFolder, saveFile, deleteEntry, renameEntry, getFileContent } from '@/actions/presentation-actions'
 import { cn } from '@/lib/utils'
 
 export default function PresentationPage() {
@@ -37,6 +37,7 @@ export default function PresentationPage() {
     const [newFolderName, setNewFolderName] = useState("")
     const [selectedEntry, setSelectedEntry] = useState<any | null>(null)
     const [showPreview, setShowPreview] = useState(false)
+    const [isPreviewLoading, setIsPreviewLoading] = useState(false)
 
     // Form per link
     const [linkData, setLinkData] = useState({ name: '', url: '', kind: 'VIDEO' })
@@ -119,6 +120,30 @@ export default function PresentationPage() {
             loadEntries()
         } else {
             toast.error(res.error)
+        }
+    }
+
+    const handleEntryClick = async (item: any) => {
+        if (item.type === 'FOLDER') {
+            setPath([...path, item])
+        } else {
+            // Se non abbiamo l'URL (per le immagini ottimizzate), lo carichiamo ora
+            if (!item.url && item.kind === 'IMAGE') {
+                setIsPreviewLoading(true)
+                setShowPreview(true)
+                setSelectedEntry(item)
+                const res = await getFileContent(item.id)
+                if (res.success) {
+                    setSelectedEntry({ ...item, url: res.url })
+                } else {
+                    toast.error(res.error)
+                    setShowPreview(false)
+                }
+                setIsPreviewLoading(false)
+            } else {
+                setSelectedEntry(item)
+                setShowPreview(true)
+            }
         }
     }
 
@@ -231,7 +256,7 @@ export default function PresentationPage() {
                     {entries.map((item) => (
                         <div key={item.id} className="group relative">
                             <Card 
-                                onClick={() => item.type === 'FOLDER' ? setPath([...path, item]) : (setSelectedEntry(item), setShowPreview(true))}
+                                onClick={() => handleEntryClick(item)}
                                 className="rounded-[2rem] border-none shadow-sm shadow-slate-200/50 bg-white hover:shadow-xl hover:shadow-indigo-100 transition-all cursor-pointer overflow-hidden aspect-square flex flex-col items-center justify-center gap-4 group-hover:-translate-y-1 duration-300"
                             >
                                 <div className="transition-transform duration-500 group-hover:scale-110">{getIcon(item)}</div>
@@ -259,10 +284,15 @@ export default function PresentationPage() {
                 <div className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
                     <Button onClick={() => setShowPreview(false)} variant="ghost" className="absolute top-6 right-6 bg-white/10 text-white hover:bg-white/20 rounded-2xl h-12 w-12"><X className="w-6 h-6"/></Button>
                     <div className="w-full max-w-5xl h-[80vh] flex items-center justify-center rounded-[3rem] overflow-hidden bg-black/20 relative shadow-2xl">
-                        {selectedEntry.kind === 'IMAGE' ? (
+                        {isPreviewLoading ? (
+                            <div className="flex flex-col items-center gap-4">
+                                <Loader2 className="w-10 h-10 animate-spin text-white" />
+                                <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">Caricamento risorsa...</span>
+                            </div>
+                        ) : selectedEntry.kind === 'IMAGE' ? (
                             <img 
                                 src={
-                                    selectedEntry.url.includes('drive.google.com')
+                                    selectedEntry.url?.includes('drive.google.com')
                                         ? selectedEntry.url.replace('/view', '').replace('/preview', '').replace('/edit', '').replace('file/d/', 'uc?id=').replace('open?id=', 'uc?id=')
                                         : selectedEntry.url
                                 } 
@@ -271,9 +301,9 @@ export default function PresentationPage() {
                         ) : selectedEntry.kind === 'VIDEO' || selectedEntry.kind === 'PDF' ? (
                             <iframe 
                                 src={
-                                    selectedEntry.url.includes('youtube.com') || selectedEntry.url.includes('youtu.be')
+                                    selectedEntry.url?.includes('youtube.com') || selectedEntry.url?.includes('youtu.be')
                                         ? (() => {
-                                            const url = selectedEntry.url;
+                                            const url = selectedEntry.url || "";
                                             let videoId = "";
                                             if (url.includes('youtu.be/')) {
                                                 videoId = url.split('youtu.be/')[1].split(/[?&]/)[0];
@@ -284,9 +314,9 @@ export default function PresentationPage() {
                                             }
                                             return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
                                         })()
-                                        : selectedEntry.url.includes('drive.google.com')
+                                        : selectedEntry.url?.includes('drive.google.com')
                                             ? (() => {
-                                                const idMatch = selectedEntry.url.match(/[-\w]{25,}/);
+                                                const idMatch = selectedEntry.url?.match(/[-\w]{25,}/);
                                                 const id = idMatch ? idMatch[0] : '';
                                                 return `https://drive.google.com/file/d/${id}/preview`;
                                             })()

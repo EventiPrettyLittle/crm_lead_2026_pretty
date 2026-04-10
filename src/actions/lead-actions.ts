@@ -69,12 +69,11 @@ export async function updateLeadQuickAction(
 
             // Costruiamo le stringhe ISO forzando l'orario di Roma (+02:00)
             const startISO = `${data.appointmentDate}:00+02:00`;
+            const startDate = new Date(startISO);
             
-            // Calcoliamo l'ora di fine (start + 1 ora) gestendo il cambio ora
-            const [dPart, tPart] = data.appointmentDate.split('T');
-            const [h, m] = tPart.split(':');
-            const endH = (parseInt(h) + 1).toString().padStart(2, '0');
-            const endISO = `${dPart}T${endH}:${m}:00+02:00`;
+            // Calcoliamo la fine (+1 ora) in modo robusto gestendo il cambio giorno
+            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+            const endISO = new Date(endDate.getTime() + 2 * 60 * 60 * 1000).toISOString().replace('Z', '+02:00');
 
             const finalTitle = data.title || `${typeLabel.toUpperCase()} - ${leadBase.firstName || 'Cliente'} ${leadBase.lastName || ''}`;
 

@@ -30,9 +30,22 @@ export async function getFiles(parentId: string | null = null) {
     try {
         await ensurePresentationTable();
         
-        const items = parentId 
-            ? await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" = $1 ORDER BY "type" DESC, "name" ASC`, parentId)
-            : await prisma.$queryRawUnsafe(`SELECT * FROM "PresentationItem" WHERE "parentId" IS NULL ORDER BY "type" DESC, "name" ASC`);
+        // Ottimizzazione: Non recuperiamo l'URL (che può essere un pesante Base64) 
+        // per gli elementi di tipo FILE-IMAGE nella lista principale.
+        // Lo recupereremo on-demand per la preview.
+        const items: any[] = await (parentId 
+            ? prisma.$queryRawUnsafe(`SELECT id, name, type, kind, "parentId", "createdAt" FROM "PresentationItem" WHERE "parentId" = $1 ORDER BY "type" DESC, "name" ASC`, parentId)
+            : prisma.$queryRawUnsafe(`SELECT id, name, type, kind, "parentId", "createdAt" FROM "PresentationItem" WHERE "parentId" IS NULL ORDER BY "type" DESC, "name" ASC`));
+        
+        // Se è un VIDEO o PDF, l'URL è un link leggero, quindi lo recuperiamo comunque
+        // per permettere di distinguerli o usarli subito.
+        // Facciamo una seconda query o integriamo nella prima (SQLite/Postgres handle this differently but raw is safer)
+        for (let item of items) {
+            if (item.type === 'FILE' && (item.kind === 'VIDEO' || item.kind === 'PDF')) {
+                const fullItem: any = await prisma.$queryRawUnsafe(`SELECT url FROM "PresentationItem" WHERE id = $1`, item.id);
+                if (fullItem && fullItem[0]) item.url = fullItem[0].url;
+            }
+        }
             
         return serializePrisma(items);
     } catch (error) {
@@ -93,19 +106,23 @@ export async function renameEntry(id: string, newName: string) {
 
 export async function deleteEntry(id: string) {
     try {
-        console.log("Tentativo eliminazione ID:", id);
-        // 1. Eliminiamo i contenuti se è una cartella
-        const delChildren = await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE "parentId" = $1`, id);
-        console.log("Figli eliminati:", delChildren);
-        
-        // 2. Eliminiamo l'elemento stesso
-        const delSelf = await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE id = $1`, id);
-        console.log("Elemento eliminato:", delSelf);
-        
+        await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE "parentId" = $1`, id);
+        await prisma.$executeRawUnsafe(`DELETE FROM "PresentationItem" WHERE id = $1`, id);
         revalidatePath('/presentation');
         return { success: true };
     } catch (error: any) {
         console.error("Delete error:", error);
         return { success: false, error: `Errore eliminazione: ${error.message}` };
+    }
+}
+
+export async function getFileContent(id: string) {
+    try {
+        const item: any = await prisma.$queryRawUnsafe(`SELECT url FROM "PresentationItem" WHERE id = $1`, id);
+        if (item && item[0]) return { success: true, url: item[0].url };
+        return { success: false, error: "File non trovato" };
+    } catch (error) {
+        console.error("getFileContent error:", error);
+        return { success: false, error: "Errore nel recupero del contenuto" };
     }
 }

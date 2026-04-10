@@ -20,6 +20,30 @@ export async function getLeadById(id: string) {
             }
         }
     });
+
+    if (lead) {
+        // Recuperiamo anche i preventivi di altri lead che hanno lo stesso nome e cognome
+        // per avere uno storico completo del cliente
+        const associatedQuotes = await prisma.quote.findMany({
+            where: {
+                lead: {
+                    firstName: lead.firstName,
+                    lastName: lead.lastName,
+                    id: { not: lead.id } // Escludiamo quelli già inclusi
+                }
+            },
+            include: { items: true },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Uniamo i preventivi evitando duplicati se necessario (anche se lead.id è diverso)
+        if (associatedQuotes.length > 0) {
+            (lead as any).quotes = [...lead.quotes, ...associatedQuotes].sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+        }
+    }
+
     return serializePrisma(lead);
 }
 
