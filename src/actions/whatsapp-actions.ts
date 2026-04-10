@@ -54,7 +54,7 @@ export async function sendLeadWhatsAppAction(
 
         // Definizione variabili dinamiche in base alla scelta esatta dell'utente
         const typeValue = context?.type === 'showroom' 
-            ? "appuntamento in show room" 
+            ? "Showroom" 
             : context?.type === 'video'
             ? "videochiamata"
             : "richiamata";
