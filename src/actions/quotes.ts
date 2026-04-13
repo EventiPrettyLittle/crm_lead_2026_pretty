@@ -36,7 +36,7 @@ function mapRawToPrisma(raw: any) {
     if (!raw) return null;
     const mapped: any = { ...raw };
     
-    // Iteriamo su tutte le chiavi per mappare correttamente indipendentemente dal case
+    // Mappatura esaustiva per coprire ogni possibile variazione di case dal DB
     Object.keys(raw).forEach(key => {
         const lower = key.toLowerCase();
         const val = raw[key];
@@ -54,6 +54,10 @@ function mapRawToPrisma(raw: any) {
         if (lower === 'updatedat') mapped.updatedAt = val;
         if (lower === 'createdby') mapped.createdBy = val;
         if (lower === 'creatorphone') mapped.creatorPhone = val;
+        if (lower === 'sentat') mapped.sentAt = val;
+        if (lower === 'notes') mapped.notes = val;
+        if (lower === 'status') mapped.status = val;
+        if (lower === 'number') mapped.number = val;
     });
 
     return mapped;
@@ -152,29 +156,58 @@ export async function createQuote(leadId: string) {
 }
 
 export async function getQuote(id: string) {
-    const quoteResults: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Quote" WHERE id = $1`, id);
-    if (quoteResults.length === 0) return null;
-    
-    let quote = mapRawToPrisma(quoteResults[0]);
-    
-    // Fetch items with raw SQL
-    const rawItems: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "QuoteItem" WHERE "quoteId" = $1 ORDER BY "id" ASC`, id);
-    quote.items = rawItems.map(item => mapRawToPrisma(item));
-    
-    // Fetch lead
-    const lead = await prisma.lead.findUnique({ where: { id: quote.leadId } });
-    quote.lead = lead;
+    try {
+        // Fetch via standard Prisma for maximum reliability with relations
+        const quote = await prisma.quote.findUnique({
+            where: { id },
+            include: {
+                lead: true,
+                items: {
+                    orderBy: { id: 'asc' }
+                }
+            }
+        });
 
-    // Fetch company settings for PDF
-    const settings = await getCompanySettings();
-    quote.companySettings = settings;
+        if (!quote) {
+            // Fallback to raw SQL if findUnique fails (e.g. if schema is extremely desynced)
+            const quoteResults: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Quote" WHERE id = $1`, id);
+            if (quoteResults.length === 0) return null;
+            
+            let rawQuote = mapRawToPrisma(quoteResults[0]);
+            const rawItems: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "QuoteItem" WHERE "quoteId" = $1 ORDER BY "id" ASC`, id);
+            rawQuote.items = rawItems.map(item => mapRawToPrisma(item));
+            const lead = await prisma.lead.findUnique({ where: { id: rawQuote.leadId } });
+            rawQuote.lead = lead;
+            
+            const [settings, { getSystemSettings }] = await Promise.all([
+                getCompanySettings(),
+                import('./settings-actions')
+            ]);
+            const systemSettings = await getSystemSettings();
+            
+            return serializePrisma({
+                ...rawQuote,
+                companySettings: settings,
+                systemSettings: systemSettings
+            });
+        }
 
-    // Fetch system settings (for logo)
-    const { getSystemSettings } = await import('./settings-actions');
-    const systemSettings = await getSystemSettings();
-    quote.systemSettings = systemSettings;
-    
-    return serializePrisma(quote);
+        // Fetch extra metadata
+        const [settings, { getSystemSettings }] = await Promise.all([
+            getCompanySettings(),
+            import('./settings-actions')
+        ]);
+        const systemSettings = await getSystemSettings();
+        
+        return serializePrisma({
+            ...quote,
+            companySettings: settings,
+            systemSettings: systemSettings
+        });
+    } catch (error) {
+        console.error("Error in getQuote:", error);
+        return null;
+    }
 }
 
 export async function deleteQuote(id: string, leadId?: string) {
