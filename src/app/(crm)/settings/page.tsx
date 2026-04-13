@@ -73,16 +73,14 @@ export default function SettingsPage() {
             const u = await getCurrentUser();
             if (u) {
                 setUser(u);
-                setAccountData({ 
-                    name: u.name || '', 
-                    phone: u.phone || '', 
-                    password: '' 
-                });
-                if (u.role === 'SUPER_ADMIN') {
-                    const users = await getAllUsers();
-                    setTeam(users);
-                }
+                setAccountData(prev => ({ 
+                    ...prev,
+                    name: u.name || u.email || '', 
+                    phone: u.phone || '' 
+                }));
             }
+        } catch (error) {
+            console.error("Error loading settings:", error);
         } finally {
             setLoading(false);
         }
