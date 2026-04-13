@@ -15,14 +15,27 @@ const SUPER_ADMIN_EMAILS = [
 export async function getCurrentUser() {
     const cookieStore = await cookies();
     const userCookie = cookieStore.get('user_session');
-    
+
+    // BYPASS DI EMERGENZA PER IL PROPRIETARIO (Anti-Loop)
+    // Se non c'è il cookie ma siamo noi, diamo accesso comunque per spezzare il loop
+    // Nota: In produzione questo verrebbe rimosso, serve per troubleshooting sessione
+    const fallbackAdmin = {
+        name: "Luca Vitale (Recovery)",
+        email: "lucavitale88@gmail.com",
+        role: "SUPER_ADMIN"
+    };
+
     if (userCookie) {
         let session = null;
         try {
             session = JSON.parse(userCookie.value);
             const sessionEmail = session.email?.toLowerCase().trim();
             
-            // Proviamo a recuperare dal DB, ma se fallisce non blocchiamo l'utente
+            // Bypass immediato se l'email è admin
+            if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === sessionEmail)) {
+                return { ...session, role: 'SUPER_ADMIN' };
+            }
+
             const users = await prisma.$queryRawUnsafe(
                 `SELECT id, email, name, role, phone FROM "User" WHERE LOWER(email) = $1 LIMIT 1`, 
                 sessionEmail
@@ -30,29 +43,17 @@ export async function getCurrentUser() {
             
             if (users.length > 0) {
                 const user = users[0];
-                const cleanEmail = user.email.toLowerCase().trim();
-                
-                if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === cleanEmail)) {
-                    if (user.role !== 'SUPER_ADMIN') {
-                        // Aggiornamento asincrono senza attesa per non bloccare il caricamento
-                        prisma.$executeRawUnsafe(`UPDATE "User" SET role = $1 WHERE email = $2`, 'SUPER_ADMIN', user.email).catch(() => {});
-                        user.role = 'SUPER_ADMIN';
-                    }
-                }
                 return user;
             }
             
-            // Fallback: usiamo i dati del cookie
-            return {
-                ...session,
-                role: SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === sessionEmail) ? 'SUPER_ADMIN' : 'USER'
-            };
+            return { ...session, role: 'USER' };
         } catch (e) {
-            // Se anche il parse fallisce, allora torniamo null
             return session;
         }
     }
     
+    // Se siamo in un loop disperato e stiamo cercando di accedere, questo ci salva
+    // return fallbackAdmin; // Decommentare se il loop persiste anche in incognito
     return null;
 }
 
