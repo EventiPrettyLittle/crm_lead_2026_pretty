@@ -59,24 +59,21 @@ export async function GET(request: NextRequest) {
             maxAge: 60 * 60 * 24 * 30 
         })
 
-        // Aggiorna user_session solo se non esiste già una sessione attiva
-        const existingSession = request.cookies.get('user_session');
-        if (!isCalendarConnect && !existingSession) {
-            const displayName = dbUser?.name || userInfo.name || 'User';
-            response.cookies.set('user_session', JSON.stringify({
-                id: dbUser?.id || userInfo.id,
-                name: displayName,
-                email: userInfo.email,
-                picture: userInfo.picture,
-                role: dbUser?.role || 'USER'
-            }), {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                path: '/',
-                maxAge: 60 * 60 * 24 * 30 
-            })
-        }
+        // Aggiorna SEMPRE la user_session al login per garantire l'autorizzazione
+        const displayName = dbUser?.name || userInfo.name || 'User';
+        response.cookies.set('user_session', JSON.stringify({
+            id: dbUser?.id || userInfo.id,
+            name: displayName,
+            email: userInfo.email,
+            picture: userInfo.picture,
+            role: dbUser?.role || 'USER'
+        }), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30 
+        })
 
         return response
     } catch (error) {
