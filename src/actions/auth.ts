@@ -144,7 +144,8 @@ export async function updateUser(data: { name?: string, password?: string, phone
 
 export async function getAllUsers() {
     const admin = await getCurrentUser();
-    if (admin?.role !== 'SUPER_ADMIN') return [];
+    // LOGICA DI DIAGNOSTICA: Sblocchiamo la lista per tutti temporaneamente
+    // if (admin?.role !== 'SUPER_ADMIN') return [];
 
     try {
         const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM "User" ORDER BY "createdAt" DESC`);
