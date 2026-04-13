@@ -23,10 +23,10 @@ export async function getCurrentUser() {
             const sessionEmail = session.email?.toLowerCase().trim();
             
             // Proviamo a recuperare dal DB, ma se fallisce non blocchiamo l'utente
-            const users: any[] = await prisma.$queryRawUnsafe(
+            const users = await prisma.$queryRawUnsafe(
                 `SELECT id, email, name, role, phone FROM "User" WHERE LOWER(email) = $1 LIMIT 1`, 
                 sessionEmail
-            ).catch(() => []);
+            ).catch(() => []) as any[];
             
             if (users.length > 0) {
                 const user = users[0];
