@@ -7,16 +7,19 @@ export async function sendEmail({ to, subject, body, attachment }: { to: string,
         const tokensCookie = cookieStore.get('google_tokens');
 
         if (!tokensCookie) {
-            console.warn("[EMAIL] No google_tokens found, falling back to mock");
-            return { success: false, error: 'Non sei collegato a Google' };
+            console.warn("[EMAIL] No google_tokens found");
+            return { success: false, error: 'Account Google non collegato. Vai nel Calendario e clicca Connetti Google.' };
         }
 
         const tokens = JSON.parse(tokensCookie.value);
         await sendGmail(tokens, { to, subject, body, attachment });
 
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         console.error("[EMAIL ERROR]", error);
-        return { success: false, error: 'Errore durante l\'invio della mail' };
+        const errorMsg = error.message?.includes('insufficient permissions') || error.message?.includes('scope')
+            ? 'Permessi Gmail insufficienti. Ricollega Google e accetta il permesso di invio email.'
+            : 'Errore durante l\'invio della mail tramite Gmail.';
+        return { success: false, error: errorMsg };
     }
 }
