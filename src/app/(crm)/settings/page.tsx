@@ -96,7 +96,8 @@ export default function SettingsPage() {
             
             if (userRes.success) {
                 toast.success("Impostazioni e profilo aggiornati");
-                setTimeout(() => window.location.reload(), 800);
+                // Ricarichiamo i dati localmente invece di refreshare tutta la pagina
+                loadData();
             } else {
                 toast.success("Impostazioni salvate");
             }
