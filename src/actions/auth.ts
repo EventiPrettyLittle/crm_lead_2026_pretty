@@ -19,14 +19,20 @@ export async function getCurrentUser() {
     if (userCookie) {
         try {
             const session = JSON.parse(userCookie.value);
-            // Invece di fidarci del cookie per il nome, lo chiediamo al DB per essere sicuri
-            const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone FROM "User" WHERE email = $1 LIMIT 1`, session.email);
+            const sessionEmail = session.email?.toLowerCase().trim();
+            
+            // Invece di fidarci del cookie per il nome, lo chiediamo al DB
+            const users: any[] = await prisma.$queryRawUnsafe(
+                `SELECT id, email, name, role, phone FROM "User" WHERE LOWER(email) = $1 LIMIT 1`, 
+                sessionEmail
+            );
             
             if (users.length > 0) {
                 const user = users[0];
+                const cleanEmail = user.email.toLowerCase().trim();
                 
-                // Forziamo il ruolo SUPER_ADMIN se l'email è nella lista del controllo totale
-                if (SUPER_ADMIN_EMAILS.includes(user.email)) {
+                // Forziamo il ruolo SUPER_ADMIN se l'email è nella lista VIP
+                if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === cleanEmail)) {
                     if (user.role !== 'SUPER_ADMIN') {
                         await prisma.$executeRawUnsafe(`UPDATE "User" SET role = $1 WHERE email = $2`, 'SUPER_ADMIN', user.email);
                         user.role = 'SUPER_ADMIN';
@@ -35,10 +41,17 @@ export async function getCurrentUser() {
                 return user;
             }
             
-            // Fallback se l'utente non è ancora nel DB (es: primo login Google prima del sync)
+            // Fallback: se l'email è VIP, diamo i permessi anche se non è ancora nel DB
+            if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === sessionEmail)) {
+                return {
+                    ...session,
+                    role: 'SUPER_ADMIN'
+                };
+            }
+
             return {
                 ...session,
-                role: SUPER_ADMIN_EMAILS.includes(session.email) ? 'SUPER_ADMIN' : 'USER'
+                role: 'USER'
             };
         } catch (e) {
             return null;
