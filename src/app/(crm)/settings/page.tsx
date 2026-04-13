@@ -189,12 +189,10 @@ export default function SettingsPage() {
                         <User className="h-4 w-4 mr-2" />
                         Account
                     </TabsTrigger>
-                    {isAdmin && (
-                        <TabsTrigger value="team" className="rounded-full px-8 py-2.5 font-black text-xs uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-md">
-                            <Users className="h-4 w-4 mr-2" />
-                            Team & Permessi
-                        </TabsTrigger>
-                    )}
+                    <TabsTrigger value="team" className="rounded-full px-8 py-2.5 font-black text-xs uppercase tracking-widest data-[state=active]:bg-white data-[state=active]:shadow-md">
+                        <Users className="h-4 w-4 mr-2" />
+                        Team & Permessi
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="company">
