@@ -95,7 +95,7 @@ export async function createQuote(leadId: string) {
     
     const nextNumber = (maxResult._max.number || 0) + 1;
     const creatorName = userResult?.name || settings?.referente || "Luca Vitale";
-    const creatorPhone = userResult?.phone || settings?.phone || "";
+    const creatorPhone = userResult?.phone || ""; // Priorità al cellulare dell'operatore loggato
     const quoteId = `quote-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
     const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
