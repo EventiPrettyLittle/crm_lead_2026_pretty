@@ -39,7 +39,10 @@ export async function initDatabase() {
             await prisma.$executeRawUnsafe(`ALTER TABLE "QuoteItem" ADD COLUMN IF NOT EXISTS "originalPrice" DECIMAL(65,30);`);
             await prisma.$executeRawUnsafe(`ALTER TABLE "QuoteItem" ADD COLUMN IF NOT EXISTS "discount" DECIMAL(65,30) DEFAULT 0;`);
             await prisma.$executeRawUnsafe(`ALTER TABLE "Quote" ADD COLUMN IF NOT EXISTS "createdBy" TEXT;`);
+            await prisma.$executeRawUnsafe(`ALTER TABLE "Quote" ADD COLUMN IF NOT EXISTS "creatorPhone" TEXT;`);
             await prisma.$executeRawUnsafe(`ALTER TABLE "Quote" ADD COLUMN IF NOT EXISTS "sentAt" TIMESTAMP(3);`);
+            await prisma.$executeRawUnsafe(`ALTER TABLE "Quote" ADD COLUMN IF NOT EXISTS "totalAmount" DECIMAL(65,30) DEFAULT 0;`);
+            await prisma.$executeRawUnsafe(`ALTER TABLE "Quote" ADD COLUMN IF NOT EXISTS "discountTotal" DECIMAL(65,30) DEFAULT 0;`);
             await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "quoteSentAt" TIMESTAMP(3);`);
             await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "createdBy" TEXT;`);
             await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "additionalServices" TEXT;`);

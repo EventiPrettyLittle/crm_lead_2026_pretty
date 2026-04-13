@@ -97,12 +97,23 @@ export async function createQuote(leadId: string) {
     const systemNote = `[Sistema - ${timestamp}]: Passato a stato Preventivo. Creato nuovo preventivo (automatico)\n\n`;
 
     // 2. Operazioni DB raggruppate in parallelo
-    await Promise.all([
-        prisma.$executeRawUnsafe(
-            `INSERT INTO "Quote" (id, number, "leadId", status, "createdBy", "creatorPhone", "totalAmount", "discountTotal", "createdAt", "updatedAt") 
+    try {
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO "Quote" (id, "number", "leadId", status, "createdBy", "creatorPhone", "totalAmount", "discountTotal", "createdAt", "updatedAt") 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
             quoteId, nextNumber, leadId, 'BOZZA', creatorName, creatorPhone, 0, 0
-        ),
+        );
+    } catch (e: any) {
+        console.warn("Fallback insert Quote (missing columns?):", e.message);
+        // Fallback simplified version without metadata columns that might be missing
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO "Quote" (id, "number", "leadId", status, "totalAmount", "discountTotal", "createdAt", "updatedAt") 
+             VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            quoteId, nextNumber, leadId, 'BOZZA', 0, 0
+        );
+    }
+
+    await Promise.all([
         prisma.lead.update({
             where: { id: leadId },
             data: {
@@ -192,12 +203,22 @@ export async function addItemToQuote(quoteId: string, data: { description: strin
             id, quoteId, data.description, data.quantity, data.originalPrice || data.unitPrice, data.unitPrice, data.discount || 0, data.vatRate, totalPrice
         );
     } catch (e: any) {
-        console.warn("Fallback insert QuoteItem (missing columns):", e.message);
-        await prisma.$executeRawUnsafe(
-            `INSERT INTO "QuoteItem" (id, "quoteId", description, quantity, "unitPrice", "vatRate", "totalPrice") 
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            id, quoteId, data.description, data.quantity, data.unitPrice, data.vatRate, totalPrice
-        );
+        console.warn("Fallback insert QuoteItem (retry without metadata):", e.message);
+        try {
+            await prisma.$executeRawUnsafe(
+                `INSERT INTO "QuoteItem" (id, "quoteId", description, quantity, "unitPrice", "vatRate", "totalPrice") 
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                id, quoteId, data.description, data.quantity, data.unitPrice, data.vatRate, totalPrice
+            );
+        } catch (e2: any) {
+            console.error("Critical insert QuoteItem failure:", e2.message);
+            // Last resort: basic insert
+            await prisma.$executeRawUnsafe(
+                `INSERT INTO "QuoteItem" (id, "quoteId", description, quantity, "unitPrice", "totalPrice") 
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                id, quoteId, data.description, data.quantity, data.unitPrice, totalPrice
+            );
+        }
     }
 
     await updateQuoteTotal(quoteId);
