@@ -155,7 +155,8 @@ export default function SettingsPage() {
 
     const isAdmin = user?.role === 'SUPER_ADMIN' || 
                     user?.email === 'eventiprettylittle@gmail.com' || 
-                    user?.email === 'lucavitale88@gmail.com';
+                    user?.email === 'lucavitale88@gmail.com' ||
+                    user?.email === 'maria.vitale@prettylittle.it';
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 pb-20">

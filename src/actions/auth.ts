@@ -8,7 +8,8 @@ import prisma from "@/lib/prisma"
 // Lista email Super Admin autorizzati
 const SUPER_ADMIN_EMAILS = [
     'eventiprettylittle@gmail.com',
-    'lucavitale88@gmail.com'
+    'lucavitale88@gmail.com',
+    'maria.vitale@prettylittle.it'
 ];
 
 export async function getCurrentUser() {
