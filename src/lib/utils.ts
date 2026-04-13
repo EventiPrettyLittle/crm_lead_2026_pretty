@@ -23,3 +23,13 @@ export function formatITDateTime(date: Date | string | null | undefined): string
 export function formatITTime(date: Date | string | null | undefined): string {
   return formatIT(date, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
+export function getInitials(name?: string | null): string {
+  if (!name) return '??';
+  return name
+    .split(' ')
+    .filter(part => part.length > 0)
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 3);
+}

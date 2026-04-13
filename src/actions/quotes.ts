@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma"
 import { serializePrisma } from "@/lib/serialize"
 import { getCurrentUser } from './auth'
 import { getCompanySettings } from './settings'
+import { getInitials } from '@/lib/utils'
 
 export async function getLeadsMini(search?: string) {
     const leads = await prisma.lead.findMany({
@@ -98,7 +99,8 @@ export async function createQuote(leadId: string) {
     const quoteId = `quote-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
     const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
-    const systemNote = `[Sistema - ${timestamp}]: Passato a stato Preventivo. Creato nuovo preventivo (automatico)\n\n`;
+    const initials = getInitials(creatorName);
+    const systemNote = `[Sistema - ${initials} - ${timestamp}]: Passato a stato Preventivo. Creato nuovo preventivo (automatico)\n\n`;
 
     // 2. Operazioni DB raggruppate in parallelo
     try {

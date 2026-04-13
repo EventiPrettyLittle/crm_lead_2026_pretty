@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from 'next/cache'
 import { createActivity } from './lead-detail'
 import { createCalendarEvent } from './calendar'
+import { getCurrentUser } from './auth'
+import { getInitials } from '@/lib/utils'
 
 /**
  * FIXED Quick Activity Action
@@ -99,9 +101,11 @@ export async function updateLeadQuickAction(
         await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
 
         // System Sync Note
+        const user = await getCurrentUser();
+        const initials = getInitials(user?.name || "??");
         const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
         const currentNotes = updatedLead.notesInternal || "";
-        const systemNote = `[Sistema - ${timestamp}]: ${activityNotes}\n\n`;
+        const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
         await prisma.lead.update({
             where: { id: leadId },
             data: { notesInternal: systemNote + currentNotes }
