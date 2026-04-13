@@ -23,9 +23,13 @@ export async function getCurrentUser() {
             
             if (users.length > 0) {
                 const user = users[0];
-                // Assegna il ruolo SUPER_ADMIN forzato se l'email è nella lista
+                
+                // Forziamo il ruolo SUPER_ADMIN se l'email è nella lista del controllo totale
                 if (SUPER_ADMIN_EMAILS.includes(user.email)) {
-                    user.role = 'SUPER_ADMIN';
+                    if (user.role !== 'SUPER_ADMIN') {
+                        await prisma.$executeRawUnsafe(`UPDATE "User" SET role = $1 WHERE email = $2`, 'SUPER_ADMIN', user.email);
+                        user.role = 'SUPER_ADMIN';
+                    }
                 }
                 return user;
             }

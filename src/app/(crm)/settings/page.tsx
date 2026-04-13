@@ -153,7 +153,9 @@ export default function SettingsPage() {
         );
     }
 
-    const isAdmin = user?.role === 'SUPER_ADMIN' || user?.email === 'eventiprettylittle@gmail.com';
+    const isAdmin = user?.role === 'SUPER_ADMIN' || 
+                    user?.email === 'eventiprettylittle@gmail.com' || 
+                    user?.email === 'lucavitale88@gmail.com';
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 pb-20">
