@@ -91,7 +91,9 @@ export async function loginWithCredentials(formData: FormData) {
         cookieStore.set('user_session', JSON.stringify(userData), {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24 * 7 // 1 settimana
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30 
         });
 
         return { success: true };
@@ -116,7 +118,9 @@ export async function updateUser(data: { name?: string, password?: string, phone
             cookieStore.set('user_session', JSON.stringify(updatedUser), {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                maxAge: 60 * 60 * 24 * 7
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 60 * 60 * 24 * 30 
             });
         }
 
