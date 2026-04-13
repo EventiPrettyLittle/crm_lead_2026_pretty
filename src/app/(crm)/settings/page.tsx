@@ -164,21 +164,14 @@ export default function SettingsPage() {
                     <h1 className="text-4xl font-black tracking-tight text-slate-900 italic">Settings</h1>
                     <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest ml-1">Platform Control Center</p>
                 </div>
-                <div className="flex items-center gap-4">
-                    {!isAdmin && (
-                        <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest bg-rose-50 px-4 py-2 rounded-full border border-rose-100 italic">
-                            Sola Lettura (Admin Only)
-                        </p>
-                    )}
-                    <Button 
-                        onClick={handleSubmit} 
-                        disabled={saving || !isAdmin}
-                        className="rounded-2xl bg-slate-900 hover:bg-black h-12 px-8 font-black shadow-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
-                    >
-                        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Applica Modifiche
-                    </Button>
-                </div>
+                <Button 
+                    onClick={handleSubmit} 
+                    disabled={saving}
+                    className="rounded-2xl bg-slate-900 hover:bg-black h-12 px-8 font-black shadow-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+                >
+                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Applica Modifiche
+                </Button>
             </div>
 
             <Tabs defaultValue="company" className="w-full">
@@ -226,9 +219,8 @@ export default function SettingsPage() {
                                             <Input 
                                                 value={settings.companyName} 
                                                 onChange={e => setSettings({...settings, companyName: e.target.value})}
-                                                disabled={!isAdmin}
                                                 placeholder="Lead Events 2026"
-                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white disabled:opacity-50"
+                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -236,9 +228,8 @@ export default function SettingsPage() {
                                             <Input 
                                                 value={settings.vatNumber} 
                                                 onChange={e => setSettings({...settings, vatNumber: e.target.value})}
-                                                disabled={!isAdmin}
                                                 placeholder="01234567890"
-                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white disabled:opacity-50"
+                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white"
                                             />
                                         </div>
                                         <div className="md:col-span-2 space-y-2">
@@ -248,9 +239,8 @@ export default function SettingsPage() {
                                                 <Input 
                                                     value={settings.address} 
                                                     onChange={e => setSettings({...settings, address: e.target.value})}
-                                                    disabled={!isAdmin}
                                                     placeholder="Via delle Aziende 123, Roma"
-                                                    className="h-12 pl-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white disabled:opacity-50"
+                                                    className="h-12 pl-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white"
                                                 />
                                             </div>
                                         </div>
@@ -276,25 +266,22 @@ export default function SettingsPage() {
                                         <div className="space-y-2">
                                             <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome e Cognome Referente</Label>
                                             <Input 
-                                                value={isAdmin ? settings.referente : (user?.name || '')} 
+                                                value={settings.referente} 
                                                 onChange={e => setSettings({...settings, referente: e.target.value})}
-                                                disabled={!isAdmin}
                                                 placeholder="Luca Vitale"
-                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white disabled:opacity-80"
+                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white"
                                             />
                                         </div>
                                         <div className="space-y-2">
                                             <Label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Cellulare Referente</Label>
                                             <Input 
-                                                value={isAdmin ? settings.phone : (user?.phone || '')} 
-                                                disabled={true}
-                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold disabled:opacity-80"
+                                                value={settings.phone} 
+                                                onChange={e => setSettings({...settings, phone: e.target.value})}
+                                                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold"
                                             />
                                         </div>
                                         <p className="text-[10px] text-slate-400 italic font-medium">
-                                            {isAdmin 
-                                                ? "Questi sono i dati predefiniti dell'azienda." 
-                                                : "Questi dati vengono presi dal tuo profilo e inseriti nei preventivi che crei."}
+                                            Questi dati vengono inseriti nei preventivi che crei.
                                         </p>
                                     </div>
                                 </CardContent>
@@ -313,8 +300,7 @@ export default function SettingsPage() {
                                         <Input 
                                             value={settings.phone} 
                                             onChange={e => setSettings({...settings, phone: e.target.value})}
-                                            disabled={!isAdmin}
-                                            className="p-4 rounded-xl border-slate-100 bg-slate-50/50 font-bold disabled:opacity-50"
+                                            className="p-4 rounded-xl border-slate-100 bg-slate-50/50 font-bold"
                                         />
                                     </div>
                                     <div className="space-y-2">
@@ -322,8 +308,7 @@ export default function SettingsPage() {
                                         <Input 
                                             value={settings.email} 
                                             onChange={e => setSettings({...settings, email: e.target.value})}
-                                            disabled={!isAdmin}
-                                            className="p-4 rounded-xl border-slate-100 bg-slate-50/50 font-bold disabled:opacity-50"
+                                            className="p-4 rounded-xl border-slate-100 bg-slate-50/50 font-bold"
                                         />
                                     </div>
                                 </CardContent>
@@ -358,7 +343,6 @@ export default function SettingsPage() {
                                                     <Input 
                                                         value={systemSettings.logoUrl} 
                                                         onChange={e => setSystemSettings({...systemSettings, logoUrl: e.target.value})}
-                                                        disabled={!isAdmin}
                                                         placeholder="URL del logo o carica file..."
                                                         className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold focus:bg-white flex-1"
                                                     />
@@ -367,7 +351,7 @@ export default function SettingsPage() {
                                                             type="file" 
                                                             accept="image/*"
                                                             className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                                            disabled={!isAdmin || saving}
+                                                            disabled={saving}
                                                             onChange={async (e) => {
                                                                 const file = e.target.files?.[0];
                                                                 if (file) {
@@ -414,7 +398,6 @@ export default function SettingsPage() {
                                                 min={50}
                                                 max={300}
                                                 step={5}
-                                                disabled={!isAdmin}
                                                 className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                                             />
                                             <div className="flex justify-between text-[9px] font-black text-slate-300 uppercase tracking-widest">
