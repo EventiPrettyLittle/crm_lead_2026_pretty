@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getCompanySettings, updateCompanySettings } from '@/actions/settings'
-import { getAllUsers, deleteUser, createUser } from '@/actions/auth'
+import { getAllUsers, deleteUser, createUser, getCurrentUser, updateUser } from '@/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -70,11 +70,14 @@ export default function SettingsPage() {
                 });
             }
 
-            const { getCurrentUser } = await import("@/actions/auth");
             const u = await getCurrentUser();
-            setUser(u);
             if (u) {
-                setAccountData({ name: u.name || '', phone: u.phone || '', password: '' });
+                setUser(u);
+                setAccountData({ 
+                    name: u.name || '', 
+                    phone: u.phone || '', 
+                    password: '' 
+                });
                 if (u.role === 'SUPER_ADMIN') {
                     const users = await getAllUsers();
                     setTeam(users);
@@ -91,7 +94,6 @@ export default function SettingsPage() {
         try {
             await updateCompanySettings(settings);
             await updateSystemSettings(systemSettings);
-            const { updateUser } = await import("@/actions/auth");
             const userRes = await updateUser(accountData);
             
             if (userRes.success) {
