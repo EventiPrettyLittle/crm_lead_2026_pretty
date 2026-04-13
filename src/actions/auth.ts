@@ -17,44 +17,39 @@ export async function getCurrentUser() {
     const userCookie = cookieStore.get('user_session');
     
     if (userCookie) {
+        let session = null;
         try {
-            const session = JSON.parse(userCookie.value);
+            session = JSON.parse(userCookie.value);
             const sessionEmail = session.email?.toLowerCase().trim();
             
-            // Invece di fidarci del cookie per il nome, lo chiediamo al DB
+            // Proviamo a recuperare dal DB, ma se fallisce non blocchiamo l'utente
             const users: any[] = await prisma.$queryRawUnsafe(
                 `SELECT id, email, name, role, phone FROM "User" WHERE LOWER(email) = $1 LIMIT 1`, 
                 sessionEmail
-            );
+            ).catch(() => []);
             
             if (users.length > 0) {
                 const user = users[0];
                 const cleanEmail = user.email.toLowerCase().trim();
                 
-                // Forziamo il ruolo SUPER_ADMIN se l'email è nella lista VIP
                 if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === cleanEmail)) {
                     if (user.role !== 'SUPER_ADMIN') {
-                        await prisma.$executeRawUnsafe(`UPDATE "User" SET role = $1 WHERE email = $2`, 'SUPER_ADMIN', user.email);
+                        // Aggiornamento asincrono senza attesa per non bloccare il caricamento
+                        prisma.$executeRawUnsafe(`UPDATE "User" SET role = $1 WHERE email = $2`, 'SUPER_ADMIN', user.email).catch(() => {});
                         user.role = 'SUPER_ADMIN';
                     }
                 }
                 return user;
             }
             
-            // Fallback: se l'email è VIP, diamo i permessi anche se non è ancora nel DB
-            if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === sessionEmail)) {
-                return {
-                    ...session,
-                    role: 'SUPER_ADMIN'
-                };
-            }
-
+            // Fallback: usiamo i dati del cookie
             return {
                 ...session,
-                role: 'USER'
+                role: SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === sessionEmail) ? 'SUPER_ADMIN' : 'USER'
             };
         } catch (e) {
-            return null;
+            // Se anche il parse fallisce, allora torniamo null
+            return session;
         }
     }
     
