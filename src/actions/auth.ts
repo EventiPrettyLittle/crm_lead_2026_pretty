@@ -56,11 +56,11 @@ export async function getCurrentUser() {
         }
     }
     
-    // NUCLEAR OPTION: Se non troviamo nulla, restituiamo un profilo generico per non bloccare la pagina
+    // NUCLEAR OPTION: Se proprio non troviamo nulla, restituiamo un profilo neutro
     return {
         id: 'admin-fallback',
-        email: 'admin@system.it',
-        name: 'Profilo Amministratore',
+        email: '',
+        name: 'Account Amministratore',
         role: 'SUPER_ADMIN'
     };
 }
