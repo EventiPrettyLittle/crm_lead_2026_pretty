@@ -142,23 +142,26 @@ export async function updateUser(data: { name?: string, password?: string, phone
 }
 
 export async function getAllUsers() {
-    const admin = await getCurrentUser();
     // LOGICA DI DIAGNOSTICA: Sblocchiamo la lista per tutti temporaneamente
-    // if (admin?.role !== 'SUPER_ADMIN') return [];
+    // const admin = await getCurrentUser();
 
     try {
-        // Usiamo le virgolette per la tabella "User" che è una parola riservata in Postgres
-        const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM "User" ORDER BY "createdAt" DESC`);
+        // Tentativo 1: Standard Prisma (più sicuro, gestisce lui i nomi tabelle)
+        const users = await prisma.user.findMany({
+            select: { id: true, email: true, name: true, role: true, phone: true, createdAt: true },
+            orderBy: { createdAt: 'desc' }
+        });
         
-        // Se non trova nessuno, stampiamo un log per capire se è davvero vuoto o se è un errore
-        if (users.length === 0) {
-            console.warn("[AUTH] getAllUsers ha restituito 0 record");
-        }
-        
-        return users;
+        if (users && users.length > 0) return serializePrisma(users);
+
+        // Tentativo 2: Raw SQL con varianti se il primo fallisce
+        const rawUsers: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM "User" ORDER BY "createdAt" DESC`)
+            .catch(() => prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM public."User" ORDER BY "createdAt" DESC`))
+            .catch(() => []);
+            
+        return rawUsers;
     } catch (e: any) {
         console.error("[AUTH ERROR] Errore getAllUsers:", e.message);
-        // Ritorniamo l'errore per vederlo nell'interfaccia se necessario
         return [];
     }
 }
