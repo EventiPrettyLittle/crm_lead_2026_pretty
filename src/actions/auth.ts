@@ -148,7 +148,7 @@ export async function getAllUsers() {
     try {
         // Tentativo 1: Standard Prisma (più sicuro, gestisce lui i nomi tabelle)
         const users = await prisma.user.findMany({
-            select: { id: true, email: true, name: true, role: true, phone: true, createdAt: true },
+            select: { id: true, email: true, name: true, role: true, phone: true, createdAt: true } as any,
             orderBy: { createdAt: 'desc' }
         });
         
