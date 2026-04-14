@@ -56,13 +56,8 @@ export async function getCurrentUser() {
         }
     }
     
-    // NUCLEAR OPTION: Se proprio non troviamo nulla, restituiamo Maria per sbloccarla
-    return {
-        id: 'maria-recovery',
-        email: 'maria.vitale@prettylittle.it',
-        name: 'Maria Vitale (Recovery)',
-        role: 'SUPER_ADMIN'
-    };
+    // NESSUN FALLBACK: Ora il sistema è dinamico e caricherà chiunque sia loggato
+    return null;
 }
 
 export async function loginWithCredentials(formData: FormData) {
