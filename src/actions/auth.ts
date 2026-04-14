@@ -147,15 +147,18 @@ export async function getAllUsers() {
     // const admin = await getCurrentUser();
 
     try {
-        // Tentativo 1: Standard Prisma (più sicuro, gestisce lui i nomi tabelle)
-        const users = await prisma.user.findMany({
-            select: { id: true, email: true, name: true, role: true, phone: true, createdAt: true } as any,
-            orderBy: { createdAt: 'desc' }
-        });
-        
-        if (users && users.length > 0) return serializePrisma(users);
+        // Tentativo 1: Standard Prisma (senza phone per evitare crash se il client è vecchio)
+        try {
+            const users = await prisma.user.findMany({
+                select: { id: true, email: true, name: true, role: true, createdAt: true } as any,
+                orderBy: { createdAt: 'desc' }
+            });
+            if (users && users.length > 0) return serializePrisma(users);
+        } catch (e) {
+            console.warn("[AUTH] Tentativo 1 fallito, provo SQL grezzo...");
+        }
 
-        // Tentativo 2: Raw SQL con varianti se il primo fallisce
+        // Tentativo 2: Raw SQL (qui il phone non blocca il build perché è una stringa)
         const rawUsers = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM "User" ORDER BY "createdAt" DESC`)
             .catch(() => prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM public."User" ORDER BY "createdAt" DESC`))
             .catch(() => []) as any[];
