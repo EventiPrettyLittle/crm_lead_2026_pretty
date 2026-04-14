@@ -35,7 +35,7 @@ export default async function LeadsPage() {
                     <Button variant="outline" asChild className="rounded-[1.5rem] h-12 px-6 border-slate-200 bg-white hover:bg-slate-50 font-black text-[11px] uppercase tracking-widest shadow-sm transition-all hover:scale-[1.02]">
                         <Link href="/leads/import">
                             <Upload className="mr-2 h-4 w-4 text-indigo-500" />
-                            Importa DB
+                            Importa
                         </Link>
                     </Button>
                     <AddLeadDialog />
