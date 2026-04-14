@@ -15,6 +15,8 @@ import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog";
 import { getProducts } from "@/actions/products";
 import { QuoteRowActions } from "@/components/quotes/quote-row-actions";
 
+export const dynamic = 'force-dynamic';
+
 export default async function QuotesPage({
     searchParams,
 }: {
