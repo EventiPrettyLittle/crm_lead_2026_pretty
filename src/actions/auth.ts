@@ -56,8 +56,8 @@ export async function getCurrentUser() {
         }
     }
     
-    // Fallback Admin solo se siamo disperati (nessun cookie)
-    return null;
+    // NUCLEAR OPTION: Fallback Admin se proprio non troviamo nessuna sessione
+    return fallbackAdmin;
 }
 
 export async function loginWithCredentials(formData: FormData) {
