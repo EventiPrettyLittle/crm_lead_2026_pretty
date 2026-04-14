@@ -78,7 +78,7 @@ export async function createManualLead(data: any) {
                 eventType: data.eventType,
                 eventDate: data.eventDate ? new Date(data.eventDate) : null,
                 eventLocation: data.eventLocation,
-                guestsCount: data.guestsCount ? parseInt(data.guestsCount) : null,
+                guestsCount: data.guestsCount ? String(data.guestsCount) : null,
                 productInterest: data.productInterest,
                 stage: 'NUOVO',
             }
