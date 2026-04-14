@@ -156,9 +156,9 @@ export async function getAllUsers() {
         if (users && users.length > 0) return serializePrisma(users);
 
         // Tentativo 2: Raw SQL con varianti se il primo fallisce
-        const rawUsers: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM "User" ORDER BY "createdAt" DESC`)
+        const rawUsers = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM "User" ORDER BY "createdAt" DESC`)
             .catch(() => prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM public."User" ORDER BY "createdAt" DESC`))
-            .catch(() => []);
+            .catch(() => []) as any[];
             
         return rawUsers;
     } catch (e: any) {
