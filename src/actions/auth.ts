@@ -47,14 +47,17 @@ export async function getCurrentUser() {
                 return user;
             }
             
-            return { ...session, role: 'USER' };
-        } catch (e) {
-            return session;
+            // Se tutto il resto fallisce ma abbiamo un'email valida in sessione, cerchiamo di restituire quella
+            if (session && session.email) {
+                return { ...session, role: session.role || 'USER' };
+            }
+        } catch (error) {
+            console.error("Error in getCurrentUser:", error);
         }
     }
     
-    // Se siamo in un loop disperato e stiamo cercando di accedere, questo ci salva
-    return fallbackAdmin; // ATTIVATO PER EMERGENZA
+    // Fallback Admin solo se siamo disperati (nessun cookie)
+    return null;
 }
 
 export async function loginWithCredentials(formData: FormData) {
