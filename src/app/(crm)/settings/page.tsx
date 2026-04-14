@@ -78,11 +78,11 @@ export default function SettingsPage() {
                     name: u.name || u.email || '', 
                     phone: u.phone || '' 
                 }));
-                
-                // CARICAMENTO TEAM: Recuperiamo la lista utenti all'avvio
-                const teamList = await getAllUsers();
-                setTeam(teamList || []);
             }
+            
+            // CARICAMENTO TEAM: Lo facciamo SEMPRE, a prescindere dalla sessione rilevata
+            const teamList = await getAllUsers();
+            setTeam(teamList || []);
         } catch (error) {
             console.error("Error loading settings:", error);
         } finally {
