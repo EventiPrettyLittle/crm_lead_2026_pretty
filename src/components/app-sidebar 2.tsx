@@ -22,7 +22,7 @@ export function AppSidebar() {
                             {sidebarLinks.map((item) => (
                                 <SidebarMenuItem key={item.title}>
                                     <SidebarMenuButton asChild>
-                                        <Link href={item.href}>
+                                        <Link href={item.href || '#'}>
                                             <item.icon />
                                             <span>{item.title}</span>
                                         </Link>
