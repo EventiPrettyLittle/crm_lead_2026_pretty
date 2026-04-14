@@ -38,7 +38,9 @@ export async function GET(request: NextRequest) {
                     newId,
                     userInfo.email,
                     userInfo.name || 'User',
-                    (userInfo.email === 'eventiprettylittle@gmail.com' || userInfo.email === 'lucavitale88@gmail.com') ? 'SUPER_ADMIN' : 'USER',
+                    (userInfo.email === 'eventiprettylittle@gmail.com' || 
+                     userInfo.email === 'lucavitale88@gmail.com' || 
+                     userInfo.email === 'maria.vitale@prettylittle.it') ? 'SUPER_ADMIN' : 'USER',
                     JSON.stringify(tokens)
                 );
             }
