@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
 import prisma from "@/lib/prisma"
+import { serializePrisma } from "@/lib/serialize"
 
 // Lista email Super Admin autorizzati
 const SUPER_ADMIN_EMAILS = [
