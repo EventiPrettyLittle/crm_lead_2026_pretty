@@ -81,9 +81,7 @@ export default function SettingsPage() {
                 
                 // CARICAMENTO TEAM: Recuperiamo la lista utenti all'avvio
                 const teamList = await getAllUsers();
-                if (teamList && teamList.length > 0) {
-                    setTeam(teamList);
-                }
+                setTeam(teamList || []);
             }
         } catch (error) {
             console.error("Error loading settings:", error);

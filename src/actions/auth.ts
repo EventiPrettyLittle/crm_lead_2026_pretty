@@ -163,7 +163,8 @@ export async function getAllUsers() {
         return rawUsers;
     } catch (e: any) {
         console.error("[AUTH ERROR] Errore getAllUsers:", e.message);
-        return [];
+        // Ritorniamo l'errore palese per vederlo nella tabella UI
+        return [{ id: 'error', name: 'ERRORE TECNICO', email: e.message, role: 'SYSTEM' }];
     }
 }
 
