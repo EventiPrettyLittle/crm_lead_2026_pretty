@@ -148,9 +148,18 @@ export async function getAllUsers() {
     // if (admin?.role !== 'SUPER_ADMIN') return [];
 
     try {
+        // Usiamo le virgolette per la tabella "User" che è una parola riservata in Postgres
         const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, phone, "createdAt" FROM "User" ORDER BY "createdAt" DESC`);
+        
+        // Se non trova nessuno, stampiamo un log per capire se è davvero vuoto o se è un errore
+        if (users.length === 0) {
+            console.warn("[AUTH] getAllUsers ha restituito 0 record");
+        }
+        
         return users;
-    } catch (e) {
+    } catch (e: any) {
+        console.error("[AUTH ERROR] Errore getAllUsers:", e.message);
+        // Ritorniamo l'errore per vederlo nell'interfaccia se necessario
         return [];
     }
 }

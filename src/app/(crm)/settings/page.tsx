@@ -78,6 +78,12 @@ export default function SettingsPage() {
                     name: u.name || u.email || '', 
                     phone: u.phone || '' 
                 }));
+                
+                // CARICAMENTO TEAM: Recuperiamo la lista utenti all'avvio
+                const teamList = await getAllUsers();
+                if (teamList && teamList.length > 0) {
+                    setTeam(teamList);
+                }
             }
         } catch (error) {
             console.error("Error loading settings:", error);
