@@ -80,7 +80,7 @@ export default function SettingsPage() {
                 }));
             }
             
-            // CARICAMENTO TEAM: Lo facciamo SEMPRE, a prescindere dalla sessione rilevata
+            // CARICAMENTO TEAM: Sempre attivo per sbloccare la visibilità
             const teamList = await getAllUsers();
             setTeam(teamList || []);
         } catch (error) {
