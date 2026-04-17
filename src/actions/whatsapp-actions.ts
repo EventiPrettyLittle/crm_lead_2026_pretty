@@ -28,11 +28,11 @@ export async function sendLeadWhatsAppAction(
 
         const isCall = actionType === 'no-answer' || context?.type === 'call';
         
-        const templateName = actionType === 'contacted' 
+        const templateName = actionType === 'appointment'
+            ? (process.env.WHATSAPP_TEMPLATE_NAME_APPOINTMENT || 'notifica_cliente')
+            : actionType === 'contacted'
             ? (process.env.WHATSAPP_TEMPLATE_NAME_CONTACTED || 'contattato')
-            : isCall
-            ? (process.env.WHATSAPP_TEMPLATE_NAME_NO_ANSWER || 'non_risponde')
-            : (process.env.WHATSAPP_TEMPLATE_NAME_APPOINTMENT || 'notifica_cliente');
+            : (process.env.WHATSAPP_TEMPLATE_NAME_NO_ANSWER || 'non_risponde');
 
         if (!templateName) {
             return { success: false, error: "Template non configurato" };
