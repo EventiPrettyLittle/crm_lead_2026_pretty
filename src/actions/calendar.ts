@@ -285,7 +285,7 @@ export async function createCalendarEvent(eventData: {
 
                 if (eventData.leadId) {
                     const { createActivity } = await import("./lead-detail");
-                    await createActivity(eventData.leadId, 'SYSTEM', `✓ Sincronizzato con Google Calendar (${googleEventId})`, "");
+                    await createActivity(eventData.leadId, 'SYSTEM', `✓ Sincronizzato con Google Calendar (${googleEventId})`, undefined);
                 }
 
                 return { success: true, eventId: googleEventId };
@@ -293,7 +293,7 @@ export async function createCalendarEvent(eventData: {
                 console.error('Google Calendar Sync failed:', googleError);
                 if (eventData.leadId) {
                     const { createActivity } = await import("./lead-detail");
-                    await createActivity(eventData.leadId, 'SYSTEM', `⚠ Errore Google Calendar: ${googleError.message || 'Sincronizzazione fallita'}`, "");
+                    await createActivity(eventData.leadId, 'SYSTEM', `⚠ Errore Google Calendar: ${googleError.message || 'Sincronizzazione fallita'}`, undefined);
                 }
                 return { 
                     success: false, 
@@ -305,7 +305,7 @@ export async function createCalendarEvent(eventData: {
             console.warn('Google Sync skipped: No tokens found for user');
             if (eventData.leadId) {
                 const { createActivity } = await import("./lead-detail");
-                await createActivity(eventData.leadId, 'SYSTEM', "⚠ Google Calendar non collegato. L'appuntamento è solo locale.", "");
+                await createActivity(eventData.leadId, 'SYSTEM', "⚠ Google Calendar non collegato. L'appuntamento è solo locale.", undefined);
             }
             return { success: false, error: "Account Google non collegato o sessione scaduta" };
         }
