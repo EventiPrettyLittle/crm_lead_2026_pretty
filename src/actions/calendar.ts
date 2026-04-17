@@ -47,19 +47,23 @@ export async function getCalendarEvents() {
     let ownerId: string | null = null;
     let localAppointments: any[] = [];
     
-    if (session) {
-        try {
-            const sessionData = JSON.parse(session.value);
-            const user = await prisma.user.findUnique({ where: { email: sessionData.email } });
-            ownerId = user?.id || null;
+        if (session) {
+            try {
+                const sessionData = JSON.parse(session.value);
+                const userEmail = sessionData.email?.toLowerCase().trim();
+                const users: any[] = await prisma.$queryRawUnsafe(
+                    `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
+                    userEmail
+                );
+                ownerId = users.length > 0 ? users[0].id : null;
 
-            if (ownerId) {
-                // RECUPERO APPUNTAMENTI DAL DATABASE CRM
-                const apps = await prisma.appointment.findMany({
-                    where: { ownerId: ownerId },
-                    include: { lead: true },
-                    orderBy: { startTime: 'asc' }
-                });
+                if (ownerId) {
+                    // RECUPERO APPUNTAMENTI DAL DATABASE CRM
+                    const apps = await prisma.appointment.findMany({
+                        where: { ownerId: ownerId },
+                        include: { lead: true },
+                        orderBy: { startTime: 'asc' }
+                    });
                 localAppointments = apps.map(app => ({
                     id: `local-${app.id}`,
                     title: app.title || `App. ${app.lead.firstName}`,
@@ -193,11 +197,15 @@ export async function createCalendarEvent(eventData: {
     try {
         const cookieStore = await cookies();
         const session = cookieStore.get('user_session');
-        
+
         if (session) {
             const sessionData = JSON.parse(session.value);
-            const user = await prisma.user.findUnique({ where: { email: sessionData.email } });
-            ownerId = user?.id || null;
+            const userEmail = sessionData.email?.toLowerCase().trim();
+            const users: any[] = await prisma.$queryRawUnsafe(
+                `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
+                userEmail
+            );
+            ownerId = users.length > 0 ? users[0].id : null;
         }
 
         if (!ownerId) {

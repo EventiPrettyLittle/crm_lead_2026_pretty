@@ -35,6 +35,20 @@ export async function updateLeadQuickAction(
         const leadBase = await prisma.lead.findUnique({ where: { id: leadId } });
         if (!leadBase) return { success: false, error: "Lead not found" };
 
+        const cookieStore = await cookies();
+        const session = cookieStore.get('user_session');
+        let ownerId = null;
+        if (session) {
+            const sessionData = JSON.parse(session.value);
+            const userEmail = sessionData.email?.toLowerCase().trim();
+            const users: any[] = await prisma.$queryRawUnsafe(
+                `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
+                userEmail
+            );
+            ownerId = users.length > 0 ? users[0].id : null;
+        }
+        if (!ownerId) return { success: false, error: "Sessione non valida" };
+
         if (type === 'contacted') {
             updateData.lastStatus = 'CONTATTATO';
             updateData.contactedAt = now;
