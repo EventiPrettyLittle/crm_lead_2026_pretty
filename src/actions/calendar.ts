@@ -257,9 +257,8 @@ export async function createCalendarEvent(eventData: {
             localAppointmentId = app.id;
         }
 
-        // 3. SINCRONIZZAZIONE GOOGLE (Orizionata)
+        // 3. SINCRONIZZAZIONE GOOGLE (Ottimizzata)
         const tokens = await getGoogleTokens();
-        let googleEventId = null;
 
         if (tokens) {
             try {
@@ -270,27 +269,48 @@ export async function createCalendarEvent(eventData: {
                         summary: eventData.title,
                         description: eventData.description,
                         location: eventData.location,
-                        start: { dateTime: eventData.startDateTime },
-                        end: { dateTime: eventData.endDateTime },
+                        start: { dateTime: eventData.startDateTime, timeZone: 'Europe/Rome' },
+                        end: { dateTime: eventData.endDateTime, timeZone: 'Europe/Rome' },
                     },
                 });
-                googleEventId = response.data.id;
 
-                // Aggiorniamo il local con l'id di Google se riuscito
+                const googleEventId = response.data.id;
+                
                 if (localAppointmentId && googleEventId) {
                     await prisma.appointment.update({
                         where: { id: localAppointmentId },
                         data: { googleEventId }
                     });
                 }
-            } catch (googleError) {
-                console.warn('Google Calendar Sync failed, appointment kept locally:', googleError);
-            }
-        }
 
-        return { success: true, eventId: googleEventId || localAppointmentId };
+                if (eventData.leadId) {
+                    const { createActivity } = await import("./lead-detail");
+                    await createActivity(eventData.leadId, 'SYSTEM', `✓ Sincronizzato con Google Calendar (${googleEventId})`, "");
+                }
+
+                return { success: true, eventId: googleEventId };
+            } catch (googleError: any) {
+                console.error('Google Calendar Sync failed:', googleError);
+                if (eventData.leadId) {
+                    const { createActivity } = await import("./lead-detail");
+                    await createActivity(eventData.leadId, 'SYSTEM', `⚠ Errore Google Calendar: ${googleError.message || 'Sincronizzazione fallita'}`, "");
+                }
+                return { 
+                    success: false, 
+                    error: `Google Error: ${googleError.message || 'Errore durante la creazione dell\'evento'}`,
+                    keepLocal: true 
+                };
+            }
+        } else {
+            console.warn('Google Sync skipped: No tokens found for user');
+            if (eventData.leadId) {
+                const { createActivity } = await import("./lead-detail");
+                await createActivity(eventData.leadId, 'SYSTEM', "⚠ Google Calendar non collegato. L'appuntamento è solo locale.", "");
+            }
+            return { success: false, error: "Account Google non collegato o sessione scaduta" };
+        }
     } catch (error: any) {
-        console.error('Error creating calendar event:', error);
+        console.error('Error in createCalendarEvent:', error);
         return { success: false, error: error.message };
     }
 }

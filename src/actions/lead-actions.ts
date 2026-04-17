@@ -103,7 +103,7 @@ export async function updateLeadQuickAction(
 
             const finalTitle = data.title || `${typeLabel.toUpperCase()} - ${leadBase.firstName || 'Cliente'} ${leadBase.lastName || ''}`;
 
-            await createCalendarEvent({
+            const syncResult = await createCalendarEvent({
                 title: finalTitle,
                 description: `Appuntamento fissato dal CRM. Note: ${data.notes || 'nessuna'}`,
                 location: data.appointmentType === 'showroom' ? "Showroom" : data.appointmentType === 'video' ? "Videochiamata" : "Richiamata Telefonica",
@@ -111,6 +111,12 @@ export async function updateLeadQuickAction(
                 endDateTime: endISO,
                 leadId: leadId
             });
+
+            if (!syncResult.success) {
+                console.error("Calendar Sync Error:", syncResult.error);
+                // We proceed anyway to save the local appointment, but we log the error
+                activityNotes = `${activityNotes} (Sincronizzazione Google Fallita: ${syncResult.error})`;
+            }
         }
 
         // Update Lead database
