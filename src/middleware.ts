@@ -14,9 +14,11 @@ export function middleware(request: NextRequest) {
     }
 
     const session = request.cookies.get('user_session');
+    const isAction = request.headers.has('next-action');
     
     // Se non c'è sessione e non siamo in login, vai a login
-    if (!session) {
+    // Ma non farlo se è una Server Action (per evitare loop durante il salvataggio)
+    if (!session && !isAction) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
 
