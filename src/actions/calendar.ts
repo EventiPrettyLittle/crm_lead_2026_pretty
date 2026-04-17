@@ -197,19 +197,32 @@ export async function createCalendarEvent(eventData: {
     try {
         const cookieStore = await cookies();
         const session = cookieStore.get('user_session');
-
+        
         if (session) {
             const sessionData = JSON.parse(session.value);
             const userEmail = sessionData.email?.toLowerCase().trim();
+            
+            // Log diagnostico interno (visibile nei log server)
+            console.log(`[CALENDAR] Attempting sync for user: ${userEmail}`);
+
             const users: any[] = await prisma.$queryRawUnsafe(
                 `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
                 userEmail
             );
-            ownerId = users.length > 0 ? users[0].id : null;
+            
+            if (users.length > 0) {
+                ownerId = users[0].id;
+                console.log(`[CALENDAR] Found ownerId: ${ownerId}`);
+            } else {
+                console.warn(`[CALENDAR] No user record found in DB for ${userEmail}. Attempting Super Admin fallback...`);
+                // Se è un super admin e non c'è nel DB, proviamo a usare l'ID dalla sessione se presente
+                ownerId = sessionData.id || null;
+            }
         }
 
         if (!ownerId) {
-            return { success: false, error: 'Sessione utente non trovata' };
+            console.error('[CALENDAR ERROR] No ownerId found even after fallback.');
+            return { success: false, error: 'Identità utente non verificata nel database. Per favore effettua Logout e Login.' };
         }
 
         // 1. PREVENZIONE DOPPIONI / RECUPERO SINCRONIZZAZIONE
