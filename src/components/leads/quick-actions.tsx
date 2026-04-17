@@ -66,6 +66,8 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             };
 
             if (actionType === 'preventivo') {
+                // Save state first, then redirect
+                await updateLeadQuickAction(lead.id, 'preventivo', { notes });
                 window.location.href = `/quotes?createFor=${lead.id}`;
                 return;
             }

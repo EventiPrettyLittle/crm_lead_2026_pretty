@@ -4,31 +4,37 @@ import { getGoogleCalendarClient } from "@/lib/google-auth";
 import { cookies } from "next/headers";
 
 async function getGoogleTokens(): Promise<any | null> {
-    // 1. Prima prova dal DB (fonte primaria - non si perde mai)
-    try {
-        const cookieStore = await cookies();
-        const session = cookieStore.get('user_session');
-        if (session) {
+    const cookieStore = await cookies();
+    const session = cookieStore.get('user_session');
+    const tokenCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
+
+    // 1. Prova dal cookie prima (più veloce e aggiornato nella sessione corrente)
+    if (tokenCookie) {
+        try { 
+            const tokens = JSON.parse(tokenCookie.value);
+            if (tokens && (tokens.access_token || tokens.refresh_token)) return tokens;
+        } catch (e) {
+            console.warn('Error parsing tokens from cookie:', e);
+        }
+    }
+
+    // 2. Fonte di backup: Database (per permanenza)
+    if (session) {
+        try {
             const sessionData = JSON.parse(session.value);
             const prisma = (await import("@/lib/prisma")).default;
             const users: any[] = await prisma.$queryRawUnsafe(
-                `SELECT "googleTokens" FROM "User" WHERE email = $1 LIMIT 1`,
-                sessionData.email
+                `SELECT "googleTokens" FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
+                sessionData.email.toLowerCase()
             );
             if (users.length > 0 && users[0].googleTokens) {
                 return JSON.parse(users[0].googleTokens);
             }
+        } catch (e) {
+            console.warn('Could not read tokens from DB:', e);
         }
-    } catch (e) {
-        console.warn('Could not read tokens from DB, falling back to cookie:', e);
     }
 
-    // 2. Fallback: leggi dal cookie
-    const cookieStore = await cookies();
-    const tokenCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
-    if (tokenCookie) {
-        try { return JSON.parse(tokenCookie.value); } catch { return null; }
-    }
     return null;
 }
 
@@ -198,8 +204,8 @@ export async function createCalendarEvent(eventData: {
             return { success: false, error: 'Sessione utente non trovata' };
         }
 
-        // 1. PREVENZIONE DOPPIONI (Raddoppio eventi)
-        // Se esiste già un appuntamento per questo lead alla stessa ora (+/- 1 minuto), saltiamo creazione
+        // 1. PREVENZIONE DOPPIONI / RECUPERO SINCRONIZZAZIONE
+        let localAppointmentId = "";
         if (eventData.leadId) {
             const startTime = new Date(eventData.startDateTime);
             const existing = await prisma.appointment.findFirst({
@@ -211,18 +217,24 @@ export async function createCalendarEvent(eventData: {
                     }
                 }
             });
+
+            // Se l'appuntamento esiste già ed è già sincronizzato con Google, saltiamo tutto
+            if (existing && existing.googleEventId) {
+                return { success: true, eventId: existing.googleEventId, updated: true };
+            }
+            
+            // Se esiste già localmente ma NON su Google, usiamo questo ID per l'update successivo
             if (existing) {
-                return { success: true, eventId: existing.googleEventId || existing.id, updated: true };
+                localAppointmentId = existing.id;
             }
         }
 
-        // 2. SALVATAGGIO LOCALE (Sempre eseguito)
-        let localAppointmentId = "";
-        const start = new Date(eventData.startDateTime);
-        const end = new Date(eventData.endDateTime);
-        const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+        // 2. SALVATAGGIO LOCALE (Solo se non esisteva già)
+        if (!localAppointmentId && eventData.leadId) {
+            const start = new Date(eventData.startDateTime);
+            const end = new Date(eventData.endDateTime);
+            const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
 
-        if (eventData.leadId) {
             const app = await prisma.appointment.create({
                 data: {
                     title: eventData.title,

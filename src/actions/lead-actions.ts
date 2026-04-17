@@ -69,13 +69,22 @@ export async function updateLeadQuickAction(
                 : "richiamata";
             activityNotes = `${typeLabel} fissato per il ${data.appointmentDate}. ${activityNotes}`;
 
-            // Costruiamo le stringhe ISO forzando l'orario di Roma (+02:00)
-            const startISO = `${data.appointmentDate}:00+02:00`;
+            // Costruiamo le stringhe ISO forzando l'orario locale (Roma +02:00 / +01:00)
+            // Nota: Per ora usiamo +02:00 fisso o ricavato in modo più pulito
+            const timezoneOffset = "+02:00"; 
+            const startISO = `${data.appointmentDate}:00${timezoneOffset}`;
             const startDate = new Date(startISO);
             
-            // Calcoliamo la fine (+1 ora) in modo robusto gestendo il cambio giorno
+            // Calcoliamo la fine (+1 ora)
             const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-            const endISO = new Date(endDate.getTime() + 2 * 60 * 60 * 1000).toISOString().replace('Z', '+02:00');
+            
+            // Formattiamo endISO in modo coerente
+            const year = endDate.getFullYear();
+            const month = String(endDate.getMonth() + 1).padStart(2, '0');
+            const day = String(endDate.getDate()).padStart(2, '0');
+            const hours = String(endDate.getHours()).padStart(2, '0');
+            const minutes = String(endDate.getMinutes()).padStart(2, '0');
+            const endISO = `${year}-${month}-${day}T${hours}:${minutes}:00${timezoneOffset}`;
 
             const finalTitle = data.title || `${typeLabel.toUpperCase()} - ${leadBase.firstName || 'Cliente'} ${leadBase.lastName || ''}`;
 
