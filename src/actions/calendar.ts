@@ -2,6 +2,8 @@
 
 import { getGoogleCalendarClient } from "@/lib/google-auth";
 import { cookies } from "next/headers";
+import prisma from "@/lib/prisma";
+import { createActivity } from "./lead-detail";
 
 async function getGoogleTokens(): Promise<any | null> {
     const cookieStore = await cookies();
@@ -22,10 +24,10 @@ async function getGoogleTokens(): Promise<any | null> {
     if (session) {
         try {
             const sessionData = JSON.parse(session.value);
-            const prisma = (await import("@/lib/prisma")).default;
+            const userEmail = sessionData.email?.toLowerCase().trim();
             const users: any[] = await prisma.$queryRawUnsafe(
                 `SELECT "googleTokens" FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
-                sessionData.email.toLowerCase()
+                userEmail
             );
             if (users.length > 0 && users[0].googleTokens) {
                 return JSON.parse(users[0].googleTokens);
@@ -41,7 +43,6 @@ async function getGoogleTokens(): Promise<any | null> {
 export async function getCalendarEvents() {
     const tokens = await getGoogleTokens();
 
-    const prisma = (await import("@/lib/prisma")).default;
     const cookieStore = await cookies();
     const session = cookieStore.get('user_session');
     let ownerId: string | null = null;
@@ -192,7 +193,6 @@ export async function createCalendarEvent(eventData: {
     leadId?: string;
 }) {
     let ownerId: string | null = null;
-    const prisma = (await import("@/lib/prisma")).default;
 
     try {
         const cookieStore = await cookies();
@@ -284,7 +284,6 @@ export async function createCalendarEvent(eventData: {
                 }
 
                 if (eventData.leadId) {
-                    const { createActivity } = await import("./lead-detail");
                     await createActivity(eventData.leadId, 'SYSTEM', `✓ Sincronizzato con Google Calendar (${googleEventId})`, undefined);
                 }
 
@@ -292,7 +291,6 @@ export async function createCalendarEvent(eventData: {
             } catch (googleError: any) {
                 console.error('Google Calendar Sync failed:', googleError);
                 if (eventData.leadId) {
-                    const { createActivity } = await import("./lead-detail");
                     await createActivity(eventData.leadId, 'SYSTEM', `⚠ Errore Google Calendar: ${googleError.message || 'Sincronizzazione fallita'}`, undefined);
                 }
                 return { 
@@ -304,7 +302,6 @@ export async function createCalendarEvent(eventData: {
         } else {
             console.warn('Google Sync skipped: No tokens found for user');
             if (eventData.leadId) {
-                const { createActivity } = await import("./lead-detail");
                 await createActivity(eventData.leadId, 'SYSTEM', "⚠ Google Calendar non collegato. L'appuntamento è solo locale.", undefined);
             }
             return { success: false, error: "Account Google non collegato o sessione scaduta" };
