@@ -8,7 +8,7 @@ import { createActivity } from "./lead-detail";
 async function getGoogleTokens(): Promise<any | null> {
     const cookieStore = await cookies();
     const session = cookieStore.get('PLATINUM_AUTH_SESSION');
-    const tokenCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
+    const tokenCookie = cookieStore.get('PLATINUM_G_SYNC') || cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
 
     if (session) {
         try {

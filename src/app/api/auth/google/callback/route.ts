@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         try {
             await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleTokens" TEXT;`);
             
-            // Se è un collegamento, usiamo l'email della sessione CRM, altrimenti quella di Google Info
+            // Lavoriamo sempre sull'email della sessione CRM se presente, altrimenti su quella Google
             const targetEmail = (isCalendarConnect && currentSession?.email) 
                 ? currentSession.email.toLowerCase() 
                 : userInfo.email.toLowerCase();
@@ -47,17 +47,17 @@ export async function GET(request: NextRequest) {
                     JSON.stringify(tokens),
                     targetEmail
                 );
-            } else if (!isCalendarConnect) {
-                // Solo se è un login creiamo un nuovo utente
+            } else {
+                // SE L'UTENTE NON ESISTE, LO CREIAMO (Fondamentale per Super Admin o nuovi operatori)
                 const newId = userInfo.id || Math.random().toString(36).substring(7);
                 await prisma.$executeRawUnsafe(
                     `INSERT INTO "User" (id, email, name, role, "googleTokens") VALUES ($1, $2, $3, $4, $5)`,
                     newId,
-                    userInfo.email,
+                    targetEmail,
                     userInfo.name || 'User',
-                    (userInfo.email === 'eventiprettylittle@gmail.com' || 
-                     userInfo.email === 'lucavitale88@gmail.com' || 
-                     userInfo.email === 'maria.vitale@prettylittle.it') ? 'SUPER_ADMIN' : 'USER',
+                    (targetEmail === 'eventiprettylittle@gmail.com' || 
+                     targetEmail === 'lucavitale88@gmail.com' || 
+                     targetEmail === 'maria.vitale@prettylittle.it') ? 'SUPER_ADMIN' : 'USER',
                     JSON.stringify(tokens)
                 );
             }
@@ -68,26 +68,22 @@ export async function GET(request: NextRequest) {
         const redirectUrl = isCalendarConnect ? '/calendar' : '/';
         const response = NextResponse.redirect(new URL(redirectUrl, request.url))
 
-        const isProd = process.env.NODE_ENV === 'production';
-
-        // Salva anche nel cookie come backup (30 giorni)
-        response.cookies.set('google_tokens', JSON.stringify(tokens), {
+        // 1. SALVIAMO I TOKEN IN UN COOKIE DEDICATO (Leggero e persistente)
+        response.cookies.set('PLATINUM_G_SYNC', JSON.stringify(tokens), {
             httpOnly: true,
-            secure: false, // Debug
+            secure: false,
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
         })
 
-        // Aggiorna la user_session SOLO se non è un collegamento calendario (ovvero è un login)
-        // Se è un collegamento calendario, vogliamo comunque aggiungere i google_tokens alla sessione attuale
+        // 2. AGGIORNIAMO LA SESSIONE CRM (Senza appesantirla con i token se possibile)
         const sessionData = {
             id: dbUser?.id || userInfo.id || currentSession?.id,
             name: dbUser?.name || userInfo.name || currentSession?.name || 'User',
-            email: userInfo.email || currentSession?.email,
+            email: currentSession?.email || userInfo.email,
             picture: userInfo.picture || currentSession?.picture,
-            role: dbUser?.role || currentSession?.role || 'USER',
-            googleTokens: JSON.stringify(tokens) // Aggiungiamo i token alla sessione per accesso immediato
+            role: dbUser?.role || currentSession?.role || 'USER'
         };
 
         response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify(sessionData), {
