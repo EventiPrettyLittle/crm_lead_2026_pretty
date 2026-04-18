@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
             console.error('Error in DB Sync:', e);
         }
 
-        // 1. SALVIAMO I TOKEN IN MODO PERMANENTE NEL DB (Backup)
+        // 1. SALVIAMO I TOKEN IN MODO PERMANENTE NEL DB (Fonte di verità unica)
         try {
             const targetEmail = (isCalendarConnect && currentSession?.email) 
                 ? currentSession.email.toLowerCase().trim() 
@@ -84,19 +84,14 @@ export async function GET(request: NextRequest) {
         const redirectUrl = isCalendarConnect ? '/calendar' : '/';
         const response = NextResponse.redirect(new URL(redirectUrl, request.url))
 
-        // 2. CREIAMO LA SESSIONE INTEGRATA CON I TOKEN (Accesso immediato)
+        // 2. CREIAMO LA SESSIONE ULTRA-LEGGERA (Solo identità fissa)
         const sessionData = {
             id: dbUser?.id || userInfo.id || currentSession?.id,
             name: dbUser?.name || userInfo.name || currentSession?.name || 'User',
             email: currentSession?.email || userInfo.email,
             picture: userInfo.picture || currentSession?.picture,
-            role: dbUser?.role || currentSession?.role || 'USER',
-            // Inseriamo i token direttamente qui (solo quelli necessari per restare leggeri)
-            googleTokens: JSON.stringify({
-                access_token: tokens.access_token,
-                refresh_token: tokens.refresh_token,
-                expiry_date: tokens.expiry_date
-            })
+            role: dbUser?.role || currentSession?.role || 'USER'
+            // TOKEN RIMOSSI DA QUI PER EVITARE PESO ECCESSIVO
         };
 
         response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify(sessionData), {
@@ -107,7 +102,7 @@ export async function GET(request: NextRequest) {
             maxAge: 60 * 60 * 24 * 30 
         });
 
-        // Cookie di backup per sicurezza
+        // 3. TOKEN IN UN COOKIE SEPARATO (Solo per backup, se il browser lo accetta bene, altrimenti c'è il DB)
         response.cookies.set('PLATINUM_G_SYNC', JSON.stringify(tokens), {
             httpOnly: true,
             secure: false,
