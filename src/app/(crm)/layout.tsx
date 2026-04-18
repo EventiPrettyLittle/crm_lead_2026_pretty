@@ -6,6 +6,8 @@ import { UserNav } from "@/components/layout/user-nav"
 import { LiveClock } from "@/components/layout/live-clock"
 import { ReminderNotifier } from "@/components/layout/reminder-notifier"
 import { headers } from "next/headers"
+import { getCurrentUser } from "@/actions/auth"
+import { redirect } from "next/navigation"
 
 export default async function CRMLayout({ children }: { children: React.ReactNode }) {
   // 1. Preveniamo il redirect selvaggio se è in corso una Server Action
