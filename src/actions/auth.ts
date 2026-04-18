@@ -16,6 +16,15 @@ const SUPER_ADMIN_EMAILS = [
 export async function getCurrentUser() {
     try {
         const cookieStore = await cookies();
+        
+        // PULIZIA ATOMICA: Eliminiamo i vecchi cookie che potrebbero creare conflitti di dimensione
+        const oldCookies = ['user_session', 'google_tokens', 'google_calendar_tokens', 'crm_session'];
+        oldCookies.forEach(name => {
+            if (cookieStore.has(name)) {
+                try { cookieStore.delete(name); } catch(e) {}
+            }
+        });
+
         const userCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
         
         if (!userCookie || !userCookie.value) return null;
@@ -23,7 +32,6 @@ export async function getCurrentUser() {
         const session = JSON.parse(userCookie.value);
         if (!session || !session.email) return null;
         
-        // Se è un Super Admin bypassamo ogni controllo DB per velocità
         const SUPER_ADMIN_EMAILS = [
             'eventiprettylittle@gmail.com',
             'lucavitale88@gmail.com',
@@ -34,10 +42,8 @@ export async function getCurrentUser() {
             return { ...session, role: 'SUPER_ADMIN' };
         }
         
-        // Restituiamo direttamente la sessione dal cookie per massima reattività
         return session;
     } catch (e) {
-        console.error("Error in getCurrentUser:", e);
         return null;
     }
 }
