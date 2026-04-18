@@ -187,9 +187,10 @@ export async function updateLeadQuickAction(
             });
         }
 
-        const leadBaseUpdated = await prisma.lead.findUnique({
+        // Recuperiamo i dati aggiornati per le note
+        const leadForNotes = await prisma.lead.findUnique({
             where: { id: leadId },
-            select: { firstName: true, lastName: true, phoneNormalized: true, stage: true }
+            select: { notesInternal: true }
         });
 
         // Create Activity log
@@ -199,7 +200,7 @@ export async function updateLeadQuickAction(
         const user = await getCurrentUser();
         const initials = getInitials(user?.name || "??");
         const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
-        const currentNotes = updatedLead.notesInternal || "";
+        const currentNotes = leadForNotes?.notesInternal || "";
         const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
         await prisma.lead.update({
             where: { id: leadId },
