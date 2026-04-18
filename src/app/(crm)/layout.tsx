@@ -14,12 +14,12 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
   const headersList = await headers();
   const isAction = headersList.has('next-action');
   
-  // GATEKEEPER SERVER-SIDE: Protezione d'accesso
+  // GATEKEEPER SERVER-SIDE
   const user = await getCurrentUser();
   
-  // if (!user && !isAction) {
-  //   redirect("/login?reason=layout_auth_required");
-  // }
+  if (!user && !isAction) {
+    return redirect("/login?reason=layout_auth_required");
+  }
 
   return (
     <SidebarProvider>
