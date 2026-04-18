@@ -19,6 +19,7 @@ model User {
   phone        String?
   leads        Lead[]
   appointments Appointment[]
+  googleTokens String?     @map("googleTokens")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
