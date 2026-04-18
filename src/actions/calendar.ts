@@ -14,7 +14,7 @@ async function getGoogleTokens(): Promise<any | null> {
         try {
             const sessionData = JSON.parse(session.value);
             
-            // 1. Prova dalla sessione (veloce)
+            // 1. Priorità Assoluta: Token integrati nella sessione (veloci e certi)
             if (sessionData.googleTokens) {
                 const tokens = JSON.parse(sessionData.googleTokens);
                 if (tokens && (tokens.access_token || tokens.refresh_token)) return tokens;

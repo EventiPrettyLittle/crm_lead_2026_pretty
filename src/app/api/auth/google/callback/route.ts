@@ -63,22 +63,43 @@ export async function GET(request: NextRequest) {
         const redirectUrl = isCalendarConnect ? '/calendar' : '/';
         const response = NextResponse.redirect(new URL(redirectUrl, request.url))
 
-        // 1. SALVIAMO I TOKEN IN UN COOKIE DEDICATO (Leggero e persistente)
-        response.cookies.set('PLATINUM_G_SYNC', JSON.stringify(tokens), {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 30 
-        })
+        // 1. SALVIAMO I TOKEN IN MODO PERMANENTE NEL DB (Backup)
+        try {
+            const targetEmail = (isCalendarConnect && currentSession?.email) 
+                ? currentSession.email.toLowerCase().trim() 
+                : userInfo.email.toLowerCase().trim();
 
-        // 2. AGGIORNIAMO LA SESSIONE CRM (Senza appesantirla con i token se possibile)
+            await (prisma.user as any).upsert({
+                where: { email: targetEmail },
+                update: { googleTokens: JSON.stringify(tokens) },
+                create: {
+                    id: userInfo.id || Math.random().toString(36).substring(7),
+                    email: targetEmail,
+                    name: userInfo.name || 'User',
+                    role: 'USER',
+                    googleTokens: JSON.stringify(tokens)
+                }
+            });
+        } catch (e) {
+            console.error('DB Token Backup Error:', e);
+        }
+
+        const redirectUrl = isCalendarConnect ? '/calendar' : '/';
+        const response = NextResponse.redirect(new URL(redirectUrl, request.url))
+
+        // 2. CREIAMO LA SESSIONE INTEGRATA CON I TOKEN (Accesso immediato)
         const sessionData = {
             id: dbUser?.id || userInfo.id || currentSession?.id,
             name: dbUser?.name || userInfo.name || currentSession?.name || 'User',
             email: currentSession?.email || userInfo.email,
             picture: userInfo.picture || currentSession?.picture,
-            role: dbUser?.role || currentSession?.role || 'USER'
+            role: dbUser?.role || currentSession?.role || 'USER',
+            // Inseriamo i token direttamente qui (solo quelli necessari per restare leggeri)
+            googleTokens: JSON.stringify({
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                expiry_date: tokens.expiry_date
+            })
         };
 
         response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify(sessionData), {
@@ -87,7 +108,16 @@ export async function GET(request: NextRequest) {
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
-        })
+        });
+
+        // Cookie di backup per sicurezza
+        response.cookies.set('PLATINUM_G_SYNC', JSON.stringify(tokens), {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30 
+        });
 
         return response
     } catch (error) {
