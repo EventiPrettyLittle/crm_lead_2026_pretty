@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
 
             const tokensStr = JSON.stringify(tokens);
 
-            // UPSERT Nativo: se esiste aggiorna i token, se non esiste lo crea
-            dbUser = await prisma.user.upsert({
+            // UPSERT con casting any per bypassare il blocco build sui tipi Prisma non aggiornati
+            dbUser = await (prisma.user as any).upsert({
                 where: { email: targetEmail },
                 update: { googleTokens: tokensStr },
                 create: {
