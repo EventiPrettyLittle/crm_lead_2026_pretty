@@ -227,52 +227,7 @@ export async function createCalendarEvent(eventData: {
             return { success: false, error: 'Identità utente non verificata nel database. Per favore effettua Logout e Login.' };
         }
 
-        // 1. PREVENZIONE DOPPIONI / RECUPERO SINCRONIZZAZIONE
-        let localAppointmentId = "";
-        if (eventData.leadId) {
-            const startTime = new Date(eventData.startDateTime);
-            const existing = await prisma.appointment.findFirst({
-                where: {
-                    leadId: eventData.leadId,
-                    startTime: {
-                        gte: new Date(startTime.getTime() - 60000),
-                        lte: new Date(startTime.getTime() + 60000)
-                    }
-                }
-            });
-
-            // Se l'appuntamento esiste già ed è già sincronizzato con Google, saltiamo tutto
-            if (existing && existing.googleEventId) {
-                return { success: true, eventId: existing.googleEventId, updated: true };
-            }
-            
-            // Se esiste già localmente ma NON su Google, usiamo questo ID per l'update successivo
-            if (existing) {
-                localAppointmentId = existing.id;
-            }
-        }
-
-        // 2. SALVATAGGIO LOCALE (Solo se non esisteva già)
-        if (!localAppointmentId && eventData.leadId) {
-            const start = new Date(eventData.startDateTime);
-            const end = new Date(eventData.endDateTime);
-            const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
-
-            const app = await prisma.appointment.create({
-                data: {
-                    title: eventData.title,
-                    notes: eventData.description,
-                    location: eventData.location,
-                    startTime: start,
-                    duration: duration,
-                    leadId: eventData.leadId,
-                    ownerId: ownerId,
-                }
-            });
-            localAppointmentId = app.id;
-        }
-
-        // 3. SINCRONIZZAZIONE GOOGLE (Ottimizzata)
+        // SINCRONIZZAZIONE GOOGLE PURA
         const tokens = await getGoogleTokens();
 
         if (tokens) {
@@ -291,35 +246,21 @@ export async function createCalendarEvent(eventData: {
 
                 const googleEventId = response.data.id;
                 
-                if (localAppointmentId && googleEventId) {
-                    await prisma.appointment.update({
-                        where: { id: localAppointmentId },
-                        data: { googleEventId }
-                    });
-                }
-
-                if (eventData.leadId) {
+                if (eventData.leadId && googleEventId) {
                     await createActivity(eventData.leadId, 'SYSTEM', `✓ Sincronizzato con Google Calendar (${googleEventId})`, undefined);
                 }
 
                 return { success: true, eventId: googleEventId };
             } catch (googleError: any) {
                 console.error('Google Calendar Sync failed:', googleError);
-                if (eventData.leadId) {
-                    await createActivity(eventData.leadId, 'SYSTEM', `⚠ Errore Google Calendar: ${googleError.message || 'Sincronizzazione fallita'}`, undefined);
-                }
                 return { 
                     success: false, 
-                    error: `Google Error: ${googleError.message || 'Errore durante la creazione dell\'evento'}`,
-                    keepLocal: true 
+                    error: `Google Sync Error: ${googleError.message || 'Errore durante la creazione su Google'}`,
                 };
             }
         } else {
-            console.warn('Google Sync skipped: No tokens found for user');
-            if (eventData.leadId) {
-                await createActivity(eventData.leadId, 'SYSTEM', "⚠ Google Calendar non collegato. L'appuntamento è solo locale.", undefined);
-            }
-            return { success: false, error: "Account Google non collegato o sessione scaduta" };
+            console.warn('Google Sync skipped: No tokens found');
+            return { success: false, error: "Account Google non collegato" };
         }
     } catch (error: any) {
         console.error('Error in createCalendarEvent:', error);

@@ -112,6 +112,20 @@ export async function updateLeadQuickAction(
 
             const finalTitle = data.title || `${typeLabel.toUpperCase()} - ${leadBase.firstName || 'Cliente'} ${leadBase.lastName || ''}`;
 
+            // 1. CREAZIONE LOCALE IMMEDIATA (Non può fallire se l'ownerId c'è)
+            const app = await prisma.appointment.create({
+                data: {
+                    title: finalTitle,
+                    notes: data.notes || '',
+                    location: data.appointmentType === 'showroom' ? "Showroom" : data.appointmentType === 'video' ? "Videochiamata" : "Richiamata Telefonica",
+                    startTime: startDate,
+                    duration: 60,
+                    leadId: leadId,
+                    ownerId: ownerId,
+                }
+            });
+
+            // 2. TENTATIVO DI SINCRONIZZAZIONE GOOGLE (Indipendente)
             const syncResult = await createCalendarEvent({
                 title: finalTitle,
                 description: `Appuntamento fissato dal CRM. Note: ${data.notes || 'nessuna'}`,
@@ -122,9 +136,14 @@ export async function updateLeadQuickAction(
             });
 
             if (!syncResult.success) {
-                console.error("Calendar Sync Error:", syncResult.error);
-                // We proceed anyway to save the local appointment, but we log the error
-                activityNotes = `${activityNotes} (Sincronizzazione Google Fallita: ${syncResult.error})`;
+                console.error("Calendar Sync Error (Google):", syncResult.error);
+                activityNotes = `${activityNotes} (CRM: OK, Google Sync: ⚠ ${syncResult.error})`;
+            } else if (syncResult.eventId) {
+                // Se Google ha successo, aggiorniamo l'appuntamento locale con il googleEventId
+                await prisma.appointment.update({
+                    where: { id: app.id },
+                    data: { googleEventId: syncResult.eventId }
+                });
             }
         }
 
