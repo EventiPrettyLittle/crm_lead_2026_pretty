@@ -12,7 +12,7 @@ import { updateLeadQuickAction } from "@/actions/lead-actions"
 import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
 import { Lead } from "@prisma/client"
 import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface QuickActionsProps {
     lead: Lead;
@@ -20,6 +20,7 @@ interface QuickActionsProps {
 }
 
 export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [actionType, setActionType] = useState<'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | 'appointment' | null>(null);
     const [appointmentType, setAppointmentType] = useState<'showroom' | 'call' | 'video'>('showroom');
@@ -106,6 +107,9 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             setIsOpen(false);
             setNotes("");
             setAppointmentDate("");
+            
+            // Forza il rinfresco dei dati della pagina
+            router.refresh();
         } catch (error) {
             toast.error("Errore nell'aggiornamento dello stato");
         } finally {

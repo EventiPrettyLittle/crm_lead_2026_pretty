@@ -210,9 +210,8 @@ export async function updateLeadQuickAction(
         revalidatePath('/', 'layout');
         revalidatePath(`/leads/${leadId}`);
         revalidatePath('/leads');
-        revalidatePath('/kanban');
         
-        return { success: true };
+        return { success: true, refresh: true };
     } catch (error) {
         console.error("Error executing quick action:", error);
         return { success: false, error: String(error) };
