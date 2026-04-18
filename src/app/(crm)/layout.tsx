@@ -14,14 +14,14 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
   const headersList = await headers();
   const isAction = headersList.has('next-action');
   
-  // GATEKEEPER SERVER-SIDE (Versione Soft per evitare logout al refresh)
+  // GATEKEEPER SERVER-SIDE (Disabilitato temporaneamente per eliminare i logout molesti)
   const user = await getCurrentUser();
   
+  /* 
   if (!user && !isAction) {
-    // Invece di redirectare subito, permettiamo al layout di renderizzare
-    // La protezione vera e propria avverrà nei componenti o se la sessione è palesemente nulla
-    return redirect("/login?reason=layout_auth_required_v1.1.2");
+    return redirect("/login?reason=layout_auth_required_disabled_v1.1.2");
   }
+  */
 
   return (
     <SidebarProvider>
