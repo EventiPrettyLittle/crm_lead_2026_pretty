@@ -17,46 +17,47 @@ export async function getCurrentUser() {
     const cookieStore = await cookies();
     const userCookie = cookieStore.get('user_session');
 
-    // BYPASS DI EMERGENZA PER IL PROPRIETARIO (Anti-Loop)
-    // Se non c'è il cookie ma siamo noi, diamo accesso comunque per spezzare il loop
-    // Nota: In produzione questo verrebbe rimosso, serve per troubleshooting sessione
-    const fallbackAdmin = {
-        name: "Luca Vitale (Recovery)",
-        email: "lucavitale88@gmail.com",
-        role: "SUPER_ADMIN"
-    };
-
     if (userCookie) {
         let session = null;
         try {
             session = JSON.parse(userCookie.value);
-            const sessionEmail = session.email?.toLowerCase().trim();
+            if (!session || !session.email) return null;
+
+            const sessionEmail = session.email.toLowerCase().trim();
             
-            // Bypass immediato se l'email è admin
+            // Bypass immediato per Super Admin (Anti-Loop)
             if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === sessionEmail)) {
                 return { ...session, role: 'SUPER_ADMIN' };
             }
 
-            const users = await prisma.$queryRawUnsafe(
-                `SELECT id, email, name, role, phone FROM "User" WHERE LOWER(email) = $1 LIMIT 1`, 
-                sessionEmail
-            ).catch(() => []) as any[];
-            
-            if (users.length > 0) {
-                const user = users[0];
-                return user;
+            // Tentativo DB
+            try {
+                const users = await prisma.$queryRawUnsafe(
+                    `SELECT id, email, name, role, phone FROM "User" WHERE LOWER(email) = $1 LIMIT 1`, 
+                    sessionEmail
+                ) as any[];
+                
+                if (users && users.length > 0) {
+                    return users[0];
+                }
+            } catch (dbError) {
+                console.warn("[AUTH] DB not responding, using session fallback for:", sessionEmail);
             }
             
-            // Se tutto il resto fallisce ma abbiamo un'email valida in sessione, cerchiamo di restituire quella
-            if (session && session.email) {
-                return { ...session, role: session.role || 'USER' };
-            }
+            // Fallback: Se il DB fallisce ma il cookie è valido, permettiamo l'accesso
+            // Questo evita il problema "mi sbatte fuori ad ogni azione"
+            return { 
+                id: session.id || 'fallback-id',
+                email: session.email,
+                name: session.name || session.email,
+                role: session.role || 'USER'
+            };
+
         } catch (error) {
-            console.error("Error in getCurrentUser:", error);
+            console.error("Error in getCurrentUser JSON parse:", error);
         }
     }
     
-    // NESSUN FALLBACK: Ora il sistema è dinamico e caricherà chiunque sia loggato
     return null;
 }
 

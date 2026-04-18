@@ -52,10 +52,12 @@ export async function GET(request: NextRequest) {
         const redirectUrl = isCalendarConnect ? '/calendar' : '/';
         const response = NextResponse.redirect(new URL(redirectUrl, request.url))
 
+        const isProd = process.env.NODE_ENV === 'production';
+
         // Salva anche nel cookie come backup (30 giorni)
         response.cookies.set('google_tokens', JSON.stringify(tokens), {
             httpOnly: true,
-            secure: true,
+            secure: isProd,
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
@@ -71,7 +73,7 @@ export async function GET(request: NextRequest) {
             role: dbUser?.role || 'USER'
         }), {
             httpOnly: true,
-            secure: true,
+            secure: isProd,
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
