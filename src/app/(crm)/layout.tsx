@@ -5,13 +5,17 @@ import { NotificationCenter } from "@/components/layout/notification-center"
 import { UserNav } from "@/components/layout/user-nav"
 import { LiveClock } from "@/components/layout/live-clock"
 import { ReminderNotifier } from "@/components/layout/reminder-notifier"
-import { getCurrentUser } from "@/actions/auth"
-import { redirect } from "next/navigation"
+import { headers } from "next/headers"
 
 export default async function CRMLayout({ children }: { children: React.ReactNode }) {
-  // GATEKEEPER SERVER-SIDE: Molto più affidabile del middleware per la gestione cookie sui sottodomini
+  // 1. Preveniamo il redirect selvaggio se è in corso una Server Action
+  const headersList = await headers();
+  const isAction = headersList.has('next-action');
+  
+  // GATEKEEPER SERVER-SIDE: Molto più affidabile del middleware
   const user = await getCurrentUser();
-  if (!user) {
+  
+  if (!user && !isAction) {
     redirect("/login?reason=layout_auth_required");
   }
 

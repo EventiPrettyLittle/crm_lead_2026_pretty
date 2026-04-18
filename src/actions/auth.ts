@@ -14,51 +14,32 @@ const SUPER_ADMIN_EMAILS = [
 ];
 
 export async function getCurrentUser() {
-    const cookieStore = await cookies();
-    const userCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
-
-    if (userCookie) {
-        let session = null;
-        try {
-            session = JSON.parse(userCookie.value);
-            if (!session || !session.email) return null;
-
-            const sessionEmail = session.email.toLowerCase().trim();
-            
-            // Bypass immediato per Super Admin (Anti-Loop)
-            if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === sessionEmail)) {
-                return { ...session, role: 'SUPER_ADMIN' };
-            }
-
-            // Tentativo DB
-            try {
-                const users = await prisma.$queryRawUnsafe(
-                    `SELECT id, email, name, role, phone FROM "User" WHERE LOWER(email) = $1 LIMIT 1`, 
-                    sessionEmail
-                ) as any[];
-                
-                if (users && users.length > 0) {
-                    return users[0];
-                }
-            } catch (dbError) {
-                console.warn("[AUTH] DB not responding, using session fallback for:", sessionEmail);
-            }
-            
-            // Fallback: Se il DB fallisce ma il cookie è valido, permettiamo l'accesso
-            // Questo evita il problema "mi sbatte fuori ad ogni azione"
-            return { 
-                id: session.id || 'fallback-id',
-                email: session.email,
-                name: session.name || session.email,
-                role: session.role || 'USER'
-            };
-
-        } catch (error) {
-            console.error("Error in getCurrentUser JSON parse:", error);
+    try {
+        const cookieStore = await cookies();
+        const userCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
+        
+        if (!userCookie || !userCookie.value) return null;
+        
+        const session = JSON.parse(userCookie.value);
+        if (!session || !session.email) return null;
+        
+        // Se è un Super Admin bypassamo ogni controllo DB per velocità
+        const SUPER_ADMIN_EMAILS = [
+            'eventiprettylittle@gmail.com',
+            'lucavitale88@gmail.com',
+            'maria.vitale@prettylittle.it'
+        ];
+        
+        if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === session.email.toLowerCase())) {
+            return { ...session, role: 'SUPER_ADMIN' };
         }
+        
+        // Restituiamo direttamente la sessione dal cookie per massima reattività
+        return session;
+    } catch (e) {
+        console.error("Error in getCurrentUser:", e);
+        return null;
     }
-    
-    return null;
 }
 
 export async function loginWithCredentials(formData: FormData) {
