@@ -60,9 +60,6 @@ export async function GET(request: NextRequest) {
             console.error('Error in DB Sync:', e);
         }
 
-        const redirectUrl = isCalendarConnect ? '/calendar' : '/';
-        const response = NextResponse.redirect(new URL(redirectUrl, request.url))
-
         // 1. SALVIAMO I TOKEN IN MODO PERMANENTE NEL DB (Backup)
         try {
             const targetEmail = (isCalendarConnect && currentSession?.email) 
