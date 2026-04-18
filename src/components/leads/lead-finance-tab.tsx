@@ -30,10 +30,16 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
     const [amount, setAmount] = useState("");
     const [method, setMethod] = useState("BONIFICO");
     const [notes, setNotes] = useState("");
-    const [quoteId, setQuoteId] = useState<string | null>(null);
+    const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Calcoli finanziari ultra-sicuri
     const acceptedQuotes = (lead.quotes || []).filter((q: any) => q.status === 'ACCETTATO');
+    
+    // Form state for selection
+    const [quoteId, setQuoteId] = useState<string | null>(
+        acceptedQuotes.length === 1 ? acceptedQuotes[0].id : null
+    );
+
     const totalBudget = acceptedQuotes.reduce((acc: number, q: any) => acc + Number(q.totalAmount || 0), 0);
     const totalPaid = (lead.payments || []).reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
     const balance = totalBudget - totalPaid;
@@ -48,13 +54,15 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
 
         setLoading(true);
         try {
-            const res = await addPayment(quoteId, Number(amount), method, notes, lead.id);
+            const res = await addPayment(quoteId, Number(amount), method, notes, lead.id, new Date(paymentDate));
             if (res.success) {
                 toast.success("Incasso registrato con successo");
                 setIsAddOpen(false);
                 setAmount("");
                 setNotes("");
                 router.refresh();
+            } else {
+                toast.error("Errore: " + (res as any).error);
             }
         } catch (error) {
             toast.error("Errore nella registrazione");
@@ -74,6 +82,42 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
             toast.error("Errore nell'eliminazione");
         }
     };
+
+    // SE NON CI SONO PREVENTIVI APPROVATI, MOSTRIAMO SOLO UN MESSAGGIO E LA LISTA INCASSI GENERICI
+    if (acceptedQuotes.length === 0) {
+        return (
+            <div className="space-y-6 pt-6 animate-in fade-in duration-500">
+                <Card className="rounded-[2.5rem] border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
+                    <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-slate-600">Nessun preventivo approvato</h3>
+                    <p className="text-sm text-slate-400 mt-1">Non è possibile mostrare l'avanzamento dei pagamenti finché non viene accettato un preventivo.</p>
+                </Card>
+
+                <div className="flex justify-between items-center px-4">
+                    <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Incassi Generici</h3>
+                    <AddPaymentDialogUI 
+                        isAddOpen={isAddOpen} 
+                        setIsAddOpen={setIsAddOpen} 
+                        amount={amount}
+                        setAmount={setAmount}
+                        method={method}
+                        setMethod={setMethod}
+                        notes={notes}
+                        setNotes={setNotes}
+                        paymentDate={paymentDate}
+                        setPaymentDate={setPaymentDate}
+                        quoteId={quoteId}
+                        setQuoteId={setQuoteId}
+                        acceptedQuotes={acceptedQuotes}
+                        handleAddPayment={handleAddPayment}
+                        loading={loading}
+                    />
+                </div>
+                
+                <PaymentsTable lead={lead} handleDelete={handleDelete} />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 pt-6 animate-in fade-in zoom-in-95 duration-500">
@@ -115,7 +159,7 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
                             </div>
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo Rimanente</p>
-                                <p className="text-2xl font-black text-amber-600">€{balance.toLocaleString('it-IT')}</p>
+                                <p className="text-2xl font-black text-rose-600">€{balance.toLocaleString('it-IT')}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -151,140 +195,191 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
 
             {/* Tabella Pagamenti */}
             <div className="space-y-4">
-                <div className="flex justify-between items-center px-2">
+                <div className="flex justify-between items-center px-4">
                     <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Storico Transazioni</h3>
-                    
-                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold gap-2">
-                                <Plus className="h-4 w-4" /> Registra Incasso
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px] rounded-[2rem] p-8">
-                            <DialogHeader>
-                                <DialogTitle className="text-2xl font-black">Nuovo Incasso</DialogTitle>
-                            </DialogHeader>
-                            <div className="grid gap-6 py-4">
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-bold uppercase text-slate-400">Importo (€)</Label>
-                                    <Input 
-                                        type="number" 
-                                        placeholder="0.00" 
-                                        className="rounded-xl h-12 font-bold text-lg" 
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-bold uppercase text-slate-400">Metodo</Label>
-                                    <Select value={method} onValueChange={setMethod}>
-                                        <SelectTrigger className="rounded-xl h-12 font-bold">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="BONIFICO">Bonifico</SelectItem>
-                                            <SelectItem value="CONTANTI">Contanti</SelectItem>
-                                            <SelectItem value="CARTA">Carta / POS</SelectItem>
-                                            <SelectItem value="ASSEGNO">Assegno</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-bold uppercase text-slate-400">Collega a Preventivo (Opzionale)</Label>
-                                    <Select onValueChange={(val) => setQuoteId(val === 'none' ? null : val)}>
-                                        <SelectTrigger className="rounded-xl h-12">
-                                            <SelectValue placeholder="Incasso generico" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Incasso generico (nessun preventivo)</SelectItem>
-                                            {acceptedQuotes.map((q: any) => (
-                                                <SelectItem key={q.id} value={q.id}>
-                                                    Preventivo #{q.number} (€{Number(q.totalAmount).toLocaleString()})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-bold uppercase text-slate-400">Note</Label>
-                                    <Input 
-                                        placeholder="Esempio: Acconto Showroom" 
-                                        className="rounded-xl h-12" 
-                                        value={notes}
-                                        onChange={(e) => setNotes(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button 
-                                    className="w-full rounded-xl h-12 font-bold bg-indigo-600 hover:bg-indigo-700 text-white"
-                                    onClick={handleAddPayment}
-                                    disabled={loading}
-                                >
-                                    {loading ? "Registrazione..." : "Conferma Incasso"}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <AddPaymentDialogUI 
+                        isAddOpen={isAddOpen} 
+                        setIsAddOpen={setIsAddOpen} 
+                        amount={amount}
+                        setAmount={setAmount}
+                        method={method}
+                        setMethod={setMethod}
+                        notes={notes}
+                        setNotes={setNotes}
+                        paymentDate={paymentDate}
+                        setPaymentDate={setPaymentDate}
+                        quoteId={quoteId}
+                        setQuoteId={setQuoteId}
+                        acceptedQuotes={acceptedQuotes}
+                        handleAddPayment={handleAddPayment}
+                        loading={loading}
+                    />
                 </div>
-
-                <div className="bg-white rounded-[2rem] border border-slate-200/60 overflow-hidden shadow-sm">
-                    <Table>
-                        <TableHeader className="bg-slate-50/50">
-                            <TableRow>
-                                <TableHead className="text-[10px] font-black uppercase text-slate-400">Data</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-slate-400">Metodo</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-slate-400">Puntatore</TableHead>
-                                <TableHead className="text-[10px] font-black uppercase text-slate-400">Note</TableHead>
-                                <TableHead className="text-right text-[10px] font-black uppercase text-slate-400">Importo</TableHead>
-                                <TableHead className="w-[50px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {lead.payments.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-12 text-slate-400 font-medium italic">
-                                        Nessun incasso registrato per questo cliente.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                            {lead.payments.map((p: any) => (
-                                <TableRow key={p.id} className="group hover:bg-slate-50/50 transition-colors">
-                                    <TableCell className="font-bold text-slate-600 text-xs">
-                                        {formatITDate(p.date)}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tight bg-white border-slate-200">
-                                            {p.method === 'BONIFICO' && <CreditCard className="h-3 w-3 mr-1 text-blue-500" />}
-                                            {p.method === 'CONTANTI' && <Banknote className="h-3 w-3 mr-1 text-emerald-500" />}
-                                            {p.method}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-[10px] font-bold text-slate-400">
-                                        {p.quoteId ? `Prev. #${lead.quotes.find((q: any) => q.id === p.quoteId)?.number}` : "Generico"}
-                                    </TableCell>
-                                    <TableCell className="text-xs text-slate-500 max-w-[200px] truncate">
-                                        {p.notes || "-"}
-                                    </TableCell>
-                                    <TableCell className="text-right font-black text-slate-900">
-                                        €{Number(p.amount).toLocaleString('it-IT')}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-8 w-8 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
-                                            onClick={() => handleDelete(p.id)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
+                
+                <PaymentsTable lead={lead} handleDelete={handleDelete} />
             </div>
+        </div>
+    );
+}
+
+// COMPONENTI DI SUPPORTO PER PULIZIA CODICE
+function AddPaymentDialogUI({ 
+    isAddOpen, setIsAddOpen, amount, setAmount, method, setMethod, 
+    notes, setNotes, paymentDate, setPaymentDate, quoteId, setQuoteId, 
+    acceptedQuotes, handleAddPayment, loading 
+}: any) {
+    return (
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger asChild>
+                <Button className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold gap-2 shadow-lg shadow-indigo-100">
+                    <Plus className="h-4 w-4" /> Registra Incasso
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] rounded-[2.5rem] p-8">
+                <DialogHeader>
+                    <DialogTitle className="text-2xl font-black">Nuovo Incasso</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase text-slate-400">Importo (€)</Label>
+                            <Input 
+                                type="number" 
+                                placeholder="0.00" 
+                                className="rounded-xl h-12 font-black text-lg border-slate-200" 
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase text-slate-400">Data Incasso</Label>
+                            <Input 
+                                type="date" 
+                                className="rounded-xl h-12 font-bold border-slate-200" 
+                                value={paymentDate}
+                                onChange={(e) => setPaymentDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label className="text-xs font-black uppercase text-slate-400">Metodo di Pagamento</Label>
+                        <Select value={method} onValueChange={setMethod}>
+                            <SelectTrigger className="rounded-xl h-12 font-black border-slate-200">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="BONIFICO">Bonifico Bancario</SelectItem>
+                                <SelectItem value="CONTANTI">Contanti</SelectItem>
+                                <SelectItem value="CARTA">Carta / POS / Link</SelectItem>
+                                <SelectItem value="ASSEGNO">Assegno</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {acceptedQuotes.length > 1 ? (
+                        <div className="space-y-2">
+                            <Label className="text-xs font-black uppercase text-slate-400">Collega a Preventivo</Label>
+                            <Select value={quoteId || 'none'} onValueChange={(val) => setQuoteId(val === 'none' ? null : val)}>
+                                <SelectTrigger className="rounded-xl h-12 border-slate-200 font-bold">
+                                    <SelectValue placeholder="Scegli preventivo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="none">Incasso generico</SelectItem>
+                                    {acceptedQuotes.map((q: any) => (
+                                        <SelectItem key={q.id} value={q.id}>
+                                            Prev. #{q.number} (€{Number(q.totalAmount).toLocaleString()})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    ) : acceptedQuotes.length === 1 ? (
+                        <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                            <p className="text-[10px] font-black text-indigo-400 uppercase mb-1">Preventivo Collegato Automaticamente</p>
+                            <p className="text-sm font-bold text-indigo-700">Preventivo #{acceptedQuotes[0].number} (€{Number(acceptedQuotes[0].totalAmount).toLocaleString()})</p>
+                        </div>
+                    ) : null}
+
+                    <div className="space-y-2">
+                        <Label className="text-xs font-black uppercase text-slate-400">Note & Descrizione</Label>
+                        <Input 
+                            placeholder="Es: Acconto showroom, Saldo evento..." 
+                            className="rounded-xl h-12 border-slate-200" 
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button 
+                        className="w-full rounded-2xl h-14 font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100 transition-all text-lg"
+                        onClick={handleAddPayment}
+                        disabled={loading}
+                    >
+                        {loading ? "Registrazione in corso..." : "Conferma Incasso"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function PaymentsTable({ lead, handleDelete }: any) {
+    return (
+        <div className="bg-white rounded-[2rem] border border-slate-200/60 overflow-hidden shadow-sm">
+            <Table>
+                <TableHeader className="bg-slate-50/50">
+                    <TableRow>
+                        <TableHead className="text-[10px] font-black uppercase text-slate-400 pl-6">Data</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase text-slate-400">Metodo</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase text-slate-400">Dettaglio</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase text-slate-400">Note</TableHead>
+                        <TableHead className="text-right text-[10px] font-black uppercase text-slate-400 pr-6">Importo</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {(lead.payments || []).length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={6} className="text-center py-12 text-slate-400 font-medium italic">
+                                Nessun incasso registrato.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                    {(lead.payments || []).map((p: any) => (
+                        <TableRow key={p.id} className="group hover:bg-slate-50/50 transition-colors">
+                            <TableCell className="font-bold text-slate-600 text-xs pl-6">
+                                {formatITDate(p.date)}
+                            </TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className="rounded-lg text-[9px] font-black uppercase tracking-tight bg-white border-slate-200">
+                                    {p.method}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-[10px] font-bold text-slate-400 italic">
+                                {p.quoteId ? `Prev. #${(lead.quotes || []).find((q: any) => q.id === p.quoteId)?.number || '??'}` : "Acconto Generico"}
+                            </TableCell>
+                            <TableCell className="text-xs text-slate-500 max-w-[200px] truncate">
+                                {p.notes || "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-black text-slate-900 pr-6">
+                                €{Number(p.amount).toLocaleString('it-IT')}
+                            </TableCell>
+                            <TableCell className="pr-4">
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
+                                    onClick={() => handleDelete(p.id)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
         </div>
     );
 }

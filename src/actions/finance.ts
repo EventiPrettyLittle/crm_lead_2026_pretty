@@ -59,43 +59,47 @@ export async function getLeadFinanceData(leadId: string) {
   });
 }
 
-export async function addPayment(quoteId: string | null, amount: number, method: string, notes?: string, leadId?: string) {
-  const id = Math.random().toString(36).substring(2);
-  
-  // Effettuiamo l'inserimento supportando sia quoteId che leadId
-  await prisma.$executeRawUnsafe(
-    `INSERT INTO "Payment" (id, "quoteId", "leadId", amount, method, notes, date, "createdAt") 
-     VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-    id, quoteId || null, leadId || null, amount, method, notes || null
-  );
+export async function addPayment(quoteId: string | null, amount: number, method: string, notes?: string, leadId?: string, paymentDate?: Date) {
+  try {
+    const id = Math.random().toString(36).substring(2);
+    const dateToUse = paymentDate || new Date();
+    
+    // Inserimento standard via Prisma per massima stabilità
+    await (prisma as any).payment.create({
+      data: {
+        id,
+        amount: amount,
+        method,
+        notes: notes || null,
+        date: dateToUse,
+        leadId: leadId || null,
+        quoteId: quoteId || null
+      }
+    });
 
-  // Se abbiamo il leadId, creiamo l'attività
-  if (leadId) {
-      await createActivity(
-        leadId,
-        'SYSTEM',
-        `💰 Registrato incasso di €${amount.toLocaleString('it-IT')} tramite ${method}. Note: ${notes || '-'}`
-      );
-  } else if (quoteId) {
-    // Fallback se passiamo solo quoteId: recuperiamo il leadId
-    const quote: any[] = await prisma.$queryRawUnsafe(`SELECT "leadId" FROM "Quote" WHERE id = $1`, quoteId);
-    if (quote.length > 0) {
-      await createActivity(
-        quote[0].leadId,
-        'SYSTEM',
-        `💰 Pagamento collegato a preventivo di €${amount.toLocaleString('it-IT')} tramite ${method}`
-      );
+    // Se abbiamo il leadId, creiamo l'attività
+    if (leadId) {
+        await createActivity(
+          leadId,
+          'SYSTEM',
+          `💰 Incasso di €${amount.toLocaleString('it-IT')} del ${dateToUse.toLocaleDateString('it-IT')} (${method}).`
+        );
     }
-  }
 
-  revalidatePath('/finance');
-  if (leadId) revalidatePath(`/leads/${leadId}`);
-  
-  return { success: true };
+    revalidatePath('/finance');
+    if (leadId) revalidatePath(`/leads/${leadId}`);
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("ADD PAYMENT ERROR:", error);
+    return { success: false, error: error.message };
+  }
 }
 
 export async function deletePayment(paymentId: string, leadId?: string) {
-    await prisma.$executeRawUnsafe(`DELETE FROM "Payment" WHERE id = $1`, paymentId);
+    await (prisma as any).payment.delete({
+      where: { id: paymentId }
+    });
     revalidatePath('/finance');
     if (leadId) revalidatePath(`/leads/${leadId}`);
     return { success: true };
