@@ -145,6 +145,11 @@ export async function updateLeadQuickAction(
                     data: { googleEventId: syncResult.eventId }
                 });
             }
+        } else if (type === 'whatsapp' as any) {
+            updateData.lastStatus = 'CONTATTATO';
+            updateData.stage = (leadBase as any).stage === 'NUOVO' ? 'CONTATTATO' : (leadBase as any).stage;
+            activityType = 'WHATSAPP';
+            activityNotes = `Messaggio WhatsApp inviato. ${activityNotes}`;
         }
 
         // Update Lead database
@@ -153,6 +158,11 @@ export async function updateLeadQuickAction(
             data: {
                 ...updateData,
             }
+        });
+
+        const leadBaseUpdated = await prisma.lead.findUnique({
+            where: { id: leadId },
+            select: { firstName: true, lastName: true, phoneNormalized: true, stage: true }
         });
 
         // Create Activity log
