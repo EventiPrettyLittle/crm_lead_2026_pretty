@@ -22,26 +22,32 @@ export async function getLeadById(id: string) {
     });
 
     if (lead) {
-        // Recuperiamo anche i preventivi di altri lead che hanno lo stesso nome e cognome
-        // per avere uno storico completo del cliente
+        // 1. Storico Preventivi (anche di altri Lead con stesso nome)
         const associatedQuotes = await prisma.quote.findMany({
             where: {
                 lead: {
                     firstName: lead.firstName,
                     lastName: lead.lastName,
-                    id: { not: lead.id } // Escludiamo quelli già inclusi
+                    id: { not: lead.id }
                 }
             },
             include: { items: true },
             orderBy: { createdAt: 'desc' }
         });
 
-        // Uniamo i preventivi evitando duplicati se necessario (anche se lead.id è diverso)
         if (associatedQuotes.length > 0) {
             (lead as any).quotes = [...lead.quotes, ...associatedQuotes].sort(
                 (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
         }
+
+        // 2. Storico Pagamenti (Diretti e via Quote)
+        const leadId = lead.id;
+        const payments: any[] = await prisma.$queryRawUnsafe(
+            `SELECT * FROM "Payment" WHERE "leadId" = $1 OR "quoteId" IN (SELECT id FROM "Quote" WHERE "leadId" = $1) ORDER BY date DESC`,
+            leadId
+        );
+        (lead as any).payments = payments;
     }
 
     return serializePrisma(lead);

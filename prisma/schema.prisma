@@ -68,6 +68,7 @@ model Lead {
   activities   Activity[]
   quotes       Quote[]
   appointments Appointment[]
+  payments     Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -105,8 +106,10 @@ model Quote {
 
 model Payment {
   id        String   @id @default(cuid())
-  quoteId   String
-  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quoteId   String?  // Opzionale ora
+  quote     Quote?   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  leadId    String?
+  lead      Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
   amount    Decimal
   method    String?  // BONIFICO, CONTANTI, CARTA, POS, ECC.
   notes     String?

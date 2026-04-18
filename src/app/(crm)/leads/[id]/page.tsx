@@ -15,6 +15,7 @@ import { EditLeadDialog } from "@/components/leads/edit-lead-dialog"
 import { DeleteLeadButton } from "@/components/leads/delete-lead-button"
 import { Button } from "@/components/ui/button"
 import { LeadInternalNotes } from "@/components/leads/lead-internal-notes"
+import { LeadFinanceTab } from "@/components/leads/lead-finance-tab"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
@@ -94,7 +95,15 @@ export default async function LeadDetailPage(props: PageProps) {
                                 </TabsTrigger>
                                 <TabsTrigger value="activities" className="rounded-lg px-6">Timeline</TabsTrigger>
                                 <TabsTrigger value="quotes" className="rounded-lg px-6">Preventivi</TabsTrigger>
+                                <TabsTrigger value="finance" className="rounded-lg px-6 flex items-center gap-2">
+                                    <ArrowRight className="h-4 w-4 text-indigo-500 rotate-[-45deg]" />
+                                    Pagamenti
+                                </TabsTrigger>
                             </TabsList>
+
+                            <TabsContent value="finance" className="outline-none">
+                                <LeadFinanceTab lead={lead as any} />
+                            </TabsContent>
 
                             <TabsContent value="chat" className="pt-6 outline-none animate-in fade-in zoom-in-95 duration-500">
                                 <LeadWhatsAppChat 
