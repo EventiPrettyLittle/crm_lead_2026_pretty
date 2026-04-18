@@ -73,7 +73,7 @@ export async function loginWithCredentials(formData: FormData) {
         const cookieStore = await cookies();
         cookieStore.set('PLATINUM_AUTH_SESSION', JSON.stringify(userData), {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: true, // Obbligatorio per HTTPS
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
