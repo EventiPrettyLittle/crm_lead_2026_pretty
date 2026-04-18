@@ -63,27 +63,24 @@ export async function addPayment(quoteId: string | null, amount: number, method:
   try {
     const id = Math.random().toString(36).substring(2);
     const dateToUse = paymentDate || new Date();
+    const amountNum = Number(amount);
     
-    // Inserimento standard via Prisma per massima stabilità
-    await (prisma as any).payment.create({
-      data: {
-        id,
-        amount: amount,
-        method,
-        notes: notes || null,
-        date: dateToUse,
-        leadId: leadId || null,
-        quoteId: quoteId || null
-      }
-    });
+    // USIAMO SQL TAGGED: Questo bypassa la cache del client e parla direttamente al DB
+    // Risolve l'errore "Unknown argument leadId" perché il DB fisico ha già la colonna
+    await (prisma as any).$executeRaw`
+      INSERT INTO "Payment" ("id", "quoteId", "leadId", "amount", "method", "notes", "date", "createdAt") 
+      VALUES (${id}, ${quoteId || null}, ${leadId || null}, ${amountNum}, ${method}, ${notes || null}, ${dateToUse}, CURRENT_TIMESTAMP)
+    `;
 
     // Se abbiamo il leadId, creiamo l'attività
     if (leadId) {
-        await createActivity(
-          leadId,
-          'SYSTEM',
-          `💰 Incasso di €${amount.toLocaleString('it-IT')} del ${dateToUse.toLocaleDateString('it-IT')} (${method}).`
-        );
+        // Usiamo anche qui una query SQL per l'attività per essere certi
+        const actId = Math.random().toString(36).substring(7);
+        const actNotes = `💰 Incasso di €${amountNum.toLocaleString('it-IT')} del ${dateToUse.toLocaleDateString('it-IT')} (${method}).`;
+        await (prisma as any).$executeRaw`
+          INSERT INTO "Activity" ("id", "leadId", "type", "notes", "createdAt") 
+          VALUES (${actId}, ${leadId}, 'SYSTEM', ${actNotes}, CURRENT_TIMESTAMP)
+        `;
     }
 
     revalidatePath('/finance');
@@ -91,15 +88,13 @@ export async function addPayment(quoteId: string | null, amount: number, method:
     
     return { success: true };
   } catch (error: any) {
-    console.error("ADD PAYMENT ERROR:", error);
+    console.error("CRITICAL ADD PAYMENT ERROR:", error);
     return { success: false, error: error.message };
   }
 }
 
 export async function deletePayment(paymentId: string, leadId?: string) {
-    await (prisma as any).payment.delete({
-      where: { id: paymentId }
-    });
+    await (prisma as any).$executeRaw`DELETE FROM "Payment" WHERE "id" = ${paymentId}`;
     revalidatePath('/finance');
     if (leadId) revalidatePath(`/leads/${leadId}`);
     return { success: true };
