@@ -31,13 +31,18 @@ export async function GET(request: NextRequest) {
         // Sincronizziamo l'utente nel Database in modo nativo con Prisma
         let dbUser: any = null;
         try {
+            // FORZATURA: Assicuriamoci che la colonna esista fisicamente
+            try {
+                await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleTokens" TEXT;`);
+            } catch(sqle) {}
+            
             const targetEmail = (isCalendarConnect && currentSession?.email) 
                 ? currentSession.email.toLowerCase().trim() 
                 : userInfo.email.toLowerCase().trim();
 
             const tokensStr = JSON.stringify(tokens);
 
-            // UPSERT con casting any per bypassare il blocco build sui tipi Prisma non aggiornati
+            // Salvataggio 
             dbUser = await (prisma.user as any).upsert({
                 where: { email: targetEmail },
                 update: { googleTokens: tokensStr },
@@ -52,12 +57,7 @@ export async function GET(request: NextRequest) {
                 }
             });
         } catch (e) {
-            console.error('Error saving google tokens to DB with Prisma:', e);
-            // Fallback SQL raw in caso Prisma non sia ancora sincronizzato
-            try {
-                const targetEmail = (isCalendarConnect && currentSession?.email) ? currentSession.email.toLowerCase() : userInfo.email.toLowerCase();
-                await prisma.$executeRawUnsafe(`UPDATE "User" SET "googleTokens" = $1 WHERE email = $2`, JSON.stringify(tokens), targetEmail);
-            } catch(sqle) {}
+            console.error('Error in DB Sync:', e);
         }
 
         const redirectUrl = isCalendarConnect ? '/calendar' : '/';

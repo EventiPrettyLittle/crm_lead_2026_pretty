@@ -23,6 +23,9 @@ async function getGoogleTokens(): Promise<any | null> {
             // 2. Prova dal database con Prisma (Accesso dinamico per evitare blocchi TypeScript in build)
             const userEmail = sessionData.email?.toLowerCase().trim();
             if (userEmail) {
+                // Migrazione silente se necessario
+                try { await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleTokens" TEXT;`); } catch(e) {}
+                
                 const user = await (prisma.user as any).findUnique({
                     where: { email: userEmail }
                 });
