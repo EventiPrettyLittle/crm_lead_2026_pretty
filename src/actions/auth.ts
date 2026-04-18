@@ -20,16 +20,24 @@ export async function getCurrentUser() {
         
         if (!userCookie || !userCookie.value) return null;
         
-        const session = JSON.parse(userCookie.value);
+        let session;
+        try {
+            session = JSON.parse(userCookie.value);
+        } catch (parseError) {
+            console.error("Session parse error, ignoring stale cookie");
+            return null;
+        }
+
         if (!session || !session.email) return null;
         
-        const SUPER_ADMIN_EMAILS = [
+        const SUPER_ADMINS = [
             'eventiprettylittle@gmail.com',
             'lucavitale88@gmail.com',
-            'maria.vitale@prettylittle.it'
+            'maria.vitale@prettylittle.it',
+            'lucavitale88@gmail.com'
         ];
         
-        if (SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === session.email.toLowerCase())) {
+        if (SUPER_ADMINS.some(e => e.toLowerCase() === session.email.toLowerCase())) {
             return { ...session, role: 'SUPER_ADMIN' };
         }
         

@@ -88,14 +88,16 @@ export async function addPayment(quoteId: string | null, amount: number, method:
         `;
     }
 
+    } catch (error: any) {
+        console.error("CRITICAL ADD PAYMENT ERROR:", error);
+        return { success: false, error: error.message };
+    }
+
+    // REVALIDATE VA SEMPRE FUORI DAL TRY/CATCH
     revalidatePath('/finance');
     if (leadId) revalidatePath(`/leads/${leadId}`);
     
     return { success: true };
-  } catch (error: any) {
-    console.error("CRITICAL ADD PAYMENT ERROR:", error);
-    return { success: false, error: error.message };
-  }
 }
 
 export async function deletePayment(paymentId: string, leadId?: string) {
