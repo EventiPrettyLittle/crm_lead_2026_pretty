@@ -41,12 +41,16 @@ export async function getLeadById(id: string) {
             );
         }
 
-        // 2. Storico Pagamenti (Diretti e via Quote)
-        const leadId = lead.id;
-        const payments: any[] = await prisma.$queryRawUnsafe(
-            `SELECT * FROM "Payment" WHERE "leadId" = $1 OR "quoteId" IN (SELECT id FROM "Quote" WHERE "leadId" = $1) ORDER BY date DESC`,
-            leadId
-        );
+        // 2. Storico Pagamenti (Usando Prisma standard per stabilità)
+        const payments = await (prisma as any).payment.findMany({
+            where: {
+                OR: [
+                    { leadId: lead.id },
+                    { quoteId: { in: lead.quotes.map((q: any) => q.id) } }
+                ]
+            },
+            orderBy: { date: 'desc' }
+        });
         (lead as any).payments = payments;
     }
 
