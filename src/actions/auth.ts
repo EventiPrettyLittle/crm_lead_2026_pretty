@@ -23,8 +23,7 @@ export async function getCurrentUser() {
         let session;
         try {
             session = JSON.parse(userCookie.value);
-        } catch (parseError) {
-            console.error("Session parse error, ignoring stale cookie");
+        } catch (e) {
             return null;
         }
 
@@ -37,11 +36,12 @@ export async function getCurrentUser() {
             'lucavitale88@gmail.com'
         ];
         
-        if (SUPER_ADMINS.some(e => e.toLowerCase() === session.email.toLowerCase())) {
-            return { ...session, role: 'SUPER_ADMIN' };
-        }
+        const isSuperAdmin = SUPER_ADMINS.some(e => e.toLowerCase() === session.email.toLowerCase());
         
-        return session;
+        return {
+            ...session,
+            role: isSuperAdmin ? 'SUPER_ADMIN' : (session.role || 'OPERATOR')
+        };
     } catch (e) {
         return null;
     }
