@@ -124,9 +124,18 @@ export default async function FinancePage() {
                                             <div className="space-y-4">
                                                 <div className="flex justify-between items-end">
                                                     <p className="text-[10px] font-black text-slate-400 uppercase">Avanzamento Pagamenti</p>
-                                                    <p className="text-sm font-black text-slate-900">€{paid.toLocaleString()} / €{Number(quote.totalAmount).toLocaleString()}</p>
+                                                    <p className="text-sm font-black text-slate-900">€{paid.toLocaleString()} / €{totalAmount.toLocaleString()}</p>
                                                 </div>
-                                                <Progress value={(paid / Number(quote.totalAmount)) * 100} className="h-2 bg-slate-200" />
+                                                <Progress value={(paid / totalAmount) * 100} className="h-2 bg-slate-200" />
+                                                {!isFullyPaid ? (
+                                                    <p className="text-[11px] font-black text-rose-600 uppercase tracking-tighter">
+                                                        ⚠️ Residuo da incassare: €{remaining.toLocaleString()}
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-[11px] font-black text-emerald-600 uppercase tracking-tighter">
+                                                        ✅ Ordine completamente saldato
+                                                    </p>
+                                                )}
                                             </div>
 
                                             <div className="pt-4 flex items-center justify-between">

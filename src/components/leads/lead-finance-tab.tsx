@@ -15,6 +15,8 @@ import { addPayment, deletePayment } from "@/actions/finance"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
+import { Progress } from "@/components/ui/progress"
+
 interface LeadFinanceTabProps {
     lead: any;
 }
@@ -35,6 +37,8 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
     const totalBudget = acceptedQuotes.reduce((acc: number, q: any) => acc + Number(q.totalAmount), 0);
     const totalPaid = lead.payments.reduce((acc: number, p: any) => acc + Number(p.amount), 0);
     const balance = totalBudget - totalPaid;
+    const progressPercent = totalBudget > 0 ? (totalPaid / totalBudget) * 100 : 0;
+    const isFullyPaid = totalBudget > 0 && balance <= 0;
 
     const handleAddPayment = async () => {
         if (!amount || Number(amount) <= 0) {
@@ -117,6 +121,33 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* BARRA DI AVANZAMENTO E SALDO ROSSO */}
+            {totalBudget > 0 && (
+                <Card className="rounded-[2.5rem] border border-slate-200/60 bg-white p-8 shadow-sm">
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Avanzamento Globale Pagamenti</h4>
+                            <span className="text-sm font-black text-slate-900">€{totalPaid.toLocaleString()} / €{totalBudget.toLocaleString()}</span>
+                        </div>
+                        <Progress value={progressPercent} className="h-3 rounded-full bg-slate-100" />
+                        <div className="flex justify-between items-center">
+                            {!isFullyPaid ? (
+                                <p className="text-sm font-black text-rose-600 uppercase italic tracking-tight">
+                                    🔴 Mancano €{balance.toLocaleString()} per saldare la posizione
+                                </p>
+                            ) : (
+                                <p className="text-sm font-black text-emerald-600 uppercase italic tracking-tight">
+                                    🟢 Congratulazioni! Cliente ha saldato tutto
+                                </p>
+                            )}
+                            <Badge variant="outline" className="rounded-lg text-[10px] font-bold py-1">
+                                {Math.floor(progressPercent)}% Completato
+                            </Badge>
+                        </div>
+                    </div>
+                </Card>
+            )}
 
             {/* Tabella Pagamenti */}
             <div className="space-y-4">
