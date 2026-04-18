@@ -10,31 +10,39 @@ async function getGoogleTokens(): Promise<any | null> {
     const session = cookieStore.get('PLATINUM_AUTH_SESSION');
     const tokenCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
 
-    // 1. Prova dal cookie prima (più veloce e aggiornato nella sessione corrente)
-    if (tokenCookie) {
-        try { 
-            const tokens = JSON.parse(tokenCookie.value);
-            if (tokens && (tokens.access_token || tokens.refresh_token)) return tokens;
-        } catch (e) {
-            console.warn('Error parsing tokens from cookie:', e);
-        }
-    }
-
-    // 2. Fonte di backup: Database (per permanenza)
+    // 1. Fonte principale: Sessione Attiva (la più affidabile e veloce)
     if (session) {
         try {
             const sessionData = JSON.parse(session.value);
+            // Se i token sono integrati nella sessione, usali subito
+            if (sessionData.googleTokens) {
+                const tokens = JSON.parse(sessionData.googleTokens);
+                if (tokens && (tokens.access_token || tokens.refresh_token)) return tokens;
+            }
+
+            // Fonte di backup 1: Database (se non sono in sessione)
             const userEmail = sessionData.email?.toLowerCase().trim();
             const users: any[] = await prisma.$queryRawUnsafe(
-                `SELECT "googleTokens" FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
+                `SELECT googleTokens FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
                 userEmail
             );
+            if (users.length > 0 && users[0].googletokens) { // Nota: Postgres potrebbe restituire googletokens tutto minuscolo
+                return JSON.parse(users[0].googletokens);
+            }
             if (users.length > 0 && users[0].googleTokens) {
                 return JSON.parse(users[0].googleTokens);
             }
         } catch (e) {
-            console.warn('Could not read tokens from DB:', e);
+            console.warn('[CALENDAR] Error reading tokens from session/DB:', e);
         }
+    }
+
+    // Fonte di backup 2: Cookie separato (legacy)
+    if (tokenCookie) {
+        try { 
+            const tokens = JSON.parse(tokenCookie.value);
+            if (tokens && (tokens.access_token || tokens.refresh_token)) return tokens;
+        } catch (e) {}
     }
 
     return null;

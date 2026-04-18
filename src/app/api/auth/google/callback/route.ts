@@ -80,22 +80,23 @@ export async function GET(request: NextRequest) {
         })
 
         // Aggiorna la user_session SOLO se non è un collegamento calendario (ovvero è un login)
-        if (!isCalendarConnect) {
-            const displayName = dbUser?.name || userInfo.name || 'User';
-            response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify({
-                id: dbUser?.id || userInfo.id,
-                name: displayName,
-                email: userInfo.email,
-                picture: userInfo.picture,
-                role: dbUser?.role || 'USER'
-            }), {
-                httpOnly: true,
-                secure: false,
-                sameSite: 'lax',
-                path: '/',
-                maxAge: 60 * 60 * 24 * 30 
-            })
-        }
+        // Se è un collegamento calendario, vogliamo comunque aggiungere i google_tokens alla sessione attuale
+        const sessionData = {
+            id: dbUser?.id || userInfo.id || currentSession?.id,
+            name: dbUser?.name || userInfo.name || currentSession?.name || 'User',
+            email: userInfo.email || currentSession?.email,
+            picture: userInfo.picture || currentSession?.picture,
+            role: dbUser?.role || currentSession?.role || 'USER',
+            googleTokens: JSON.stringify(tokens) // Aggiungiamo i token alla sessione per accesso immediato
+        };
+
+        response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify(sessionData), {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30 
+        })
 
         return response
     } catch (error) {
