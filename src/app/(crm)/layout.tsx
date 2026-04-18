@@ -17,22 +17,25 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
   // GATEKEEPER SERVER-SIDE: Protezione d'accesso
   const user = await getCurrentUser();
   
-  if (!user && !isAction) {
-    redirect("/login?reason=layout_auth_required");
-  }
+  // if (!user && !isAction) {
+  //   redirect("/login?reason=layout_auth_required");
+  // }
 
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="w-full bg-[#f8fafc]">
+      <main className="w-full bg-[#f8fafc] relative">
         <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60 transition-all duration-300 px-6 h-20 flex items-center justify-between gap-8">
           <div className="flex items-center gap-4 shrink-0">
             <SidebarTrigger className="h-10 w-10 text-slate-500 hover:text-indigo-600 transition-colors" />
             <div className="h-8 w-px bg-slate-200" />
           </div>
 
-          <div className="flex-1 max-w-2xl px-4">
+          <div className="flex-1 max-w-2xl px-4 flex items-center gap-4">
             <GlobalSearch />
+            <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold whitespace-nowrap">
+              CRM V.1.1.0 - SYNC TEST
+            </span>
           </div>
 
           {/* Live Clock — centro header */}

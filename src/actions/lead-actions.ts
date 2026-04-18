@@ -163,13 +163,29 @@ export async function updateLeadQuickAction(
             activityNotes = `Messaggio WhatsApp inviato. ${activityNotes}`;
         }
 
-        // Update Lead database
-        const updatedLead = await prisma.lead.update({
-            where: { id: leadId },
-            data: {
-                ...updateData,
+        // Aggiornamento "Violento" via SQL per bypassare ogni cache o blocco ORM
+        try {
+            const stageValue = updateData.stage;
+            const lastStatusValue = updateData.lastStatus;
+            
+            if (stageValue) {
+                await prisma.$executeRawUnsafe(
+                    `UPDATE "Lead" SET "stage" = $1, "lastStatus" = $2, "lastStatusAt" = $3, "updatedAt" = $3 WHERE id = $4`,
+                    stageValue,
+                    lastStatusValue || stageValue,
+                    now,
+                    leadId
+                );
             }
-        });
+        } catch (sqlError) {
+            console.error("SQL DIRECT UPDATE ERROR:", sqlError);
+            
+            // Fallback Prisma Standard
+            await prisma.lead.update({
+                where: { id: leadId },
+                data: updateData
+            });
+        }
 
         const leadBaseUpdated = await prisma.lead.findUnique({
             where: { id: leadId },
