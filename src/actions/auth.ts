@@ -73,7 +73,7 @@ export async function loginWithCredentials(formData: FormData) {
         const cookieStore = await cookies();
         cookieStore.set('PLATINUM_AUTH_SESSION', JSON.stringify(userData), {
             httpOnly: true,
-            secure: false, // Temporaneamente false per debug visibilità cookie
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
@@ -95,12 +95,12 @@ export async function updateUser(data: { name?: string, password?: string, phone
             const cleanName = data.name.trim();
             await prisma.$executeRawUnsafe(`UPDATE "User" SET name = $1 WHERE email = $2`, cleanName, user.email);
             
-            // Aggiorniamo il cookie con il nuovo nome
+        // Aggiorniamo il cookie con il nuovo nome
             const cookieStore = await cookies();
             const updatedUser = { ...user, name: cleanName };
-            cookieStore.set('user_session', JSON.stringify(updatedUser), {
+            cookieStore.set('PLATINUM_AUTH_SESSION', JSON.stringify(updatedUser), {
                 httpOnly: true,
-                secure: false, // Temporaneamente false per debug
+                secure: process.env.NODE_ENV === 'production',
                 sameSite: 'lax',
                 path: '/',
                 maxAge: 60 * 60 * 24 * 30 
