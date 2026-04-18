@@ -7,7 +7,7 @@ import { createActivity } from "./lead-detail";
 
 async function getGoogleTokens(): Promise<any | null> {
     const cookieStore = await cookies();
-    const session = cookieStore.get('user_session');
+    const session = cookieStore.get('PLATINUM_AUTH_SESSION');
     const tokenCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
 
     // 1. Prova dal cookie prima (più veloce e aggiornato nella sessione corrente)
@@ -44,7 +44,7 @@ export async function getCalendarEvents() {
     const tokens = await getGoogleTokens();
 
     const cookieStore = await cookies();
-    const session = cookieStore.get('user_session');
+    const session = cookieStore.get('PLATINUM_AUTH_SESSION');
     let ownerId: string | null = null;
     let localAppointments: any[] = [];
     
@@ -196,7 +196,7 @@ export async function createCalendarEvent(eventData: {
 
     try {
         const cookieStore = await cookies();
-        const session = cookieStore.get('user_session');
+        const session = cookieStore.get('PLATINUM_AUTH_SESSION');
         
         if (session) {
             const sessionData = JSON.parse(session.value);

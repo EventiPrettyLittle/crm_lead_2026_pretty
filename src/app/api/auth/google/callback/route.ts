@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 
         // Aggiorna SEMPRE la user_session al login per garantire l'autorizzazione
         const displayName = dbUser?.name || userInfo.name || 'User';
-        response.cookies.set('user_session', JSON.stringify({
+        response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify({
             id: dbUser?.id || userInfo.id,
             name: displayName,
             email: userInfo.email,

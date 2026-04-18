@@ -5,10 +5,10 @@ export async function GET(request: Request) {
     const cookieStore = await cookies()
     
     // Cancella la sessione del CRM
-    cookieStore.set('user_session', '', { path: '/', expires: new Date(0) })
+    cookieStore.set('PLATINUM_AUTH_SESSION', '', { path: '/', expires: new Date(0) })
     
     // Per sicurezza extra, facciamo il delete standard
-    cookieStore.delete('user_session')
+    cookieStore.delete('PLATINUM_AUTH_SESSION')
 
     // Cancella anche i token Google per forzare il ricollegamento se necessario
     cookieStore.set('google_tokens', '', { path: '/', expires: new Date(0) })

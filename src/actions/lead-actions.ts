@@ -37,7 +37,7 @@ export async function updateLeadQuickAction(
         if (!leadBase) return { success: false, error: "Lead not found" };
 
         const cookieStore = await cookies();
-        const session = cookieStore.get('user_session');
+        const session = cookieStore.get('PLATINUM_AUTH_SESSION');
         let ownerId = null;
         if (session) {
             const sessionData = JSON.parse(session.value);

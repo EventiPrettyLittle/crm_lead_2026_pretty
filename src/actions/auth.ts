@@ -15,7 +15,7 @@ const SUPER_ADMIN_EMAILS = [
 
 export async function getCurrentUser() {
     const cookieStore = await cookies();
-    const userCookie = cookieStore.get('user_session');
+    const userCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
 
     if (userCookie) {
         let session = null;
@@ -93,7 +93,7 @@ export async function loginWithCredentials(formData: FormData) {
         };
 
         const cookieStore = await cookies();
-        cookieStore.set('user_session', JSON.stringify(userData), {
+        cookieStore.set('PLATINUM_AUTH_SESSION', JSON.stringify(userData), {
             httpOnly: true,
             secure: false, // Temporaneamente false per debug visibilità cookie
             sameSite: 'lax',

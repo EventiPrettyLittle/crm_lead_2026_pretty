@@ -14,7 +14,7 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    const session = request.cookies.get('user_session');
+    const session = request.cookies.get('PLATINUM_AUTH_SESSION');
     const isAction = request.headers.has('next-action');
     const isPrefetch = request.headers.get('purpose') === 'prefetch';
     
