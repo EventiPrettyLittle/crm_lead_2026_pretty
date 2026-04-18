@@ -19,7 +19,7 @@ import { addPayment } from "@/actions/finance";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-export function AddPaymentDialog({ quoteId, leadName }: { quoteId: string, leadName: string }) {
+export function AddPaymentDialog({ quoteId, leadId, leadName }: { quoteId: string, leadId: string, leadName: string }) {
     const router = useRouter();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -34,7 +34,7 @@ export function AddPaymentDialog({ quoteId, leadName }: { quoteId: string, leadN
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await addPayment(quoteId, Number(formData.amount), formData.method, formData.notes, undefined, new Date(formData.date));
+            const res = await addPayment(quoteId, Number(formData.amount), formData.method, formData.notes, leadId, new Date(formData.date));
             if (res.success) {
                 toast.success("Pagamento registrato");
                 setOpen(false);

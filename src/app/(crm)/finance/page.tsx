@@ -139,7 +139,7 @@ export default async function FinancePage() {
                                             </div>
 
                                             <div className="pt-4 flex items-center justify-between">
-                                                <AddPaymentDialog quoteId={quote.id} leadName={`${quote.lead.firstName} ${quote.lead.lastName}`} />
+                                                <AddPaymentDialog quoteId={quote.id} leadId={quote.leadId} leadName={`${quote.lead.firstName} ${quote.lead.lastName}`} />
                                                 <Button variant="ghost" size="sm" asChild className="h-10 rounded-xl font-bold text-slate-400 hover:text-indigo-600 hover:bg-indigo-50">
                                                     <Link href={`/leads/${quote.leadId}`}>
                                                         Vai al Lead <ArrowRight className="ml-2 h-4 w-4" />
