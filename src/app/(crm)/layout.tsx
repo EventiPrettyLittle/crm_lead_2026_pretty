@@ -5,8 +5,16 @@ import { NotificationCenter } from "@/components/layout/notification-center"
 import { UserNav } from "@/components/layout/user-nav"
 import { LiveClock } from "@/components/layout/live-clock"
 import { ReminderNotifier } from "@/components/layout/reminder-notifier"
+import { getCurrentUser } from "@/actions/auth"
+import { redirect } from "next/navigation"
 
-export default function CRMLayout({ children }: { children: React.ReactNode }) {
+export default async function CRMLayout({ children }: { children: React.ReactNode }) {
+  // GATEKEEPER SERVER-SIDE: Molto più affidabile del middleware per la gestione cookie sui sottodomini
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login?reason=layout_auth_required");
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar />
