@@ -60,13 +60,19 @@ export async function getLeadFinanceData(leadId: string) {
 }
 
 export async function addPayment(quoteId: string | null, amount: number, method: string, notes?: string, leadId?: string, paymentDate?: Date) {
-  try {
+    // EMERGENZA SCHEMAS: Forza la creazione della colonna se il DB non è allineato
+    try {
+        await (prisma as any).$executeRawUnsafe(`ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "leadId" TEXT`);
+        await (prisma as any).$executeRawUnsafe(`ALTER TABLE "Activity" ADD COLUMN IF NOT EXISTS "leadId" TEXT`);
+    } catch (e) {
+        // Silenzioso se la colonna esiste già o errore minore
+    }
+
     const id = Math.random().toString(36).substring(2);
     const dateToUse = paymentDate || new Date();
     const amountNum = Number(amount);
     
-    // USIAMO SQL TAGGED: Questo bypassa la cache del client e parla direttamente al DB
-    // Risolve l'errore "Unknown argument leadId" perché il DB fisico ha già la colonna
+    // USIAMO SQL TAGGED
     await (prisma as any).$executeRaw`
       INSERT INTO "Payment" ("id", "quoteId", "leadId", "amount", "method", "notes", "date", "createdAt") 
       VALUES (${id}, ${quoteId || null}, ${leadId || null}, ${amountNum}, ${method}, ${notes || null}, ${dateToUse}, CURRENT_TIMESTAMP)
