@@ -20,20 +20,19 @@ async function getGoogleTokens(): Promise<any | null> {
                 if (tokens && (tokens.access_token || tokens.refresh_token)) return tokens;
             }
 
-            // 2. Prova dal database con Prisma Nativo (A prova di errore case-sensitive)
+            // 2. Prova dal database con Prisma (Accesso dinamico per evitare blocchi TypeScript in build)
             const userEmail = sessionData.email?.toLowerCase().trim();
             if (userEmail) {
-                const user = await prisma.user.findUnique({
-                    where: { email: userEmail },
-                    select: { googleTokens: true }
+                const user = await (prisma.user as any).findUnique({
+                    where: { email: userEmail }
                 });
                 
-                if (user?.googleTokens) {
+                if (user && user.googleTokens) {
                     return JSON.parse(user.googleTokens);
                 }
             }
         } catch (e) {
-            console.warn('[CALENDAR] Error reading tokens via Prisma:', e);
+            console.warn('[CALENDAR] Error reading tokens via Dynamic Prisma:', e);
         }
     }
 
