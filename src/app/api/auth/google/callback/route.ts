@@ -14,6 +14,11 @@ export async function GET(request: NextRequest) {
         const tokens = await getTokens(code)
         const { getUserInfo } = await import("@/lib/google-auth")
         const userInfo = await getUserInfo(tokens)
+        
+        if (!userInfo || !userInfo.email) {
+            return NextResponse.json({ error: 'Impossibile recuperare l\'email dall\'account Google' }, { status: 400 })
+        }
+
         const prisma = (await import("@/lib/prisma")).default
 
         const isCalendarConnect = state === 'calendar_connect';
