@@ -19,10 +19,14 @@ export function middleware(request: NextRequest) {
     const isPrefetch = request.headers.get('purpose') === 'prefetch';
     
     // 2. Se non c'è sessione e non siamo in login, vai a login
-    // Non blocchiamo le Server Actions (che hanno i loro controlli interni) 
-    // né i prefetch per non degradare le performance o causare loop di re-routing
+    // Permettiamo TUTTE le richieste non-GET (POST, PUT, DELETE) per evitare di interrompere azioni
+    // Il controllo di autenticazione reale avverrà dentro la Server Action
+    if (request.method !== 'GET') {
+        return NextResponse.next();
+    }
+
     if (!session && !isAction && !isPrefetch) {
-        return NextResponse.redirect(new URL('/login', request.url));
+        return NextResponse.redirect(new URL('/login?reason=missing_session', request.url));
     }
 
     // Deployment Refresh & Fix: 2026-04-18 15:15

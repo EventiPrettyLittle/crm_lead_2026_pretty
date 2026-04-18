@@ -95,7 +95,7 @@ export async function loginWithCredentials(formData: FormData) {
         const cookieStore = await cookies();
         cookieStore.set('user_session', JSON.stringify(userData), {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false, // Temporaneamente false per debug visibilità cookie
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
@@ -122,7 +122,7 @@ export async function updateUser(data: { name?: string, password?: string, phone
             const updatedUser = { ...user, name: cleanName };
             cookieStore.set('user_session', JSON.stringify(updatedUser), {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: false, // Temporaneamente false per debug
                 sameSite: 'lax',
                 path: '/',
                 maxAge: 60 * 60 * 24 * 30 
