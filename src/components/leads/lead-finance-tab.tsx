@@ -32,10 +32,10 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
     const [notes, setNotes] = useState("");
     const [quoteId, setQuoteId] = useState<string | null>(null);
 
-    // Calcoli finanziari
-    const acceptedQuotes = lead.quotes.filter((q: any) => q.status === 'ACCETTATO');
-    const totalBudget = acceptedQuotes.reduce((acc: number, q: any) => acc + Number(q.totalAmount), 0);
-    const totalPaid = lead.payments.reduce((acc: number, p: any) => acc + Number(p.amount), 0);
+    // Calcoli finanziari ultra-sicuri
+    const acceptedQuotes = (lead.quotes || []).filter((q: any) => q.status === 'ACCETTATO');
+    const totalBudget = acceptedQuotes.reduce((acc: number, q: any) => acc + Number(q.totalAmount || 0), 0);
+    const totalPaid = (lead.payments || []).reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
     const balance = totalBudget - totalPaid;
     const progressPercent = totalBudget > 0 ? (totalPaid / totalBudget) * 100 : 0;
     const isFullyPaid = totalBudget > 0 && balance <= 0;

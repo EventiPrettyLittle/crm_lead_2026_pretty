@@ -41,17 +41,23 @@ export async function getLeadById(id: string) {
             );
         }
 
-        // 2. Storico Pagamenti (Usando Prisma standard per stabilità)
-        const payments = await (prisma as any).payment.findMany({
-            where: {
-                OR: [
-                    { leadId: lead.id },
-                    { quoteId: { in: lead.quotes.map((q: any) => q.id) } }
-                ]
-            },
-            orderBy: { date: 'desc' }
-        });
-        (lead as any).payments = payments;
+        // 2. Storico Pagamenti (Versione Ultra-Stabile)
+        let payments: any[] = [];
+        try {
+            payments = await (prisma as any).payment.findMany({
+                where: {
+                    OR: [
+                        { leadId: id },
+                        { quoteId: { in: lead.quotes.map((q: any) => q.id) } }
+                    ]
+                },
+                orderBy: { date: 'desc' }
+            });
+        } catch (e) {
+            console.error("Payment fetch failed, providing empty array:", e);
+            payments = [];
+        }
+        (lead as any).payments = payments || [];
     }
 
     return serializePrisma(lead);
