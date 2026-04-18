@@ -40,15 +40,24 @@ export async function updateLeadQuickAction(
         const session = cookieStore.get('PLATINUM_AUTH_SESSION');
         let ownerId = null;
         if (session) {
-            const sessionData = JSON.parse(session.value);
-            const userEmail = sessionData.email?.toLowerCase().trim();
-            const users: any[] = await prisma.$queryRawUnsafe(
-                `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
-                userEmail
-            );
-            ownerId = users.length > 0 ? users[0].id : null;
+            try {
+                const sessionData = JSON.parse(session.value);
+                // Proviamo prima l'ID diretto dal cookie (più sicuro)
+                ownerId = sessionData.id || null;
+                
+                // Fallback se l'ID manca nel cookie: cerchiamo per email
+                if (!ownerId && sessionData.email) {
+                    const userEmail = sessionData.email.toLowerCase().trim();
+                    const users: any[] = await prisma.$queryRawUnsafe(
+                        `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
+                        userEmail
+                    );
+                    ownerId = users.length > 0 ? users[0].id : null;
+                }
+            } catch (e) {}
         }
-        if (!ownerId) return { success: false, error: "Sessione non valida" };
+        
+        if (!ownerId) return { success: false, error: "Identità operatore non trovata. Per favore effettua Logout e nuovo Login." };
 
         if (type === 'contacted') {
             updateData.lastStatus = 'CONTATTATO';

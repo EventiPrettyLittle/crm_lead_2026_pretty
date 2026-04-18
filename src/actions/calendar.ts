@@ -207,23 +207,18 @@ export async function createCalendarEvent(eventData: {
         
         if (session) {
             const sessionData = JSON.parse(session.value);
+            // 1. Priorità assoluta: l'id già presente nel cookie
+            ownerId = sessionData.id || null;
+            
             const userEmail = sessionData.email?.toLowerCase().trim();
             
-            // Log diagnostico interno (visibile nei log server)
-            console.log(`[CALENDAR] Attempting sync for user: ${userEmail}`);
-
-            const users: any[] = await prisma.$queryRawUnsafe(
-                `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
-                userEmail
-            );
-            
-            if (users.length > 0) {
-                ownerId = users[0].id;
-                console.log(`[CALENDAR] Found ownerId: ${ownerId}`);
-            } else {
-                console.warn(`[CALENDAR] No user record found in DB for ${userEmail}. Attempting Super Admin fallback...`);
-                // Se è un super admin e non c'è nel DB, proviamo a usare l'ID dalla sessione se presente
-                ownerId = sessionData.id || null;
+            // 2. Backup: se l'ID non c'è nel cookie, lo cerchiamo nel DB
+            if (!ownerId && userEmail) {
+                const users: any[] = await prisma.$queryRawUnsafe(
+                    `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
+                    userEmail
+                );
+                if (users.length > 0) ownerId = users[0].id;
             }
         }
 
