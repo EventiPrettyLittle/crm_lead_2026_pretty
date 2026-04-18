@@ -60,12 +60,13 @@ export async function getLeadFinanceData(leadId: string) {
 }
 
 export async function addPayment(quoteId: string | null, amount: number, method: string, notes?: string, leadId?: string, paymentDate?: Date) {
+  try {
     // EMERGENZA SCHEMAS: Forza la creazione della colonna se il DB non è allineato
     try {
         await (prisma as any).$executeRawUnsafe(`ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "leadId" TEXT`);
         await (prisma as any).$executeRawUnsafe(`ALTER TABLE "Activity" ADD COLUMN IF NOT EXISTS "leadId" TEXT`);
     } catch (e) {
-        // Silenzioso se la colonna esiste già o errore minore
+        // Silenzioso se la colonna esiste già
     }
 
     const id = Math.random().toString(36).substring(2);
@@ -78,9 +79,7 @@ export async function addPayment(quoteId: string | null, amount: number, method:
       VALUES (${id}, ${quoteId || null}, ${leadId || null}, ${amountNum}, ${method}, ${notes || null}, ${dateToUse}, CURRENT_TIMESTAMP)
     `;
 
-    // Se abbiamo il leadId, creiamo l'attività
     if (leadId) {
-        // Usiamo anche qui una query SQL per l'attività per essere certi
         const actId = Math.random().toString(36).substring(7);
         const actNotes = `💰 Incasso di €${amountNum.toLocaleString('it-IT')} del ${dateToUse.toLocaleDateString('it-IT')} (${method}).`;
         await (prisma as any).$executeRaw`
