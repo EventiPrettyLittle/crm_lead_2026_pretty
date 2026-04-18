@@ -57,8 +57,16 @@ export default async function LeadDetailPage(props: PageProps) {
                                         {lead.firstName} {lead.lastName}
                                     </h1>
                                     <div className="flex items-center gap-3 mt-1">
-                                        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100 transition-colors rounded-lg px-2.5">
-                                            {lead.stage}
+                                        <Badge className={cn(
+                                            "rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-widest border-none shadow-sm transition-all",
+                                            lead.stage === 'NUOVO' && "bg-blue-50 text-blue-600",
+                                            lead.stage === 'CONTATTATO' && "bg-emerald-50 text-emerald-600",
+                                            lead.stage === 'NON_RISPONDE' && "bg-rose-50 text-rose-600",
+                                            lead.stage === 'APPUNTAMENTO' && "bg-indigo-50 text-indigo-600",
+                                            lead.stage === 'PREVENTIVO' && "bg-violet-50 text-violet-600",
+                                            lead.stage === 'CANCELLATO' && "bg-slate-100 text-slate-500",
+                                        )}>
+                                            {lead.stage?.replace('_', ' ')}
                                         </Badge>
                                         <Separator orientation="vertical" className="h-4" />
                                         <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium">
