@@ -146,14 +146,17 @@ export async function updateLeadQuickAction(
                 });
             }
         } else if (type === 'whatsapp' as any) {
-            updateData.lastStatus = 'CONTATTATO';
-            
-            // Logica intelligente: se invio uno "Showroom", lo stato deve diventare APPUNTAMENTO
-            if (activityNotes.toLowerCase().includes('showroom') || activityNotes.toLowerCase().includes('appuntamento')) {
+            // Logica assoluta richiesta: il tag cambia in base al template inviato
+            const notes = activityNotes.toLowerCase();
+            if (notes.includes('showroom') || notes.includes('appuntamento')) {
                  updateData.stage = 'APPUNTAMENTO';
                  updateData.lastStatus = 'APPUNTAMENTO';
+            } else if (notes.includes('non_risponde') || notes.includes('non risponde')) {
+                 updateData.stage = 'NON_RISPONDE';
+                 updateData.lastStatus = 'NON_RISPONDE';
             } else {
-                 updateData.stage = (leadBase as any).stage === 'NUOVO' ? 'CONTATTATO' : (leadBase as any).stage;
+                 updateData.stage = 'CONTATTATO';
+                 updateData.lastStatus = 'CONTATTATO';
             }
             
             activityType = 'WHATSAPP';

@@ -96,16 +96,16 @@ export async function GET(request: NextRequest) {
 
         response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify(sessionData), {
             httpOnly: true,
-            secure: false,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
         });
 
-        // 3. TOKEN IN UN COOKIE SEPARATO (Solo per backup, se il browser lo accetta bene, altrimenti c'è il DB)
+        // 3. TOKEN IN UN COOKIE SEPARATO (Solo per backup)
         response.cookies.set('PLATINUM_G_SYNC', JSON.stringify(tokens), {
             httpOnly: true,
-            secure: false,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
