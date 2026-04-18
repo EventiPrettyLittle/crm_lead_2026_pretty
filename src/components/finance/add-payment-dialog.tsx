@@ -131,10 +131,8 @@ export function AddPaymentDialog({ quoteId, leadName }: { quoteId: string, leadN
                                 placeholder="Esempio: Acconto confirmazione, Saldo finale, ecc."
                                 className="h-12 rounded-2xl border-slate-100 bg-slate-50 font-bold focus:ring-indigo-500 focus:bg-white transition-all shadow-sm"
                                 value={formData.notes}
-                                onChange={(e) => setFormData({...formData, notes: e.target.value})}
                              />
                         </div>
-                    </div>
 
                     <DialogFooter className="pt-4">
                         <Button 
