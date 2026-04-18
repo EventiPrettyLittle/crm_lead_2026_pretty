@@ -28,41 +28,36 @@ export async function GET(request: NextRequest) {
             try { currentSession = JSON.parse(currentSessionCookie.value); } catch(e) {}
         }
 
-        // Sincronizziamo l'utente nel Database e salviamo i token in modo permanente
+        // Sincronizziamo l'utente nel Database in modo nativo con Prisma
         let dbUser: any = null;
         try {
-            await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleTokens" TEXT;`);
-            
-            // Lavoriamo sempre sull'email della sessione CRM se presente, altrimenti su quella Google
             const targetEmail = (isCalendarConnect && currentSession?.email) 
-                ? currentSession.email.toLowerCase() 
-                : userInfo.email.toLowerCase();
+                ? currentSession.email.toLowerCase().trim() 
+                : userInfo.email.toLowerCase().trim();
 
-            const users: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "User" WHERE email = $1 LIMIT 1`, targetEmail);
-            
-            if (users.length > 0) {
-                dbUser = users[0];
-                await prisma.$executeRawUnsafe(
-                    `UPDATE "User" SET "googleTokens" = $1 WHERE email = $2`,
-                    JSON.stringify(tokens),
-                    targetEmail
-                );
-            } else {
-                // SE L'UTENTE NON ESISTE, LO CREIAMO (Fondamentale per Super Admin o nuovi operatori)
-                const newId = userInfo.id || Math.random().toString(36).substring(7);
-                await prisma.$executeRawUnsafe(
-                    `INSERT INTO "User" (id, email, name, role, "googleTokens") VALUES ($1, $2, $3, $4, $5)`,
-                    newId,
-                    targetEmail,
-                    userInfo.name || 'User',
-                    (targetEmail === 'eventiprettylittle@gmail.com' || 
-                     targetEmail === 'lucavitale88@gmail.com' || 
-                     targetEmail === 'maria.vitale@prettylittle.it') ? 'SUPER_ADMIN' : 'USER',
-                    JSON.stringify(tokens)
-                );
-            }
+            const tokensStr = JSON.stringify(tokens);
+
+            // UPSERT Nativo: se esiste aggiorna i token, se non esiste lo crea
+            dbUser = await prisma.user.upsert({
+                where: { email: targetEmail },
+                update: { googleTokens: tokensStr },
+                create: {
+                    id: userInfo.id || Math.random().toString(36).substring(7),
+                    email: targetEmail,
+                    name: userInfo.name || 'User',
+                    role: (targetEmail === 'eventiprettylittle@gmail.com' || 
+                           targetEmail === 'lucavitale88@gmail.com' || 
+                           targetEmail === 'maria.vitale@prettylittle.it') ? 'SUPER_ADMIN' : 'USER',
+                    googleTokens: tokensStr
+                }
+            });
         } catch (e) {
-            console.error('Error saving google tokens to DB:', e);
+            console.error('Error saving google tokens to DB with Prisma:', e);
+            // Fallback SQL raw in caso Prisma non sia ancora sincronizzato
+            try {
+                const targetEmail = (isCalendarConnect && currentSession?.email) ? currentSession.email.toLowerCase() : userInfo.email.toLowerCase();
+                await prisma.$executeRawUnsafe(`UPDATE "User" SET "googleTokens" = $1 WHERE email = $2`, JSON.stringify(tokens), targetEmail);
+            } catch(sqle) {}
         }
 
         const redirectUrl = isCalendarConnect ? '/calendar' : '/';

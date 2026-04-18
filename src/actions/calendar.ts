@@ -20,19 +20,20 @@ async function getGoogleTokens(): Promise<any | null> {
                 if (tokens && (tokens.access_token || tokens.refresh_token)) return tokens;
             }
 
-            // 2. Prova dal database (permanente) - Uso virgolette doppie per PostgreSQL
+            // 2. Prova dal database con Prisma Nativo (A prova di errore case-sensitive)
             const userEmail = sessionData.email?.toLowerCase().trim();
-            const users: any[] = await prisma.$queryRawUnsafe(
-                `SELECT "googleTokens" FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
-                userEmail
-            );
-            
-            if (users && users.length > 0) {
-                const rawTokens = users[0].googleTokens || users[0].googletokens;
-                if (rawTokens) return JSON.parse(rawTokens);
+            if (userEmail) {
+                const user = await prisma.user.findUnique({
+                    where: { email: userEmail },
+                    select: { googleTokens: true }
+                });
+                
+                if (user?.googleTokens) {
+                    return JSON.parse(user.googleTokens);
+                }
             }
         } catch (e) {
-            console.warn('[CALENDAR] Error reading tokens from session/DB:', e);
+            console.warn('[CALENDAR] Error reading tokens via Prisma:', e);
         }
     }
 
