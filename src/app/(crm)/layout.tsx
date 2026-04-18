@@ -14,14 +14,11 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
   const headersList = await headers();
   const isAction = headersList.has('next-action');
   
-  // GATEKEEPER SERVER-SIDE: Molto più affidabile del middleware
-  // Lo rendiamo informativo invece di punitivo per evitare redirect durante revalidatePath
+  // GATEKEEPER SERVER-SIDE: Protezione d'accesso
   const user = await getCurrentUser();
   
   if (!user && !isAction) {
-    // Invece di redirect, lasciamo che sia la pagina/azione a fallire se necessario.
-    // Questo evita di venire buttati fuori durante i refresh di Vercel (revalidatePath).
-    console.warn("Session not found in layout, but avoiding redirect to prevent sync loops");
+    redirect("/login?reason=layout_auth_required");
   }
 
   return (
