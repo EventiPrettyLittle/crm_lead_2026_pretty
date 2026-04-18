@@ -35,8 +35,8 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
 
           <div className="flex-1 max-w-2xl px-4 flex items-center gap-4">
             <GlobalSearch />
-            <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold whitespace-nowrap">
-              CRM V.1.1.2 - SECURE SESSION
+            <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold whitespace-nowrap uppercase tracking-tighter">
+              CRM V.1.1.3 - UNSTOPPABLE SESSION
             </span>
           </div>
 
