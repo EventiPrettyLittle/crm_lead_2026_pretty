@@ -34,20 +34,24 @@ export async function getAcceptedQuotes() {
 }
 
 export async function getLeadFinanceData(leadId: string) {
-  // 1. Recuperiamo tutti i preventivi accettati per questo lead per calcolare il dovuto
+  // 1. Recuperiamo tutti i preventivi accettati per questo lead
   const quotes: any[] = await prisma.$queryRawUnsafe(
     `SELECT id, "totalAmount", status FROM "Quote" WHERE "leadId" = $1 AND status = 'ACCETTATO'`, 
     leadId
   );
 
-  // 2. Recuperiamo tutti i pagamenti collegati a questo lead (sia diretti che via preventivo)
+  // 2. Recuperiamo TUTTI i pagamenti (sia per leadId che per quoteId)
+  // Usiamo una query più robusta basata sull'ID del lead
   const payments: any[] = await prisma.$queryRawUnsafe(
-    `SELECT * FROM "Payment" WHERE "leadId" = $1 OR "quoteId" IN (SELECT id FROM "Quote" WHERE "leadId" = $1) ORDER BY date DESC`,
+    `SELECT * FROM "Payment" 
+     WHERE "leadId" = $1 
+     OR "quoteId" IN (SELECT id FROM "Quote" WHERE "leadId" = $1)
+     ORDER BY date DESC`,
     leadId
   );
 
-  const totalBudget = quotes.reduce((acc, q) => acc + Number(q.totalAmount), 0);
-  const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+  const totalBudget = quotes.reduce((acc, q) => acc + Number(q.totalAmount || 0), 0);
+  const totalPaid = payments.reduce((acc, p) => acc + Number(p.amount || 0), 0);
   const balance = totalBudget - totalPaid;
 
   return serializePrisma({
