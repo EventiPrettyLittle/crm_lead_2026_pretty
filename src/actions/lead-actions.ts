@@ -147,7 +147,15 @@ export async function updateLeadQuickAction(
             }
         } else if (type === 'whatsapp' as any) {
             updateData.lastStatus = 'CONTATTATO';
-            updateData.stage = (leadBase as any).stage === 'NUOVO' ? 'CONTATTATO' : (leadBase as any).stage;
+            
+            // Logica intelligente: se invio uno "Showroom", lo stato deve diventare APPUNTAMENTO
+            if (activityNotes.toLowerCase().includes('showroom') || activityNotes.toLowerCase().includes('appuntamento')) {
+                 updateData.stage = 'APPUNTAMENTO';
+                 updateData.lastStatus = 'APPUNTAMENTO';
+            } else {
+                 updateData.stage = (leadBase as any).stage === 'NUOVO' ? 'CONTATTATO' : (leadBase as any).stage;
+            }
+            
             activityType = 'WHATSAPP';
             activityNotes = `Messaggio WhatsApp inviato. ${activityNotes}`;
         }
@@ -179,10 +187,10 @@ export async function updateLeadQuickAction(
             data: { notesInternal: systemNote + currentNotes }
         });
 
+        revalidatePath('/', 'layout');
         revalidatePath(`/leads/${leadId}`);
         revalidatePath('/leads');
         revalidatePath('/kanban');
-        revalidatePath('/calendar');
         
         return { success: true };
     } catch (error) {

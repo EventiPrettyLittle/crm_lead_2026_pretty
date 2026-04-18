@@ -16,15 +16,6 @@ const SUPER_ADMIN_EMAILS = [
 export async function getCurrentUser() {
     try {
         const cookieStore = await cookies();
-        
-        // PULIZIA ATOMICA: Eliminiamo i vecchi cookie che potrebbero creare conflitti di dimensione
-        const oldCookies = ['user_session', 'google_tokens', 'google_calendar_tokens', 'crm_session'];
-        oldCookies.forEach(name => {
-            if (cookieStore.has(name)) {
-                try { cookieStore.delete(name); } catch(e) {}
-            }
-        });
-
         const userCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
         
         if (!userCookie || !userCookie.value) return null;
