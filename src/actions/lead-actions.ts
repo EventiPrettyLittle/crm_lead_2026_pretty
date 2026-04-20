@@ -163,17 +163,13 @@ export async function updateLeadQuickAction(
             activityNotes = `Messaggio WhatsApp inviato. ${activityNotes}`;
         }
 
-        // PREPARAZIONE NOTE DI SISTEMA
+        // PREPARAZIONE NOTE DI SISTEMA (RIPRISTINO ORIGINALE)
         const user = await getCurrentUser();
         const initials = getInitials(user?.name || "??");
-        const timestamp = new Date().toLocaleString('it-IT', { 
-            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', 
-            timeZone: 'Europe/Rome' 
-        });
+        const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
         const currentNotes = leadBase?.notesInternal || "";
         const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
-        
-        // UNICO UPDATE STABILE CON PRISMA
+
         await prisma.lead.update({
             where: { id: leadId },
             data: {
@@ -184,6 +180,10 @@ export async function updateLeadQuickAction(
 
         // Create Activity log
         await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
+
+        // FORZIAMO L'AGGIORNAMENTO DELLE ETICHETTE (QUESTO È IL SEGRETO)
+        revalidatePath(`/leads/${leadId}`);
+        revalidatePath('/'); // Aggiorna anche la dashboard
 
         revalidatePath('/', 'layout');
         revalidatePath(`/leads/${leadId}`);

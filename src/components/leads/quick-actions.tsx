@@ -112,7 +112,9 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 }
             }
             
-            router.refresh();
+            toast.success("Lead aggiornato correttamente");
+            setIsOpen(false);
+            window.location.reload();
         } catch (error) {
             toast.error("Errore critico nel salvataggio");
             console.error("Submit error:", error);
