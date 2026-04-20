@@ -26,8 +26,10 @@ export async function sendWhatsAppTemplate({
     }
 
     // Clean phone number: remove +, spaces, and any non-digit. 
-    // SendApp wants '393331234567', NOT '+393331234567'
-    const cleanTo = to.replace(/\D/g, "");
+    let cleanTo = to.replace(/\D/g, "");
+    if (cleanTo.length === 10 && cleanTo.startsWith('3')) {
+        cleanTo = '39' + cleanTo;
+    }
 
     const bodyParameters = bodyVariables.map(text => ({
         type: "text",
@@ -95,7 +97,10 @@ export async function sendWhatsAppMessage({
         return { success: false, error: "Credenziali WhatsApp mancanti" };
     }
 
-    const cleanTo = to.replace(/\D/g, "");
+    let cleanTo = to.replace(/\D/g, "");
+    if (cleanTo.length === 10 && cleanTo.startsWith('3')) {
+        cleanTo = '39' + cleanTo;
+    }
 
     const payload = {
         apikey,

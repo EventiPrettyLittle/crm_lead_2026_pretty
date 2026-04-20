@@ -82,9 +82,9 @@ export async function sendLeadWhatsAppAction(
             bodyVariables: variables
         });
 
+        const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
+
         if (res.success) {
-            const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
-            
             const activityNote = actionType === 'appointment'
                 ? `Inviato WhatsApp: ${typeValue} per il ${dayFormatted} alle ${timeFormatted}`
                 : `Inviato WhatsApp: ${typeValue}`;
@@ -102,13 +102,20 @@ export async function sendLeadWhatsAppAction(
                 ? `Inviato "${typeValue}" (${dayFormatted} ore ${timeFormatted})`
                 : `Inviato template "${typeValue}"`;
             
-            const systemNote = `[WhatsApp - ${timestamp}]: ${systemNoteContent}\n\n`;
+            const systemNote = `[WhatsApp - ${timestamp}]: ✅ ${systemNoteContent}\n\n`;
             await prisma.lead.update({
                 where: { id: leadId },
                 data: { notesInternal: systemNote + currentNotes }
             });
-
-            revalidatePath(`/leads/${leadId}`);
+        } else {
+            // TRACCIAMENTO ERRORE NELLE NOTE
+            const currentNotes = lead.notesInternal || "";
+            const errorMsg = res.error || "Errore sconosciuto";
+            const systemError = `[WhatsApp - ${timestamp}]: ❌ FALLITO: ${errorMsg} (Template: ${templateName})\n\n`;
+            await prisma.lead.update({
+                where: { id: leadId },
+                data: { notesInternal: systemError + currentNotes }
+            });
         }
 
         return res;
