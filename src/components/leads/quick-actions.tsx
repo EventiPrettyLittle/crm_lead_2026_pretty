@@ -109,8 +109,8 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             setNotes("");
             setAppointmentDate("");
             
-            // Forza il rinfresco dei dati della pagina
-            router.refresh();
+            // Forza il rinfresco dei dati della pagina in modo "pesante"
+            window.location.reload();
         } catch (error) {
             toast.error("Errore nell'aggiornamento dello stato");
         } finally {
