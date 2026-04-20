@@ -26,6 +26,7 @@ export async function sendWhatsAppTemplate({
     }
 
     // Clean phone number: remove +, spaces, and any non-digit. 
+    // SendApp wants '393331234567', NOT '+393331234567'
     let cleanTo = to.replace(/\D/g, "");
     if (cleanTo.length === 10 && cleanTo.startsWith('3')) {
         cleanTo = '39' + cleanTo;
@@ -37,8 +38,8 @@ export async function sendWhatsAppTemplate({
     }));
 
     const payload = {
-        apikey,
-        token,
+        apikey: apikey,
+        token: token,
         number: cleanTo,
         type: "template",
         template: {
@@ -56,28 +57,31 @@ export async function sendWhatsAppTemplate({
     };
 
     try {
+        console.log("Sending WhatsApp to:", cleanTo, "Template:", templateName);
         const response = await fetch(baseUrl, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
             body: JSON.stringify(payload)
         });
 
         const data = await response.json();
 
-        if (!response.ok || data.status === "error") {
-            console.error("WhatsApp API Error:", data);
+        if (!response.ok || data.status === "error" || data.error) {
+            console.error("WhatsApp API Detail Error:", data);
+            const detail = data.message || data.error?.message || JSON.stringify(data);
             return { 
                 success: false, 
-                error: data?.message || data?.error?.message || "Errore durante l'invio del messaggio" 
+                error: `API Resp: ${detail}` 
             };
         }
 
         return { success: true, data };
-    } catch (error) {
-        console.error("WhatsApp Fetch Exception:", error);
-        return { success: false, error: "Errore di connessione con SendApp API" };
+    } catch (error: any) {
+        console.error("WhatsApp Exception:", error);
+        return { success: false, error: `Exception: ${error.message || 'Network Error'}` };
     }
 }
 
