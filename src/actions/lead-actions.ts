@@ -163,31 +163,27 @@ export async function updateLeadQuickAction(
             activityNotes = `Messaggio WhatsApp inviato. ${activityNotes}`;
         }
 
-        // Aggiornamento tramite Prisma Standard (più stabile su Vercel)
-        await prisma.lead.update({
-            where: { id: leadId },
-            data: updateData
+        // PREPARAZIONE NOTE DI SISTEMA
+        const user = await getCurrentUser();
+        const initials = getInitials(user?.name || "??");
+        const timestamp = new Date().toLocaleString('it-IT', { 
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', 
+            timeZone: 'Europe/Rome' 
         });
-
-        // Recuperiamo i dati aggiornati per le note
-        const leadForNotes = await prisma.lead.findUnique({
-            where: { id: leadId },
-            select: { notesInternal: true }
-        });
+        const currentNotes = leadBase?.notesInternal || "";
+        const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
+        
+        // UNICO UPDATE BLINDATO (SQL + PRISMA)
+        await prisma.$transaction([
+            // Forziamo lo stato via SQL Raw (Metodo Ultra-Stabile)
+            prisma.$executeRawUnsafe(
+                `UPDATE "Lead" SET "stage" = $1, "lastStatus" = $2, "updatedAt" = $3, "notesInternal" = $4 WHERE id = $5`,
+                updateData.stage, updateData.lastStatus || updateData.stage, now, systemNote + currentNotes, leadId
+            )
+        ]);
 
         // Create Activity log
         await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
-
-        // System Sync Note
-        const user = await getCurrentUser();
-        const initials = getInitials(user?.name || "??");
-        const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
-        const currentNotes = leadForNotes?.notesInternal || "";
-        const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
-        await prisma.lead.update({
-            where: { id: leadId },
-            data: { notesInternal: systemNote + currentNotes }
-        });
 
         revalidatePath('/', 'layout');
         revalidatePath(`/leads/${leadId}`);

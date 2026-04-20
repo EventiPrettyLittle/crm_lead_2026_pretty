@@ -95,24 +95,23 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             });
 
             if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'appointment')) {
-                const waRes = await sendLeadWhatsAppAction(lead.id, actionType, {
-                    date: actionType === 'appointment' ? combinedDateTime : undefined,
-                    type: actionType === 'appointment' ? appointmentType : undefined
-                });
-                if (waRes.success) {
-                    toast.success("Messaggio WhatsApp inviato!");
+                try {
+                    await sendLeadWhatsAppAction(lead.id, actionType, {
+                        date: actionType === 'appointment' ? combinedDateTime : undefined,
+                        type: actionType === 'appointment' ? appointmentType : undefined
+                    });
+                } catch (waErr) {
+                    console.error("WA send error, but status saved");
                 }
             }
 
-            toast.success(`Stato aggiornato a ${stageMap[actionType]}`);
             setIsOpen(false);
             setNotes("");
-            setAppointmentDate("");
             
-            // Forza il rinfresco dei dati della pagina in modo "pesante"
-            window.location.reload();
+            // IL TOCCO FINALE: Ricaricamento totale immediato
+            window.location.href = window.location.pathname + '?updated=' + Date.now();
         } catch (error) {
-            toast.error("Errore nell'aggiornamento dello stato");
+            toast.error("Errore nell'aggiornamento");
         } finally {
             setLoading(false);
         }
