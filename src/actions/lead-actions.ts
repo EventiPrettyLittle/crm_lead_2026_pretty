@@ -173,14 +173,14 @@ export async function updateLeadQuickAction(
         const currentNotes = leadBase?.notesInternal || "";
         const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
         
-        // UNICO UPDATE BLINDATO (SQL + PRISMA)
-        await prisma.$transaction([
-            // Forziamo lo stato via SQL Raw (Metodo Ultra-Stabile)
-            prisma.$executeRawUnsafe(
-                `UPDATE "Lead" SET "stage" = $1, "lastStatus" = $2, "updatedAt" = $3, "notesInternal" = $4 WHERE id = $5`,
-                updateData.stage, updateData.lastStatus || updateData.stage, now, systemNote + currentNotes, leadId
-            )
-        ]);
+        // UNICO UPDATE STABILE CON PRISMA
+        await prisma.lead.update({
+            where: { id: leadId },
+            data: {
+                ...updateData,
+                notesInternal: systemNote + currentNotes
+            }
+        });
 
         // Create Activity log
         await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
