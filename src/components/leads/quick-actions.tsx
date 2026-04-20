@@ -86,6 +86,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 ? new Date(`${reminderDate}T${reminderHour}`)
                 : undefined;
 
+            // 1. PRIMA SALVIAMO LO STATO (OPERAZIONE CRITICA)
             await updateLeadQuickAction(lead.id, actionType as any, {
                 notes: finalNotes,
                 nextFollowup: reminderDateTime,
@@ -94,25 +95,27 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 title: actionType === 'appointment' ? appointmentTitle : undefined
             });
 
+            toast.success("Stato aggiornato e log registrato");
+            setIsOpen(false);
+
+            // 2. POI TENTIAMO WHATSAPP (SE FALLISCE NON IMPORTA)
             if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'appointment')) {
-                const waRes = await sendLeadWhatsAppAction(lead.id, actionType, {
-                    date: actionType === 'appointment' ? combinedDateTime : undefined,
-                    type: actionType === 'appointment' ? appointmentType : undefined
-                });
-                if (waRes.success) {
-                    toast.success("WhatsApp inviato con successo");
+                try {
+                    await sendLeadWhatsAppAction(lead.id, actionType, {
+                        date: actionType === 'appointment' ? combinedDateTime : undefined,
+                        type: actionType === 'appointment' ? appointmentType : undefined
+                    });
+                    toast.success("Messaggio WhatsApp inviato");
+                } catch (waErr) {
+                    console.error("WA Error:", waErr);
+                    toast.error("Nota salvata, ma errore invio WhatsApp");
                 }
             }
-
-            toast.success("Lead aggiornato correttamente");
-            setIsOpen(false);
             
-            // Aspettiamo un attimo per far leggere il messaggio prima del reload
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
+            router.refresh();
         } catch (error) {
-            toast.error("Errore durante l'aggiornamento");
+            toast.error("Errore critico nel salvataggio");
+            console.error("Submit error:", error);
         } finally {
             setLoading(false);
         }

@@ -18,8 +18,6 @@ import { LeadInternalNotes } from "@/components/leads/lead-internal-notes"
 import { LeadFinanceTab } from "@/components/leads/lead-finance-tab"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 import { LeadWhatsAppButtons } from "@/components/leads/lead-whatsapp-buttons"
 
