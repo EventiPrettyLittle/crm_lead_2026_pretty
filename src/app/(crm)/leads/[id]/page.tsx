@@ -64,7 +64,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                             lead.stage === 'NON_RISPONDE' && "bg-rose-50 text-rose-600",
                                             lead.stage === 'APPUNTAMENTO' && "bg-indigo-50 text-indigo-600",
                                             lead.stage === 'PREVENTIVO' && "bg-violet-50 text-violet-600",
-                                            lead.stage === 'CANCELLATO' && "bg-slate-100 text-slate-500",
+                                            lead.stage === 'CANCELLATO' && "bg-rose-600 text-white shadow-lg shadow-rose-100",
                                         )}>
                                             {lead.stage?.replace('_', ' ')}
                                         </Badge>
@@ -271,7 +271,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                         lead.stage === 'NON_RISPONDE' && "bg-rose-500 text-white",
                                         lead.stage === 'APPUNTAMENTO' && "bg-indigo-500 text-white animate-pulse",
                                         lead.stage === 'PREVENTIVO' && "bg-violet-600 text-white",
-                                        lead.stage === 'CANCELLATO' && "bg-slate-500 text-white",
+                                        lead.stage === 'CANCELLATO' && "bg-rose-600 text-white shadow-xl shadow-rose-200",
                                     )}>
                                         {lead.stage?.replace('_', ' ')}
                                     </Badge>

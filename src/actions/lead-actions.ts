@@ -79,8 +79,8 @@ export async function updateLeadQuickAction(
         } else if (type === 'cancelled') {
             updateData.lastStatus = 'CANCELLATO';
             updateData.stage = 'CANCELLATO';
-            activityType = 'NOTE';
-            activityNotes = `Lead segnato come Cancellato. ${activityNotes}`;
+            activityType = 'CANCELLAZIONE';
+            activityNotes = `🔴 LEAD CANCELLATO: ${activityNotes}`;
         } else if (type === 'appointment' && data.appointmentDate) {
             updateData.lastStatus = 'APPUNTAMENTO';
             updateData.stage = 'APPUNTAMENTO';
