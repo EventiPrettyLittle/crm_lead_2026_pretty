@@ -18,70 +18,51 @@ export async function sendWhatsAppTemplate({
 }: WhatsAppTemplateParams) {
     const apikey = process.env.WHATSAPP_API_KEY || 'vCZnSEs9OxYtLimo';
     const token = process.env.WHATSAPP_TOKEN || 'DqvljFxnVAJ3i7XK';
-    const baseUrl = process.env.WHATSAPP_BASE_URL || "https://app.sendapp.ai/api/whatsapp-meta/send";
 
-    if (!apikey || !token) {
-        console.error("WhatsApp credentials missing in .env");
-        return { success: false, error: "Credenziali WhatsApp mancanti" };
-    }
-
-    // Clean phone number: remove +, spaces, and any non-digit. 
-    // SendApp wants '393331234567', NOT '+393331234567'
+    // Clean phone number
     let cleanTo = to.replace(/\D/g, "");
     if (cleanTo.length === 10 && cleanTo.startsWith('3')) {
         cleanTo = '39' + cleanTo;
     }
 
-    const bodyParameters = bodyVariables.map(text => ({
-        type: "text",
-        text: text
-    }));
+    // Costruiamo un messaggio testuale se è un template (per l'API Standard)
+    let messageText = "";
+    if (templateName === 'notifica_cliente' || templateName === 'contattato') {
+        messageText = `Ciao ${bodyVariables[0] || 'Cliente'}, siamo di Pretty Little. Ti abbiamo contattato per il tuo interesse.`;
+    } else if (templateName === 'non_risponde') {
+        messageText = `Ciao ${bodyVariables[0] || 'Cliente'}, abbiamo provato a chiamarti ma non abbiamo ricevuto risposta. A presto!`;
+    } else {
+        messageText = `Ciao ${bodyVariables[0] || 'Cliente'}, ti confermiamo l'appuntamento per il ${bodyVariables[2] || ''} alle ore ${bodyVariables[3] || ''}.`;
+    }
 
     const payload = {
         apikey: apikey,
-        token: token,
+        instance: token, // Nell'API v1 il token è spesso l'ID istanza
         number: cleanTo,
-        type: "template",
-        template: {
-            name: templateName,
-            language: {
-                code: languageCode
-            },
-            components: bodyParameters.length > 0 ? [
-                {
-                    type: "body",
-                    parameters: bodyParameters
-                }
-            ] : []
-        }
+        message: messageText
     };
 
+    const standardUrl = "https://app.sendapp.ai/api/v1/send";
+
     try {
-        console.log("Sending WhatsApp to:", cleanTo, "Template:", templateName);
-        const response = await fetch(baseUrl, {
+        const response = await fetch(standardUrl, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(payload)
         });
 
         const data = await response.json();
 
-        if (!response.ok || data.status === "error" || data.error) {
-            console.error("WhatsApp API Detail Error:", data);
-            const detail = data.message || data.error?.message || JSON.stringify(data);
-            return { 
-                success: false, 
-                error: `API Resp: ${detail}` 
-            };
+        // Controllo successo per API V1
+        if (data.status === "error" || data.error) {
+            return { success: false, error: data.message || "Errore SendApp V1" };
         }
 
         return { success: true, data };
     } catch (error: any) {
-        console.error("WhatsApp Exception:", error);
-        return { success: false, error: `Exception: ${error.message || 'Network Error'}` };
+        return { success: false, error: `Connessione Fallita: ${error.message}` };
     }
 }
 
@@ -108,14 +89,15 @@ export async function sendWhatsAppMessage({
 
     const payload = {
         apikey,
-        token,
+        instance: token,
         number: cleanTo,
-        type: "text",
-        text: text
+        message: text
     };
 
+    const standardUrl = "https://app.sendapp.ai/api/v1/send";
+
     try {
-        const response = await fetch(baseUrl, {
+        const response = await fetch(standardUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -125,17 +107,12 @@ export async function sendWhatsAppMessage({
 
         const data = await response.json();
 
-        if (!response.ok || data.status === "error") {
-            console.error("WhatsApp API Error:", data);
-            return { 
-                success: false, 
-                error: data?.message || data?.error?.message || "Errore durante l'invio del messaggio" 
-            };
+        if (data.status === "error" || data.error) {
+            return { success: false, error: data.message || "Errore SendApp V1" };
         }
 
         return { success: true, data };
-    } catch (error) {
-        console.error("WhatsApp Fetch Exception:", error);
-        return { success: false, error: "Errore di connessione con SendApp API" };
+    } catch (error: any) {
+        return { success: false, error: `Connessione Fallita: ${error.message}` };
     }
 }
