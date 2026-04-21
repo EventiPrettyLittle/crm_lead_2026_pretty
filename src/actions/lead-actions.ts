@@ -169,6 +169,15 @@ export async function updateLeadQuickAction(
         const currentNotes = leadBase?.notesInternal || "";
         const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
 
+        // MAPPA DEGLI STATI (RIPRISTINO)
+        const stageMap: Record<string, string> = {
+            'contacted': 'CONTATTATO',
+            'no-answer': 'NON_RISPONDE',
+            'preventivo': 'PREVENTIVO',
+            'cancelled': 'PERSO',
+            'appointment': 'APPUNTAMENTO'
+        };
+
         // UPDATE ATOMICO VIA PRISMA (MODO SICURO PER VERCEL)
         const stage = type === 'appointment' ? 'APPUNTAMENTO' : stageMap[type];
         
