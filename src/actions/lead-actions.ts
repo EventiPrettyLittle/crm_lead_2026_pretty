@@ -8,10 +8,6 @@ import { createCalendarEvent } from './calendar'
 import { getCurrentUser } from './auth'
 import { getInitials } from '@/lib/utils'
 
-/**
- * FIXED Quick Activity Action
- * Handles state transitions and triggers Google Calendar sync for appointments.
- */
 export async function updateLeadQuickAction(
     leadId: string,
     type: 'contacted' | 'no-answer' | 'preventivo' | 'cancelled' | 'appointment',
@@ -42,10 +38,7 @@ export async function updateLeadQuickAction(
         if (session) {
             try {
                 const sessionData = JSON.parse(session.value);
-                // Proviamo prima l'ID diretto dal cookie (più sicuro)
                 ownerId = sessionData.id || null;
-                
-                // Fallback se l'ID manca nel cookie: cerchiamo per email
                 if (!ownerId && sessionData.email) {
                     const userEmail = sessionData.email.toLowerCase().trim();
                     const users: any[] = await prisma.$queryRawUnsafe(
@@ -57,7 +50,7 @@ export async function updateLeadQuickAction(
             } catch (e) {}
         }
         
-        if (!ownerId) return { success: false, error: "Identità operatore non trovata. Per favore effettua Logout e nuovo Login." };
+        if (!ownerId) return { success: false, error: "Identità operatore non trovata." };
 
         if (type === 'contacted') {
             updateData.lastStatus = 'CONTATTATO';
@@ -86,38 +79,21 @@ export async function updateLeadQuickAction(
             updateData.stage = 'APPUNTAMENTO';
             activityType = 'SYSTEM';
             
-            const typeLabel = data.appointmentType === 'showroom' 
-                ? "appuntamento in show room" 
-                : data.appointmentType === 'video'
-                ? "videochiamata"
-                : "richiamata";
+            const typeLabel = data.appointmentType === 'showroom' ? "Showroom" : data.appointmentType === 'video' ? "Videochiamata" : "Richiamata";
             activityNotes = `${typeLabel} fissato per il ${data.appointmentDate}. ${activityNotes}`;
 
-            // Costruiamo le stringhe ISO forzando l'orario locale (Roma +02:00 / +01:00)
-            // Nota: Per ora usiamo +02:00 fisso o ricavato in modo più pulito
             const timezoneOffset = "+02:00"; 
             const startISO = `${data.appointmentDate}:00${timezoneOffset}`;
             const startDate = new Date(startISO);
-            
-            // Calcoliamo la fine (+1 ora)
             const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
             
-            // Formattiamo endISO in modo coerente
-            const year = endDate.getFullYear();
-            const month = String(endDate.getMonth() + 1).padStart(2, '0');
-            const day = String(endDate.getDate()).padStart(2, '0');
-            const hours = String(endDate.getHours()).padStart(2, '0');
-            const minutes = String(endDate.getMinutes()).padStart(2, '0');
-            const endISO = `${year}-${month}-${day}T${hours}:${minutes}:00${timezoneOffset}`;
+            const finalTitle = data.title || `${typeLabel.toUpperCase()} - ${leadBase.firstName || 'Cliente'}`;
 
-            const finalTitle = data.title || `${typeLabel.toUpperCase()} - ${leadBase.firstName || 'Cliente'} ${leadBase.lastName || ''}`;
-
-            // 1. CREAZIONE LOCALE IMMEDIATA (Non può fallire se l'ownerId c'è)
             const app = await prisma.appointment.create({
                 data: {
                     title: finalTitle,
                     notes: data.notes || '',
-                    location: data.appointmentType === 'showroom' ? "Showroom" : data.appointmentType === 'video' ? "Videochiamata" : "Richiamata Telefonica",
+                    location: data.appointmentType === 'showroom' ? "Showroom" : "Remoto",
                     startTime: startDate,
                     duration: 60,
                     leadId: leadId,
@@ -125,45 +101,16 @@ export async function updateLeadQuickAction(
                 }
             });
 
-            // 2. TENTATIVO DI SINCRONIZZAZIONE GOOGLE (Indipendente)
-            const syncResult = await createCalendarEvent({
+            await createCalendarEvent({
                 title: finalTitle,
-                description: `Appuntamento fissato dal CRM. Note: ${data.notes || 'nessuna'}`,
-                location: data.appointmentType === 'showroom' ? "Showroom" : data.appointmentType === 'video' ? "Videochiamata" : "Richiamata Telefonica",
+                description: `Note: ${data.notes || 'nessuna'}`,
+                location: data.appointmentType === 'showroom' ? "Showroom" : "Remoto",
                 startDateTime: startISO,
-                endDateTime: endISO,
+                endDateTime: endDate.toISOString(),
                 leadId: leadId
             });
-
-            if (!syncResult.success) {
-                console.error("Calendar Sync Error (Google):", syncResult.error);
-                activityNotes = `${activityNotes} (CRM: OK, Google Sync: ⚠ ${syncResult.error})`;
-            } else if (syncResult.eventId) {
-                // Se Google ha successo, aggiorniamo l'appuntamento locale con il googleEventId
-                await prisma.appointment.update({
-                    where: { id: app.id },
-                    data: { googleEventId: syncResult.eventId }
-                });
-            }
-        } else if (type === 'whatsapp' as any) {
-            // Logica assoluta richiesta: il tag cambia in base al template inviato
-            const notes = activityNotes.toLowerCase();
-            if (notes.includes('showroom') || notes.includes('appuntamento')) {
-                 updateData.stage = 'APPUNTAMENTO';
-                 updateData.lastStatus = 'APPUNTAMENTO';
-            } else if (notes.includes('non_risponde') || notes.includes('non risponde')) {
-                 updateData.stage = 'NON_RISPONDE';
-                 updateData.lastStatus = 'NON_RISPONDE';
-            } else {
-                 updateData.stage = 'CONTATTATO';
-                 updateData.lastStatus = 'CONTATTATO';
-            }
-            
-            activityType = 'WHATSAPP';
-            activityNotes = `Messaggio WhatsApp inviato. ${activityNotes}`;
         }
 
-        // PREPARAZIONE NOTE DI SISTEMA (RIPRISTINO ORIGINALE)
         const user = await getCurrentUser();
         const initials = getInitials(user?.name || "??");
         const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
@@ -178,18 +125,13 @@ export async function updateLeadQuickAction(
             }
         });
 
-        // Create Activity log
         await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
 
-        // FORZIAMO L'AGGIORNAMENTO DELLE ETICHETTE (QUESTO È IL SEGRETO)
-        revalidatePath(`/leads/${leadId}`);
-        revalidatePath('/'); // Aggiorna anche la dashboard
-
-        revalidatePath('/', 'layout');
         revalidatePath(`/leads/${leadId}`);
         revalidatePath('/leads');
+        revalidatePath('/');
         
-        return { success: true, refresh: true };
+        return { success: true };
     } catch (error) {
         console.error("Error executing quick action:", error);
         return { success: false, error: String(error) };
@@ -204,9 +146,6 @@ export async function createManualLead(data: any) {
                 lastName: data.lastName || null,
                 email: data.email || null,
                 phoneRaw: data.phone || null,
-                eventType: data.eventType || null,
-                eventDate: data.eventDate ? new Date(data.eventDate) : null,
-                eventLocation: data.eventLocation || null,
                 stage: 'NUOVO',
             } as any
         });
@@ -215,24 +154,6 @@ export async function createManualLead(data: any) {
         revalidatePath('/leads');
         return { success: true };
     } catch (error) {
-        console.error("Error creating manual lead:", error);
-        return { success: false, error };
-    }
-}
-
-export async function deleteAllLeads() {
-    try {
-        await prisma.activity.deleteMany({});
-        await prisma.quoteItem.deleteMany({});
-        await prisma.quote.deleteMany({});
-        await prisma.appointment.deleteMany({});
-        await prisma.lead.deleteMany({});
-
-        revalidatePath('/leads');
-        revalidatePath('/kanban');
-        return { success: true };
-    } catch (error) {
-        console.error("Error deleting leads:", error);
         return { success: false, error };
     }
 }
@@ -242,17 +163,10 @@ export async function updateLeadDetails(id: string, data: any) {
         await prisma.lead.update({
             where: { id },
             data: {
-                eventCity: data.eventCity || null,
-                eventProvince: data.eventProvince || null,
-                eventRegion: data.eventRegion || null,
-                eventLocation: data.eventLocation || null,
-                locationName: data.locationName || null,
                 firstName: data.firstName || null,
                 lastName: data.lastName || null,
                 email: data.email || null,
                 phoneRaw: data.phone || null,
-                eventType: data.eventType || null,
-                eventDate: data.eventDate ? new Date(data.eventDate) : null,
                 updatedAt: new Date(),
             } as any
         });
@@ -261,7 +175,6 @@ export async function updateLeadDetails(id: string, data: any) {
         revalidatePath('/leads');
         return { success: true };
     } catch (error: any) {
-        console.error("SERVER ERROR: Failed to update lead details:", error);
-        return { success: false, error: error.message || "Unknown Prisma Error" };
+        return { success: false, error: error.message };
     }
 }
