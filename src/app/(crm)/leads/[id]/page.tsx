@@ -89,9 +89,9 @@ export default async function LeadDetailPage(props: PageProps) {
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     <div className="lg:col-span-8 space-y-8">
-                        <div className="flex items-center gap-2 mb-4">
+                        {/* <div className="flex items-center gap-2 mb-4">
                             <QuickActions lead={lead as any} showLabels={true} />
-                        </div>
+                        </div> */}
 
                         {/* Main Info Tabs */}
                         <Tabs defaultValue="details" className="w-full">
