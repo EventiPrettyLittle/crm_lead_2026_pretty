@@ -42,7 +42,6 @@ export async function importLeadsAction(leads: ParsedLead[]): Promise<ImportResu
                         phoneRaw: lead.phoneRaw,
                         email: lead.email,
                         preferredContactTime: lead.preferredContactTime,
-                        // @ts-ignore
                         guestsCount: lead.guestsCount,
                     }
                 });
@@ -53,7 +52,6 @@ export async function importLeadsAction(leads: ParsedLead[]): Promise<ImportResu
                         leadCreatedAt: lead.leadCreatedAt,
                         countryCode: lead.countryCode,
                         eventType: lead.eventType,
-                        // @ts-ignore
                         guestsCount: lead.guestsCount,
                         productInterest: lead.productInterest,
                         eventDate: lead.eventDate,
