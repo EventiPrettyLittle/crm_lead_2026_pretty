@@ -42,8 +42,8 @@ export async function sendWhatsAppTemplate({
         message: messageText
     };
 
-    // 3. Chiamata API (Gateway V1)
-    const standardUrl = "https://app.sendapp.ai/api/v1/send";
+    // 3. Chiamata API (Gateway V1 - Tentativo su .live)
+    const standardUrl = "https://app.sendapp.live/api/v1/send";
 
     try {
         const response = await fetch(standardUrl, {
@@ -61,7 +61,9 @@ export async function sendWhatsAppTemplate({
             return { success: true, data };
         } else {
             const html = await response.text();
-            return { success: false, error: `HTML Resp: ${html.substring(0, 40).replace(/<[^>]*>?/gm, '')}` };
+            // Prendiamo più testo per capire l'errore (300 caratteri)
+            const cleanHtml = html.substring(0, 300).replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+            return { success: false, error: `HTML Resp: ${cleanHtml}` };
         }
     } catch (error: any) {
         return { success: false, error: `Errore Rete: ${error.message}` };
@@ -96,7 +98,7 @@ export async function sendWhatsAppMessage({
         message: text
     };
 
-    const standardUrl = "https://app.sendapp.ai/api/v1/send";
+    const standardUrl = "https://app.sendapp.live/api/v1/send";
 
     try {
         const response = await fetch(standardUrl, {
