@@ -87,7 +87,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 : undefined;
 
             // 1. PRIMA SALVIAMO LO STATO (OPERAZIONE CRITICA)
-            await updateLeadQuickAction(lead.id, actionType as any, {
+            const res = await updateLeadQuickAction(lead.id, actionType as any, {
                 notes: finalNotes,
                 nextFollowup: reminderDateTime,
                 appointmentDate: actionType === 'appointment' ? combinedDateTime : undefined,
@@ -95,28 +95,32 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 title: actionType === 'appointment' ? appointmentTitle : undefined
             });
 
-            toast.success("Stato aggiornato e log registrato");
-            setIsOpen(false);
+            if (!res.success) {
+                toast.error(`ERRORE SALVATAGGIO: ${res.error || 'Il server ha rifiutato la modifica'}`);
+                setLoading(false);
+                return;
+            }
+
+            toast.success("Database aggiornato!");
 
             // 2. POI TENTIAMO WHATSAPP (SE FALLISCE NON IMPORTA)
             if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'appointment')) {
                 try {
-                    await sendLeadWhatsAppAction(lead.id, actionType, {
+                    const waRes = await sendLeadWhatsAppAction(lead.id, actionType, {
                         date: actionType === 'appointment' ? combinedDateTime : undefined,
                         type: actionType === 'appointment' ? appointmentType : undefined
                     });
-                    toast.success("Messaggio WhatsApp inviato");
+                    if (waRes.success) toast.success("WhatsApp inviato correttamente");
+                    else toast.error(`WhatsApp fallito: ${waRes.error}`);
                 } catch (waErr) {
                     console.error("WA Error:", waErr);
-                    toast.error("Nota salvata, ma errore invio WhatsApp");
                 }
             }
             
-            toast.success("Lead aggiornato correttamente");
             setIsOpen(false);
             window.location.reload();
-        } catch (error) {
-            toast.error("Errore critico nel salvataggio");
+        } catch (error: any) {
+            toast.error(`ERRORE CRITICO: ${error.message || 'Controlla la connessione'}`);
             console.error("Submit error:", error);
         } finally {
             setLoading(false);

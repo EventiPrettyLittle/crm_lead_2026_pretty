@@ -21,10 +21,6 @@ export async function updateLeadQuickAction(
 ) {
     try {
         const now = new Date();
-        let activityType = '';
-        let activityNotes = data.notes || '';
-        
-        // DETERMINIAMO LO STAGE (L'ETICHETTA) IN MODO ASSOLUTO
         const stageMap: Record<string, string> = {
             'contacted': 'CONTATTATO',
             'no-answer': 'NON_RISPONDE',
@@ -34,16 +30,13 @@ export async function updateLeadQuickAction(
         };
         const newStage = stageMap[type];
 
-        let updateData: any = {
-            updatedAt: now,
-            lastStatusAt: now,
-            stage: newStage,      // AGGIORNIAMO SEMPRE LO STAGE (ETICHETTA)
-            lastStatus: newStage  // E ANCHE IL LAST STATUS PER SICUREZZA
-        };
-
+        // 1. RECUPERO LEAD (Dati freschi)
         const leadBase = await prisma.lead.findUnique({ where: { id: leadId } });
-        if (!leadBase) return { success: false, error: "Lead non trovato" };
+        if (!leadBase) {
+            return { success: false, error: "ERRORE: Cliente non trovato nel DB." };
+        }
 
+        // 2. RECUPERO OPERATORE
         const cookieStore = await cookies();
         const session = cookieStore.get('PLATINUM_AUTH_SESSION');
         let ownerId = null;
@@ -53,60 +46,78 @@ export async function updateLeadQuickAction(
                 ownerId = sessionData.id || null;
             } catch (e) {}
         }
+        if (!ownerId) return { success: false, error: "ERRORE: Tua sessione scaduta. Rifai il login." };
+
+        // 3. PREPARAZIONE LOGICA ATTIVITÁ
+        let activityType = 'SYSTEM';
+        let activityNotes = data.notes || '';
         
-        if (!ownerId) return { success: false, error: "Identità operatore non trovata." };
+        if (type === 'contacted') activityType = 'CALL';
+        else if (type === 'no-answer') activityType = 'RICHIAMO';
+        else if (type === 'appointment') activityType = 'SYSTEM';
 
-        if (type === 'contacted') {
-            updateData.contactedAt = now;
-            activityType = 'CALL';
-        } else if (type === 'no-answer') {
-            updateData.nextFollowupAt = data.nextFollowup;
-            activityType = 'RICHIAMO';
-        } else if (type === 'appointment') {
-            activityType = 'SYSTEM';
-            // Logica appuntamento...
-            const typeLabel = data.appointmentType === 'showroom' ? "Showroom" : "Remoto";
-            const startISO = `${data.appointmentDate}:00+02:00`;
-            const startDate = new Date(startISO);
-            
-            await prisma.appointment.create({
-                data: {
-                    title: data.title || `APPUNTAMENTO - ${leadBase.firstName}`,
-                    notes: data.notes || '',
-                    location: typeLabel,
-                    startTime: startDate,
-                    duration: 60,
-                    leadId: leadId,
-                    ownerId: ownerId,
-                }
-            });
-        }
-
+        // 4. PREPARAZIONE NOTA DI SISTEMA
         const user = await getCurrentUser();
         const initials = getInitials(user?.name || "??");
         const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
-        const systemNote = `[Sistema - ${initials} - ${timestamp}]: Stato -> ${newStage}. Note: ${activityNotes}\n\n`;
+        const systemNote = `[OK - ${initials} - ${timestamp}]: Stato -> ${newStage}.${activityNotes ? ' Note: ' + activityNotes : ''}\n\n`;
 
-        // AGGIORNAMENTO DB
-        await prisma.lead.update({
-            where: { id: leadId },
-            data: {
-                ...updateData,
-                notesInternal: systemNote + (leadBase.notesInternal || "")
-            }
-        });
+        // 5. UPDATE ATOMICO (QUI POTREBBE CRASHRE)
+        try {
+            await prisma.lead.update({
+                where: { id: leadId },
+                data: {
+                   stage: newStage,
+                   lastStatus: newStage,
+                   lastStatusAt: now,
+                   updatedAt: now,
+                   notesInternal: systemNote + (leadBase.notesInternal || "")
+                }
+            });
+        } catch (dbError: any) {
+            console.error("DB UPDATE FAILED:", dbError);
+            return { success: false, error: `ERRORE DATABASE: ${dbError.message}` };
+        }
 
-        await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
+        // 6. LOG ATTIVITÁ (NON BLOCCANTE)
+        try {
+            await createActivity(leadId, activityType, activityNotes || "Cambio stato manuale", data.nextFollowup);
+        } catch (actErr) {
+            console.warn("Activity Log Failed (non-critical):", actErr);
+        }
 
-        // REVALIDAZIONE MASSICCIA
+        // 7. APPUNTAMENTO GOOGLE (NON BLOCCANTE)
+        if (type === 'appointment' && data.appointmentDate) {
+             try {
+                const typeLabel = data.appointmentType === 'showroom' ? "Showroom" : "Remoto";
+                const startDate = new Date(`${data.appointmentDate}:00+02:00`);
+                
+                await prisma.appointment.create({
+                    data: {
+                        title: data.title || `APPUNTAMENTO - ${leadBase.firstName}`,
+                        notes: data.notes || '',
+                        location: typeLabel,
+                        startTime: startDate,
+                        duration: 60,
+                        leadId: leadId,
+                        ownerId: ownerId,
+                    }
+                });
+             } catch (appErr: any) {
+                 console.error("Appt Creation Error:", appErr);
+                 // Continuiamo comunque perché lo stage è già stato salvato
+             }
+        }
+
+        // 8. REVALIDATE & RETURN
         revalidatePath(`/leads/${leadId}`, 'page');
         revalidatePath('/leads', 'page');
         revalidatePath('/', 'page');
         
         return { success: true };
-    } catch (error) {
-        console.error("Error executing quick action:", error);
-        return { success: false, error: String(error) };
+    } catch (error: any) {
+        console.error("Critical Global Error:", error);
+        return { success: false, error: `ERRORE CRITICO: ${error.message}` };
     }
 }
 
