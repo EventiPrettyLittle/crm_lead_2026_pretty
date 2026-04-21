@@ -170,7 +170,7 @@ export async function updateLeadQuickAction(
         const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
 
         // UPDATE ATOMICO VIA PRISMA (MODO SICURO PER VERCEL)
-        const stage = actionType === 'appointment' ? 'APPUNTAMENTO' : stageMap[actionType];
+        const stage = type === 'appointment' ? 'APPUNTAMENTO' : stageMap[type];
         
         await prisma.$transaction([
             prisma.lead.update({
