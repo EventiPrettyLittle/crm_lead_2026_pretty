@@ -21,16 +21,28 @@ export async function updateLeadQuickAction(
 ) {
     try {
         const now = new Date();
-        let updateData: any = {
-            updatedAt: now,
-            lastStatusAt: now
-        };
-
         let activityType = '';
         let activityNotes = data.notes || '';
+        
+        // DETERMINIAMO LO STAGE (L'ETICHETTA) IN MODO ASSOLUTO
+        const stageMap: Record<string, string> = {
+            'contacted': 'CONTATTATO',
+            'no-answer': 'NON_RISPONDE',
+            'preventivo': 'PREVENTIVO',
+            'cancelled': 'CANCELLATO',
+            'appointment': 'APPUNTAMENTO'
+        };
+        const newStage = stageMap[type];
+
+        let updateData: any = {
+            updatedAt: now,
+            lastStatusAt: now,
+            stage: newStage,      // AGGIORNIAMO SEMPRE LO STAGE (ETICHETTA)
+            lastStatus: newStage  // E ANCHE IL LAST STATUS PER SICUREZZA
+        };
 
         const leadBase = await prisma.lead.findUnique({ where: { id: leadId } });
-        if (!leadBase) return { success: false, error: "Lead not found" };
+        if (!leadBase) return { success: false, error: "Lead non trovato" };
 
         const cookieStore = await cookies();
         const session = cookieStore.get('PLATINUM_AUTH_SESSION');
@@ -39,97 +51,57 @@ export async function updateLeadQuickAction(
             try {
                 const sessionData = JSON.parse(session.value);
                 ownerId = sessionData.id || null;
-                if (!ownerId && sessionData.email) {
-                    const userEmail = sessionData.email.toLowerCase().trim();
-                    const users: any[] = await prisma.$queryRawUnsafe(
-                        `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
-                        userEmail
-                    );
-                    ownerId = users.length > 0 ? users[0].id : null;
-                }
             } catch (e) {}
         }
         
         if (!ownerId) return { success: false, error: "Identità operatore non trovata." };
 
         if (type === 'contacted') {
-            updateData.lastStatus = 'CONTATTATO';
             updateData.contactedAt = now;
-            updateData.stage = 'CONTATTATO';
             activityType = 'CALL';
-            activityNotes = `Segnato come contattato. ${activityNotes}`;
         } else if (type === 'no-answer') {
-            updateData.lastStatus = 'NON_RISPONDE';
             updateData.nextFollowupAt = data.nextFollowup;
-            updateData.stage = 'NON_RISPONDE';
             activityType = 'RICHIAMO';
-            activityNotes = `Non risponde. ${activityNotes}`;
-        } else if (type === 'preventivo') {
-            updateData.lastStatus = 'PREVENTIVO';
-            updateData.stage = 'PREVENTIVO';
-            activityType = 'QUOTE';
-            activityNotes = `Passato a stato Preventivo. ${activityNotes}`;
-        } else if (type === 'cancelled') {
-            updateData.lastStatus = 'CANCELLATO';
-            updateData.stage = 'CANCELLATO';
-            activityType = 'CANCELLAZIONE';
-            activityNotes = `🔴 LEAD CANCELLATO: ${activityNotes}`;
-        } else if (type === 'appointment' && data.appointmentDate) {
-            updateData.lastStatus = 'APPUNTAMENTO';
-            updateData.stage = 'APPUNTAMENTO';
+        } else if (type === 'appointment') {
             activityType = 'SYSTEM';
-            
-            const typeLabel = data.appointmentType === 'showroom' ? "Showroom" : data.appointmentType === 'video' ? "Videochiamata" : "Richiamata";
-            activityNotes = `${typeLabel} fissato per il ${data.appointmentDate}. ${activityNotes}`;
-
-            const timezoneOffset = "+02:00"; 
-            const startISO = `${data.appointmentDate}:00${timezoneOffset}`;
+            // Logica appuntamento...
+            const typeLabel = data.appointmentType === 'showroom' ? "Showroom" : "Remoto";
+            const startISO = `${data.appointmentDate}:00+02:00`;
             const startDate = new Date(startISO);
-            const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
             
-            const finalTitle = data.title || `${typeLabel.toUpperCase()} - ${leadBase.firstName || 'Cliente'}`;
-
-            const app = await prisma.appointment.create({
+            await prisma.appointment.create({
                 data: {
-                    title: finalTitle,
+                    title: data.title || `APPUNTAMENTO - ${leadBase.firstName}`,
                     notes: data.notes || '',
-                    location: data.appointmentType === 'showroom' ? "Showroom" : "Remoto",
+                    location: typeLabel,
                     startTime: startDate,
                     duration: 60,
                     leadId: leadId,
                     ownerId: ownerId,
                 }
             });
-
-            await createCalendarEvent({
-                title: finalTitle,
-                description: `Note: ${data.notes || 'nessuna'}`,
-                location: data.appointmentType === 'showroom' ? "Showroom" : "Remoto",
-                startDateTime: startISO,
-                endDateTime: endDate.toISOString(),
-                leadId: leadId
-            });
         }
 
         const user = await getCurrentUser();
         const initials = getInitials(user?.name || "??");
         const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
-        const currentNotes = leadBase?.notesInternal || "";
-        const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
+        const systemNote = `[Sistema - ${initials} - ${timestamp}]: Stato -> ${newStage}. Note: ${activityNotes}\n\n`;
 
+        // AGGIORNAMENTO DB
         await prisma.lead.update({
             where: { id: leadId },
             data: {
                 ...updateData,
-                notesInternal: systemNote + currentNotes
+                notesInternal: systemNote + (leadBase.notesInternal || "")
             }
         });
 
         await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
 
-        revalidatePath(`/leads/${leadId}`);
-        revalidatePath('/leads');
-        revalidatePath('/');
+        // REVALIDAZIONE MASSICCIA
+        revalidatePath(`/leads/${leadId}`, 'page');
+        revalidatePath('/leads', 'page');
+        revalidatePath('/', 'page');
         
         return { success: true };
     } catch (error) {
@@ -149,12 +121,10 @@ export async function createManualLead(data: any) {
                 stage: 'NUOVO',
             } as any
         });
-
-        await createActivity(lead.id, 'SYSTEM', 'Lead created manually', undefined);
         revalidatePath('/leads');
         return { success: true };
     } catch (error) {
-        return { success: false, error };
+        return { success: false };
     }
 }
 
@@ -170,7 +140,6 @@ export async function updateLeadDetails(id: string, data: any) {
                 updatedAt: new Date(),
             } as any
         });
-
         revalidatePath(`/leads/${id}`);
         revalidatePath('/leads');
         return { success: true };
