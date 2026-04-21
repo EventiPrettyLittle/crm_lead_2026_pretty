@@ -74,10 +74,23 @@ export async function getQuotes(search?: string) {
                 { number: isNaN(parseInt(search)) ? undefined : parseInt(search) }
             ]
         } : {},
-        include: {
+        select: {
+            id: true,
+            number: true,
+            leadId: true,
+            status: true,
+            paymentMethod: true,
+            totalAmount: true,
+            discountTotal: true,
+            notes: true,
+            createdAt: true,
+            updatedAt: true,
+            sentAt: true,
+            createdBy: true,
+            // creatorPhone: true, // ESCLUSO TEMPORANEAMENTE PER EVITARE CRASH
             lead: true,
             items: true
-        },
+        } as any,
         orderBy: { createdAt: 'desc' },
         take: 50 // Limitiamo per velocità
     });
@@ -162,12 +175,25 @@ export async function getQuote(id: string) {
         // Fetch via standard Prisma for maximum reliability with relations
         const quote = await prisma.quote.findUnique({
             where: { id },
-            include: {
+            select: {
+                id: true,
+                number: true,
+                leadId: true,
+                status: true,
+                paymentMethod: true,
+                totalAmount: true,
+                discountTotal: true,
+                notes: true,
+                createdAt: true,
+                updatedAt: true,
+                sentAt: true,
+                createdBy: true,
+                // creatorPhone: true, 
                 lead: true,
                 items: {
                     orderBy: { id: 'asc' }
                 }
-            }
+            } as any
         });
 
         if (!quote) {
