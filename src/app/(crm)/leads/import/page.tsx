@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
 import { parseLeadsFile, ParsedLead } from '@/lib/import-utils'
 import { importLeadsAction } from '@/actions/leads'
