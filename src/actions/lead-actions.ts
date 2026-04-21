@@ -25,6 +25,7 @@ export async function updateLeadQuickAction(
         };
         const newStage = stageMap[type];
 
+        // 1. UPDATE STATO (VELOCE)
         await prisma.lead.update({
             where: { id: leadId },
             data: {
@@ -32,6 +33,19 @@ export async function updateLeadQuickAction(
                 lastStatus: newStage,
                 lastStatusAt: now,
                 updatedAt: now
+                // Abbiamo rimosso notesInternal: qui non scriviamo più log automatici!
+            }
+        });
+
+        // 2. CREAZIONE ATTIVITÁ (TIMELINE)
+        // Questo è il posto giusto per i log!
+        const activityType = type === 'contacted' ? 'CALL' : type === 'no-answer' ? 'RICHIAMO' : 'SYSTEM';
+        await prisma.activity.create({
+            data: {
+                leadId,
+                type: activityType,
+                notes: `Stato cambiato in ${newStage}. ${data.notes || ''}`,
+                nextFollowupAt: data.nextFollowup
             }
         });
 
@@ -41,6 +55,7 @@ export async function updateLeadQuickAction(
         
         return { success: true };
     } catch (error: any) {
+        console.error("Critical Global Error:", error);
         return { success: false, error: error.message };
     }
 }
@@ -70,6 +85,7 @@ export async function updateLeadDetails(id: string, data: any) {
                 lastName: data.lastName || null,
                 email: data.email || null,
                 phoneRaw: data.phone || null,
+                notesInternal: data.notesInternal, // Le note qui le salviamo solo se scritte dall'utente
                 updatedAt: new Date(),
             } as any
         });
