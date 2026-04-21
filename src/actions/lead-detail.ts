@@ -2,38 +2,45 @@
 
 import prisma from "@/lib/prisma"
 import { serializePrisma } from "@/lib/serialize"
-import { revalidatePath } from 'next/cache'
 
 export async function getLeadById(id: string) {
     try {
+        // VERSIONE POTENZIATA: Carichiamo tutto quello che serve per la scheda Premium
         const lead = await prisma.lead.findUnique({
             where: { id },
             include: {
                 activities: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 50
+                },
+                quotes: {
                     orderBy: { createdAt: 'desc' }
+                },
+                appointments: {
+                    orderBy: { startTime: 'asc' }
                 }
             }
         });
 
         if (!lead) return null;
 
-        // Mock delle relazioni pesanti che ancora stiamo testando
-        const safeLead = {
-            ...lead,
-            quotes: [],
-            appointments: []
-        };
-
-        return serializePrisma(safeLead);
-    } catch (error: any) {
-        console.error("CRITICAL DATA FETCH ERROR:", error);
-        return null;
+        return serializePrisma(lead);
+    } catch (error) {
+        console.error("Error fetching lead detail:", error);
+        // Fallback estremo se le relazioni crashano (ma dopo il db-init dovrebbero andare)
+        const liteLead = await prisma.lead.findUnique({ where: { id } });
+        return serializePrisma({ 
+            ...liteLead, 
+            activities: [], 
+            quotes: [], 
+            appointments: [] 
+        });
     }
 }
 
-export async function createActivity(leadId: string, type: string, notes?: string, nextFollowupAt?: Date) {
+export async function createActivity(leadId: string, type: string, notes: string, nextFollowupAt?: Date) {
     try {
-        await prisma.activity.create({
+        const activity = await prisma.activity.create({
             data: {
                 leadId,
                 type,
@@ -41,16 +48,9 @@ export async function createActivity(leadId: string, type: string, notes?: strin
                 nextFollowupAt
             }
         });
-
-        await prisma.lead.update({
-            where: { id: leadId },
-            data: { updatedAt: new Date() }
-        });
-
-        revalidatePath(`/leads/${leadId}`);
-        return { success: true };
+        return { success: true, activity };
     } catch (error) {
         console.error("Error creating activity:", error);
-        return { success: false, error };
+        return { success: false };
     }
 }
