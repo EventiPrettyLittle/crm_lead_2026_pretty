@@ -3,7 +3,6 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
-import { createActivity } from './lead-detail'
 import { createCalendarEvent } from './calendar'
 import { getCurrentUser } from './auth'
 import { getInitials } from '@/lib/utils'
