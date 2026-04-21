@@ -127,38 +127,20 @@ export async function updateLeadStage(leadId: string, newStage: string) {
 export async function syncLeadsFromGoogleSheet(url: string): Promise<ImportResult> {
     const cookieStore = await cookies();
     
-    // 1. RECUPERO TOKEN INTELLIGENTE (COPIA CALENDARIO)
-    let tokens: any = null;
-    const session = cookieStore.get('PLATINUM_AUTH_SESSION');
-    const tokenCookie = cookieStore.get('PLATINUM_G_SYNC') || cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
+    // Recupero Token Semplificato (per stabilità build)
+    const tokenCookie = cookieStore.get('google_tokens') || 
+                        cookieStore.get('google_calendar_tokens') || 
+                        cookieStore.get('PLATINUM_G_SYNC');
 
-    if (session) {
-        try {
-            const sessionData = JSON.parse(session.value);
-            // Prova dalla sessione
-            if (sessionData.googleTokens) {
-                tokens = JSON.parse(sessionData.googleTokens);
-            }
-            
-            // Prova dal database se non trovato
-            if (!tokens && sessionData.email) {
-                const user = await (prisma.user as any).findUnique({
-                    where: { email: sessionData.email.toLowerCase().trim() }
-                });
-                if (user && user.googleTokens) {
-                    tokens = JSON.parse(user.googleTokens);
-                }
-            }
-        } catch (e) {}
+    if (!tokenCookie) {
+        return { success: 0, errors: 1, message: "Account Google non collegato. Per favore riconnetti l'account." };
     }
 
-    // Fallback cookie
-    if (!tokens && tokenCookie) {
-        try { tokens = JSON.parse(tokenCookie.value); } catch (e) {}
-    }
-
-    if (!tokens || (!tokens.access_token && !tokens.refresh_token)) {
-        return { success: 0, errors: 1, message: "Account Google non collegato. Vai al Calendario o premi 'Connetti' per sincronizzare." };
+    let tokens: any;
+    try {
+        tokens = JSON.parse(tokenCookie.value);
+    } catch (e) {
+        return { success: 0, errors: 1, message: "Errore autenticazione Google. Riconnetti l'account." };
     }
 
     try {
