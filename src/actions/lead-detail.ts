@@ -21,30 +21,6 @@ export async function getLeadById(id: string) {
         }
     });
 
-    if (lead) {
-        // 1. Storico Preventivi (anche di altri Lead con stesso nome)
-        const associatedQuotes = await prisma.quote.findMany({
-            where: {
-                lead: {
-                    firstName: lead.firstName,
-                    lastName: lead.lastName,
-                    id: { not: lead.id }
-                }
-            },
-            include: { items: true },
-            orderBy: { createdAt: 'desc' }
-        });
-
-        if (associatedQuotes.length > 0) {
-            (lead as any).quotes = [...lead.quotes, ...associatedQuotes].sort(
-                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
-        }
-
-        // 2. Storico Pagamenti (Sincronizzazione Protetta)
-        (lead as any).payments = []; 
-    }
-
     return serializePrisma(lead);
 }
 
@@ -59,9 +35,6 @@ export async function createActivity(leadId: string, type: string, notes?: strin
             }
         });
 
-        // Update lead last interaction if needed
-        // This logic is mainly handled by specialized actions (like quick actions), 
-        // but generic activity logging might want to touch updatedAt
         await prisma.lead.update({
             where: { id: leadId },
             data: { updatedAt: new Date() }

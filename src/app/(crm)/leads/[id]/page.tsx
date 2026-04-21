@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { formatITDate, formatITDateTime, formatITTime } from "@/lib/utils"
-import { Mail, Phone, MapPin, Calendar, User, FileText, ArrowLeft, MessageSquare, ArrowRight } from "lucide-react"
+import { Mail, Phone, MapPin, Calendar, User, FileText, ArrowRight, ArrowLeft, MessageSquare } from "lucide-react"
 import QuoteBuilder from "@/components/quotes/quote-builder"
 import { QuoteRowActions } from "@/components/quotes/quote-row-actions"
 import { LeadLocationActions } from "@/components/leads/lead-location-actions"
@@ -19,108 +19,110 @@ import Link from "next/link"
 import { LeadWhatsAppButtons } from "@/components/leads/lead-whatsapp-buttons"
 import { LeadWhatsAppChat } from "@/components/leads/lead-whatsapp-chat"
 
+// FIX NEXT.JS 15: params deve essere una Promise
 interface PageProps {
     params: Promise<{ id: string }>
 }
 
 export default async function LeadDetailPage(props: PageProps) {
-    try {
-        const params = await props.params;
-        const lead = await getLeadById(params.id);
+    const params = await props.params;
+    const lead = await getLeadById(params.id);
 
-        if (!lead) {
-            return (
-                <div className="p-20 text-center">
-                    <h1 className="text-2xl font-black text-slate-400">Cliente non trovato</h1>
-                    <Button asChild variant="link" className="mt-4"><Link href="/leads">Torna alla lista</Link></Button>
-                </div>
-            )
-        }
+    if (!lead) {
+        return <div className="p-20 text-center font-black text-slate-400 uppercase">Lead not found</div>
+    }
 
-        return (
-            <div className="space-y-8 pb-20 animate-in fade-in duration-500">
-                {/* Header Section */}
-                <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm overflow-hidden mb-8">
-                    <div className="px-8 lg:px-12 py-6 lg:py-8">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                            <div className="flex items-center gap-4">
-                                <Button variant="ghost" size="icon" asChild className="rounded-xl h-12 w-12"><Link href="/leads"><ArrowLeft className="h-6 w-6" /></Link></Button>
-                                <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white"><User className="h-6 w-6" /></div>
+    return (
+        <div className="space-y-8 pb-20">
+            {/* Header Section */}
+            <div className="bg-white rounded-[2rem] border border-slate-200/60 shadow-sm overflow-hidden mb-8">
+                <div className="px-8 lg:px-12 py-6 lg:py-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div className="space-y-2">
+                             <div className="flex items-center gap-4">
+                                <Button variant="ghost" size="icon" asChild className="rounded-xl h-12 w-12 shrink-0">
+                                    <Link href="/leads"><ArrowLeft className="h-6 w-6" /></Link>
+                                </Button>
+                                <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-100">
+                                    <User className="h-6 w-6" />
+                                </div>
                                 <div>
-                                    <h1 className="text-3xl font-black tracking-tight">{lead.firstName} {lead.lastName}</h1>
-                                    <div className="flex items-center gap-2 mt-1">
+                                    <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-none">
+                                        {lead.firstName} {lead.lastName}
+                                    </h1>
+                                    <div className="flex items-center gap-3 mt-1">
                                         <Badge className="bg-indigo-50 text-indigo-600 border-none font-black text-[10px] uppercase">{lead.stage}</Badge>
-                                        <span className="text-xs text-slate-400 font-medium italic">Creato il {formatITDateTime(new Date(lead.createdAt))}</span>
+                                        <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium italic">
+                                            <Calendar className="h-3.5 w-3.5" />
+                                            Creato il {formatITDateTime(new Date(lead.createdAt))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <EditLeadDialog lead={lead as any} />
-                                <DeleteLeadButton leadId={lead.id} variant="destructive" size="icon" showText={false} />
-                            </div>
+                             </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <EditLeadDialog lead={lead as any} />
+                            <DeleteLeadButton leadId={lead.id} variant="destructive" size="icon" showText={false} />
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div className="px-8 lg:px-12">
-                     <div className="mb-8">
-                        <QuickActions lead={lead as any} showLabels={true} />
-                     </div>
+            <div className="px-8 lg:px-12 py-4 space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    <div className="lg:col-span-8 space-y-8">
+                        <div className="flex items-center gap-2 mb-4">
+                            <QuickActions lead={lead as any} showLabels={true} />
+                        </div>
 
-                     <Tabs defaultValue="details" className="w-full">
-                        <TabsList className="bg-slate-100 p-1 rounded-xl mb-6">
-                            <TabsTrigger value="details" className="rounded-lg px-8">Dettagli</TabsTrigger>
-                            <TabsTrigger value="chat" className="rounded-lg px-8">WhatsApp</TabsTrigger>
-                            <TabsTrigger value="quotes" className="rounded-lg px-8">Preventivi</TabsTrigger>
-                            <TabsTrigger value="finance" className="rounded-lg px-8">Pagamenti</TabsTrigger>
-                        </TabsList>
+                        <Tabs defaultValue="details" className="w-full">
+                            <TabsList className="bg-slate-100/50 p-1 rounded-xl">
+                                <TabsTrigger value="details" className="rounded-lg px-6">Dettagli</TabsTrigger>
+                                <TabsTrigger value="chat" className="rounded-lg px-6 flex items-center gap-2 tracking-tight font-bold">
+                                    <MessageSquare className="h-4 w-4 text-emerald-500" /> WhatsApp
+                                </TabsTrigger>
+                                <TabsTrigger value="quotes" className="rounded-lg px-6">Preventivi</TabsTrigger>
+                                <TabsTrigger value="finance" className="rounded-lg px-6">Pagamenti</TabsTrigger>
+                            </TabsList>
 
-                        <TabsContent value="details" className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <Card className="p-8 rounded-[2rem] border-slate-200/60 shadow-sm">
-                                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Contatti & Evento</h3>
-                                    <div className="space-y-6">
-                                        <div className="flex items-center gap-4">
-                                            <div className="h-10 w-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600"><Mail className="h-5 w-5" /></div>
-                                            <div><p className="text-[10px] font-bold text-slate-400 uppercase">Email</p><p className="font-bold">{lead.email || '-'}</p></div>
-                                        </div>
-                                        <div className="flex items-center justify-between">
+                            <TabsContent value="details" className="pt-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <Card className="rounded-2xl border-slate-200/60 shadow-sm overflow-hidden p-6">
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Contatti</h3>
+                                        <div className="space-y-4">
                                             <div className="flex items-center gap-4">
-                                                <div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><Phone className="h-5 w-5" /></div>
-                                                <div><p className="text-[10px] font-bold text-slate-400 uppercase">Telefono</p><p className="font-bold">{lead.phoneRaw || '-'}</p></div>
+                                                <div className="h-10 w-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600"><Mail className="h-5 w-5" /></div>
+                                                <div><p className="text-[10px] font-bold text-slate-400 uppercase">Email</p><p className="font-bold">{lead.email || '-'}</p></div>
                                             </div>
-                                            <LeadWhatsAppButtons phone={lead.phoneRaw} />
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><Phone className="h-5 w-5" /></div>
+                                                    <div><p className="text-[10px] font-bold text-slate-400 uppercase">Telefono</p><p className="font-bold">{lead.phoneRaw || '-'}</p></div>
+                                                </div>
+                                                <LeadWhatsAppButtons phone={lead.phoneRaw} />
+                                            </div>
                                         </div>
-                                    </div>
-                                </Card>
-
-                                <Card className="p-8 rounded-[2rem] border-slate-200/60 shadow-sm">
-                                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Location</h3>
-                                    <div className="space-y-4">
-                                        <div className="flex items-start gap-4">
-                                            <div className="h-10 w-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600"><MapPin className="h-5 w-5" /></div>
-                                            <p className="font-bold text-slate-600 leading-relaxed">{lead.eventLocation || 'Nessun indirizzo impostato'}</p>
+                                    </Card>
+                                    <Card className="rounded-2xl border-slate-200/60 shadow-sm overflow-hidden p-6">
+                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Evento</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex items-start gap-4">
+                                                <div className="h-10 w-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600"><MapPin className="h-5 w-5" /></div>
+                                                <p className="font-bold text-slate-600 leading-relaxed">{lead.eventLocation || '-'}</p>
+                                            </div>
+                                            {lead.eventLocation && <LeadLocationActions lead={lead as any} />}
                                         </div>
-                                        {lead.eventLocation && <LeadLocationActions lead={lead as any} />}
-                                    </div>
-                                </Card>
-                            </div>
-                        </TabsContent>
+                                    </Card>
+                                </div>
+                            </TabsContent>
 
-                        <TabsContent value="finance">
-                            <LeadFinanceTab lead={lead as any} />
-                        </TabsContent>
-
-                        <TabsContent value="chat">
-                             <LeadWhatsAppChat leadId={lead.id} leadName={`${lead.firstName} ${lead.lastName}`} phone={lead.phoneRaw} />
-                        </TabsContent>
-
-                        <TabsContent value="quotes" className="space-y-6">
-                            <div className="flex justify-between items-center">
-                                <h2 className="text-2xl font-black italic">Preventivi</h2>
-                                <QuoteBuilder leadId={lead.id} />
-                            </div>
-                            <div className="grid gap-4">
+                            <TabsContent value="finance"><LeadFinanceTab lead={lead as any} /></TabsContent>
+                            <TabsContent value="chat"><LeadWhatsAppChat leadId={lead.id} leadName={`${lead.firstName} ${lead.lastName}`} phone={lead.phoneRaw} /></TabsContent>
+                            <TabsContent value="quotes" className="space-y-4 pt-6">
+                                <div className="flex justify-between items-center px-2">
+                                    <h3 className="text-lg font-black italic">Preventivi Generati</h3>
+                                    <QuoteBuilder leadId={lead.id} />
+                                </div>
                                 {lead.quotes.map((quote: any) => (
                                     <Card key={quote.id} className="p-6 rounded-2xl border-slate-200 shadow-sm flex justify-between items-center">
                                         <div className="space-y-1">
@@ -128,24 +130,16 @@ export default async function LeadDetailPage(props: PageProps) {
                                             <p className="text-xs text-slate-400 italic">{formatITDate(new Date(quote.createdAt))}</p>
                                         </div>
                                         <div className="flex items-center gap-6">
-                                            <p className="text-xl font-black text-indigo-600">€{Number(quote.totalAmount).toFixed(2)}</p>
+                                            <p className="text-2xl font-black text-indigo-600">€{Number(quote.totalAmount).toFixed(2)}</p>
                                             <QuoteRowActions quote={quote} />
                                         </div>
                                     </Card>
                                 ))}
-                            </div>
-                        </TabsContent>
-                     </Tabs>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
                 </div>
             </div>
-        )
-    } catch (e: any) {
-        return (
-            <div className="p-20 text-center space-y-4">
-                <h1 className="text-4xl font-black text-rose-600 uppercase italic">Errore Diagnostico</h1>
-                <p className="text-slate-400 font-bold max-w-lg mx-auto">Abbiamo isolato un errore nel caricamento del cliente: <span className="text-slate-900">{e.message}</span></p>
-                <Button asChild className="px-10 h-14 bg-black rounded-2xl font-black uppercase tracking-widest mt-8"><Link href="/leads">Indietro</Link></Button>
-            </div>
-        )
-    }
+        </div>
+    )
 }
