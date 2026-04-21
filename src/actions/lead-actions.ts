@@ -25,7 +25,6 @@ export async function updateLeadQuickAction(
         };
         const newStage = stageMap[type];
 
-        // 1. UPDATE DIRETTO (VELOCISSIMO)
         await prisma.lead.update({
             where: { id: leadId },
             data: {
@@ -36,14 +35,12 @@ export async function updateLeadQuickAction(
             }
         });
 
-        // 2. REVALIDATE IMMEDIATO (Per sbloccare la UI)
         revalidatePath(`/leads/${leadId}`);
         revalidatePath('/leads');
         revalidatePath('/');
         
         return { success: true };
     } catch (error: any) {
-        console.error("Critical Global Error:", error);
         return { success: false, error: error.message };
     }
 }
@@ -61,7 +58,7 @@ export async function createManualLead(data: any) {
         });
         revalidatePath('/leads');
         return { success: true };
-    } catch (error) { return { success: false }; }
+    } catch (error: any) { return { success: false, error: error.message }; }
 }
 
 export async function updateLeadDetails(id: string, data: any) {
@@ -79,5 +76,5 @@ export async function updateLeadDetails(id: string, data: any) {
         revalidatePath(`/leads/${id}`);
         revalidatePath('/leads');
         return { success: true };
-    } catch (error: any) { return { success: false }; }
+    } catch (error: any) { return { success: false, error: error.message }; }
 }
