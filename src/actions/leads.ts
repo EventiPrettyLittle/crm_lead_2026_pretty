@@ -126,11 +126,39 @@ import { mapRowToLead } from '@/lib/import-utils'
 
 export async function syncLeadsFromGoogleSheet(url: string): Promise<ImportResult> {
     const cookieStore = await cookies();
-    // Use the updated generic google_tokens cookie
-    let tokensCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
+    
+    // 1. RECUPERO TOKEN INTELLIGENTE (COPIA CALENDARIO)
+    let tokens: any = null;
+    const session = cookieStore.get('PLATINUM_AUTH_SESSION');
+    const tokenCookie = cookieStore.get('PLATINUM_G_SYNC') || cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
 
-    if (!tokensCookie) {
-        return { success: 0, errors: 1, message: "Account Google non collegato. Vai al Calendario o Sync per collegarlo." };
+    if (session) {
+        try {
+            const sessionData = JSON.parse(session.value);
+            // Prova dalla sessione
+            if (sessionData.googleTokens) {
+                tokens = JSON.parse(sessionData.googleTokens);
+            }
+            
+            // Prova dal database se non trovato
+            if (!tokens && sessionData.email) {
+                const user = await (prisma.user as any).findUnique({
+                    where: { email: sessionData.email.toLowerCase().trim() }
+                });
+                if (user && user.googleTokens) {
+                    tokens = JSON.parse(user.googleTokens);
+                }
+            }
+        } catch (e) {}
+    }
+
+    // Fallback cookie
+    if (!tokens && tokenCookie) {
+        try { tokens = JSON.parse(tokenCookie.value); } catch (e) {}
+    }
+
+    if (!tokens || (!tokens.access_token && !tokens.refresh_token)) {
+        return { success: 0, errors: 1, message: "Account Google non collegato. Vai al Calendario o premi 'Connetti' per sincronizzare." };
     }
 
     try {
@@ -149,7 +177,6 @@ export async function syncLeadsFromGoogleSheet(url: string): Promise<ImportResul
         }
 
         console.log("Syncing from Spreadsheet ID:", spreadsheetId);
-        const tokens = JSON.parse(tokensCookie.value);
         const sheets = getGoogleSheetsClient(tokens);
 
         // Get a large range to ensure we cover row 637 and beyond
