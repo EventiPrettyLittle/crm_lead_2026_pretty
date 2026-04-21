@@ -7,6 +7,9 @@ import { QuickActions } from "@/components/leads/quick-actions"
 import { LeadInternalNotes } from "@/components/leads/lead-internal-notes"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface PageProps {
     params: Promise<{ id: string }>
 }
