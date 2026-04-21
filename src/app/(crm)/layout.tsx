@@ -12,21 +12,17 @@ import { redirect } from "next/navigation"
 export default async function CRMLayout({ children }: { children: React.ReactNode }) {
   // 1. Preveniamo il redirect selvaggio se è in corso una Server Action
   const headersList = await headers();
-  const isAction = headersList.has('next-action');
-  
-  // GATEKEEPER SERVER-SIDE (Disabilitato temporaneamente per eliminare i logout molesti)
-  const user = await getCurrentUser();
-  
-  /* 
-  if (!user && !isAction) {
-    return redirect("/login?reason=layout_auth_required_disabled_v1.1.2");
+  let user = null;
+  try {
+    user = await getCurrentUser();
+  } catch (e) {
+    console.error("Layout Auth Error:", e);
   }
-  */
 
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="w-full bg-[#f8fafc] relative">
+      <main className="w-full bg-[#f8fafc] relative min-h-screen">
         <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60 transition-all duration-300 px-6 h-20 flex items-center justify-between gap-8">
           <div className="flex items-center gap-4 shrink-0">
             <SidebarTrigger className="h-10 w-10 text-slate-500 hover:text-indigo-600 transition-colors" />
