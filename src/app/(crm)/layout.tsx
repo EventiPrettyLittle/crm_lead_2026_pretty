@@ -9,8 +9,16 @@ import { headers } from "next/headers"
 import { getCurrentUser } from "@/actions/auth"
 import { redirect } from "next/navigation"
 
+import { initDatabase } from "@/actions/db-init"
+
 export default async function CRMLayout({ children }: { children: React.ReactNode }) {
-  // 1. Preveniamo il redirect selvaggio se è in corso una Server Action
+  // Auto-riparazione database
+  try {
+    await initDatabase();
+  } catch (e) {
+    console.error("DB Init Error:", e);
+  }
+
   const headersList = await headers();
   let user = null;
   try {
