@@ -12,13 +12,6 @@ import { redirect } from "next/navigation"
 import { initDatabase } from "@/actions/db-init"
 
 export default async function CRMLayout({ children }: { children: React.ReactNode }) {
-  // Auto-riparazione database
-  try {
-    await initDatabase();
-  } catch (e) {
-    console.error("DB Init Error:", e);
-  }
-
   const headersList = await headers();
   let user = null;
   try {
