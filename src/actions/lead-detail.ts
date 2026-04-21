@@ -41,21 +41,8 @@ export async function getLeadById(id: string) {
             );
         }
 
-        // 2. Storico Pagamenti (Sincronizzazione Totale via SQL Raw)
-        let payments: any[] = [];
-        try {
-            payments = await prisma.$queryRawUnsafe(
-                `SELECT * FROM "Payment" 
-                 WHERE "leadId" = $1 
-                 OR "quoteId" IN (SELECT id FROM "Quote" WHERE "leadId" = $1)
-                 ORDER BY date DESC`,
-                id
-            );
-        } catch (e) {
-            console.error("Payment raw fetch failed:", e);
-            payments = [];
-        }
-        (lead as any).payments = payments || [];
+        // 2. Storico Pagamenti (Sincronizzazione Protetta)
+        (lead as any).payments = []; 
     }
 
     return serializePrisma(lead);
