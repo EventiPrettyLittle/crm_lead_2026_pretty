@@ -102,23 +102,18 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             }
 
             toast.success("Database aggiornato!");
-
-            // 2. POI TENTIAMO WHATSAPP (SE FALLISCE NON IMPORTA)
-            if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'appointment')) {
-                try {
-                    const waRes = await sendLeadWhatsAppAction(lead.id, actionType, {
-                        date: actionType === 'appointment' ? combinedDateTime : undefined,
-                        type: actionType === 'appointment' ? appointmentType : undefined
-                    });
-                    if (waRes.success) toast.success("WhatsApp inviato correttamente");
-                    else toast.error(`WhatsApp fallito: ${waRes.error}`);
-                } catch (waErr) {
-                    console.error("WA Error:", waErr);
-                }
-            }
-            
             setIsOpen(false);
+            
+            // AGGIORNAMENTO ISTANTANEO (Prima di WhatsApp)
             window.location.reload();
+
+            // 2. TENTIAMO WHATSAPP IN BACKGROUND (Senza bloccare l'utente)
+            if (sendWhatsapp && (actionType === 'contacted' || actionType === 'no-answer' || actionType === 'appointment')) {
+                sendLeadWhatsAppAction(lead.id, actionType, {
+                    date: actionType === 'appointment' ? combinedDateTime : undefined,
+                    type: actionType === 'appointment' ? appointmentType : undefined
+                }).catch(waErr => console.error("WA Background Error:", waErr));
+            }
         } catch (error: any) {
             toast.error(`ERRORE CRITICO: ${error.message || 'Controlla la connessione'}`);
             console.error("Submit error:", error);
