@@ -170,20 +170,29 @@ export async function updateLeadQuickAction(
         const currentNotes = leadBase?.notesInternal || "";
         const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
 
-        // UPDATE BLINDATO VIA SQL RAW (ATOMICO E INELUDIBILE)
+        // UPDATE ATOMICO VIA PRISMA (MODO SICURO PER VERCEL)
         const stage = actionType === 'appointment' ? 'APPUNTAMENTO' : stageMap[actionType];
         
-        await prisma.$executeRaw`
-            UPDATE "Lead" 
-            SET "stage" = ${stage}::"LeadStage", 
-                "lastStatus" = ${stage}, 
-                "notesInternal" = ${systemNote + currentNotes},
-                "updatedAt" = ${now}
-            WHERE id = ${leadId}
-        `;
-
-        // Create Activity log
-        await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
+        await prisma.$transaction([
+            prisma.lead.update({
+                where: { id: leadId },
+                data: {
+                    stage: stage as any,
+                    lastStatus: stage,
+                    notesInternal: systemNote + currentNotes,
+                    updatedAt: now
+                }
+            }),
+            // Registriamo anche l'attività
+            prisma.activity.create({
+                data: {
+                    leadId,
+                    type: activityType,
+                    notes: activityNotes,
+                    nextFollowupAt: data.nextFollowup
+                }
+            })
+        ]);
 
         // FORZIAMO L'AGGIORNAMENTO DELLA UI
         revalidatePath(`/leads/${leadId}`, 'page');
