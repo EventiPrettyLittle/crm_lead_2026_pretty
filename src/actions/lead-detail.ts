@@ -6,17 +6,20 @@ import { revalidatePath } from 'next/cache'
 
 export async function getLeadById(id: string) {
     try {
-        // RICERCA ULTRA-SEMPLICE SENZA RELAZIONI
         const lead = await prisma.lead.findUnique({
-            where: { id }
+            where: { id },
+            include: {
+                activities: {
+                    orderBy: { createdAt: 'desc' }
+                }
+            }
         });
 
         if (!lead) return null;
 
-        // Mock delle relazioni per non far crashare la pagina
+        // Mock delle relazioni pesanti che ancora stiamo testando
         const safeLead = {
             ...lead,
-            activities: [],
             quotes: [],
             appointments: []
         };
