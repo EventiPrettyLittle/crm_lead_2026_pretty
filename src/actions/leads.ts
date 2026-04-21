@@ -5,9 +5,6 @@ import prisma from "@/lib/prisma"
 import { ParsedLead } from '@/lib/import-utils'
 import { revalidatePath, unstable_cache } from 'next/cache'
 import { serializePrisma } from "@/lib/serialize"
-import { cookies } from 'next/headers'
-import { getGoogleSheetsClient } from '@/lib/google-auth'
-import { mapRowToLead } from '@/lib/import-utils'
 
 
 
@@ -42,6 +39,7 @@ export async function importLeadsAction(leads: ParsedLead[]): Promise<ImportResu
                         phoneRaw: lead.phoneRaw,
                         email: lead.email,
                         preferredContactTime: lead.preferredContactTime,
+                        // @ts-ignore
                         guestsCount: lead.guestsCount,
                     }
                 });
@@ -52,6 +50,7 @@ export async function importLeadsAction(leads: ParsedLead[]): Promise<ImportResu
                         leadCreatedAt: lead.leadCreatedAt,
                         countryCode: lead.countryCode,
                         eventType: lead.eventType,
+                        // @ts-ignore
                         guestsCount: lead.guestsCount,
                         productInterest: lead.productInterest,
                         eventDate: lead.eventDate,
@@ -121,24 +120,17 @@ export async function updateLeadStage(leadId: string, newStage: string) {
         return { success: false, error };
     }
 }
+import { cookies } from 'next/headers'
+import { getGoogleSheetsClient } from '@/lib/google-auth'
+import { mapRowToLead } from '@/lib/import-utils'
 
 export async function syncLeadsFromGoogleSheet(url: string): Promise<ImportResult> {
     const cookieStore = await cookies();
-    
-    // Recupero Token Semplificato (per stabilità build)
-    const tokenCookie = cookieStore.get('google_tokens') || 
-                        cookieStore.get('google_calendar_tokens') || 
-                        cookieStore.get('PLATINUM_G_SYNC');
+    // Use the updated generic google_tokens cookie
+    let tokensCookie = cookieStore.get('google_tokens') || cookieStore.get('google_calendar_tokens');
 
-    if (!tokenCookie) {
-        return { success: 0, errors: 1, message: "Account Google non collegato. Per favore riconnetti l'account." };
-    }
-
-    let tokens: any;
-    try {
-        tokens = JSON.parse(tokenCookie.value);
-    } catch (e) {
-        return { success: 0, errors: 1, message: "Errore autenticazione Google. Riconnetti l'account." };
+    if (!tokensCookie) {
+        return { success: 0, errors: 1, message: "Account Google non collegato. Vai al Calendario o Sync per collegarlo." };
     }
 
     try {
@@ -157,6 +149,7 @@ export async function syncLeadsFromGoogleSheet(url: string): Promise<ImportResul
         }
 
         console.log("Syncing from Spreadsheet ID:", spreadsheetId);
+        const tokens = JSON.parse(tokensCookie.value);
         const sheets = getGoogleSheetsClient(tokens);
 
         // Get a large range to ensure we cover row 637 and beyond

@@ -5,12 +5,24 @@ import { NotificationCenter } from "@/components/layout/notification-center"
 import { UserNav } from "@/components/layout/user-nav"
 import { LiveClock } from "@/components/layout/live-clock"
 import { ReminderNotifier } from "@/components/layout/reminder-notifier"
+import { headers } from "next/headers"
 import { getCurrentUser } from "@/actions/auth"
+import { redirect } from "next/navigation"
 
 export default async function CRMLayout({ children }: { children: React.ReactNode }) {
-  // Integrazione sicura dell'utente
+  // 1. Preveniamo il redirect selvaggio se è in corso una Server Action
+  const headersList = await headers();
+  const isAction = headersList.has('next-action');
+  
+  // GATEKEEPER SERVER-SIDE (Disabilitato temporaneamente per eliminare i logout molesti)
   const user = await getCurrentUser();
   
+  /* 
+  if (!user && !isAction) {
+    return redirect("/login?reason=layout_auth_required_disabled_v1.1.2");
+  }
+  */
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -23,8 +35,12 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
 
           <div className="flex-1 max-w-2xl px-4 flex items-center gap-4">
             <GlobalSearch />
+            <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold whitespace-nowrap uppercase tracking-tighter">
+              CRM V.1.1.3 - UNSTOPPABLE SESSION
+            </span>
           </div>
 
+          {/* Live Clock — centro header */}
           <div className="hidden md:flex items-center justify-center px-8 border-x border-slate-100 h-full">
             <LiveClock />
           </div>

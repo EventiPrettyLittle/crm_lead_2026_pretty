@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
+import { createActivity } from './lead-detail'
 import { createCalendarEvent } from './calendar'
 import { getCurrentUser } from './auth'
 import { getInitials } from '@/lib/utils'
@@ -169,42 +170,24 @@ export async function updateLeadQuickAction(
         const currentNotes = leadBase?.notesInternal || "";
         const systemNote = `[Sistema - ${initials} - ${timestamp}]: ${activityNotes}\n\n`;
 
-        // MAPPA DEGLI STATI (RIPRISTINO)
-        const stageMap: Record<string, string> = {
-            'contacted': 'CONTATTATO',
-            'no-answer': 'NON_RISPONDE',
-            'preventivo': 'PREVENTIVO',
-            'cancelled': 'PERSO',
-            'appointment': 'APPUNTAMENTO'
-        };
+        await prisma.lead.update({
+            where: { id: leadId },
+            data: {
+                ...updateData,
+                notesInternal: systemNote + currentNotes
+            }
+        });
 
-        // UPDATE ATOMICO VIA PRISMA (MODO SICURO PER VERCEL)
-        const stage = type === 'appointment' ? 'APPUNTAMENTO' : stageMap[type];
-        
-        await prisma.$transaction([
-            prisma.lead.update({
-                where: { id: leadId },
-                data: {
-                    stage: stage as any,
-                    lastStatus: stage,
-                    notesInternal: systemNote + currentNotes,
-                    updatedAt: now
-                }
-            }),
-            // Registriamo anche l'attività
-            prisma.activity.create({
-                data: {
-                    leadId,
-                    type: activityType,
-                    notes: activityNotes,
-                    nextFollowupAt: data.nextFollowup
-                }
-            })
-        ]);
+        // Create Activity log
+        await createActivity(leadId, activityType, activityNotes, data.nextFollowup);
 
-        // FORZIAMO L'AGGIORNAMENTO DELLA UI
-        revalidatePath(`/leads/${leadId}`, 'page');
+        // FORZIAMO L'AGGIORNAMENTO DELLE ETICHETTE (QUESTO È IL SEGRETO)
+        revalidatePath(`/leads/${leadId}`);
+        revalidatePath('/'); // Aggiorna anche la dashboard
+
         revalidatePath('/', 'layout');
+        revalidatePath(`/leads/${leadId}`);
+        revalidatePath('/leads');
         
         return { success: true, refresh: true };
     } catch (error) {
@@ -228,13 +211,7 @@ export async function createManualLead(data: any) {
             } as any
         });
 
-        await prisma.activity.create({
-            data: {
-                leadId: lead.id,
-                type: 'SYSTEM',
-                notes: 'Lead creato manualmente'
-            }
-        });
+        await createActivity(lead.id, 'SYSTEM', 'Lead created manually', undefined);
         revalidatePath('/leads');
         return { success: true };
     } catch (error) {

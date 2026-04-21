@@ -36,9 +36,7 @@ export async function getCurrentUser() {
             'lucavitale88@gmail.com'
         ];
         
-        const isSuperAdmin = (session?.email) 
-            ? SUPER_ADMINS.some(e => e?.toLowerCase() === session.email.toLowerCase())
-            : false;
+        const isSuperAdmin = SUPER_ADMINS.some(e => e.toLowerCase() === session.email.toLowerCase());
         
         return {
             ...session,
