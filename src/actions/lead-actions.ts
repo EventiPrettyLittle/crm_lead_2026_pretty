@@ -228,7 +228,13 @@ export async function createManualLead(data: any) {
             } as any
         });
 
-        await createActivity(lead.id, 'SYSTEM', 'Lead created manually', undefined);
+        await prisma.activity.create({
+            data: {
+                leadId: lead.id,
+                type: 'SYSTEM',
+                notes: 'Lead creato manualmente'
+            }
+        });
         revalidatePath('/leads');
         return { success: true };
     } catch (error) {
