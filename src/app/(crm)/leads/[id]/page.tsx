@@ -71,7 +71,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                         <Separator orientation="vertical" className="h-4" />
                                         <div className="flex items-center gap-1.5 text-sm text-slate-500 font-medium">
                                             <Calendar className="h-3.5 w-3.5" />
-                                                Creato il {formatITDateTime(lead.createdAt)}
+                                                Creato il {formatITDateTime(new Date(lead.createdAt))}
                                         </div>
                                     </div>
                                 </div>
@@ -89,9 +89,9 @@ export default async function LeadDetailPage(props: PageProps) {
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     <div className="lg:col-span-8 space-y-8">
-                        {/* <div className="flex items-center gap-2 mb-4">
+                        <div className="flex items-center gap-2 mb-4">
                             <QuickActions lead={lead as any} showLabels={true} />
-                        </div> */}
+                        </div>
 
                         {/* Main Info Tabs */}
                         <Tabs defaultValue="details" className="w-full">
@@ -161,7 +161,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                                 <div>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase">Data Evento</p>
                                                     <p className="text-sm font-semibold">
-                                                        {lead.eventDate ? formatITDate(lead.eventDate) : '-'}
+                                                        {lead.eventDate ? formatITDate(new Date(lead.eventDate)) : '-'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -210,7 +210,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                                     <div className="flex items-center justify-between mb-1">
                                                         <div className="font-bold text-slate-800 text-sm">{activity.type}</div>
                                                         <time className="text-[10px] font-bold text-indigo-500">
-                                                        {formatITTime(activity.createdAt)}
+                                                        {formatITTime(new Date(activity.createdAt))}
                                                         </time>
                                                     </div>
                                                     <div className="text-slate-500 text-sm leading-relaxed">
@@ -241,7 +241,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                                                     {quote.status}
                                                                 </Badge>
                                                             </div>
-                                                            <p className="text-xs text-slate-400 font-medium italic">Creato il {formatITDate(quote.createdAt)}</p>
+                                                            <p className="text-xs text-slate-400 font-medium italic">Creato il {formatITDate(new Date(quote.createdAt))}</p>
                                                         </div>
                                                         <div className="text-right">
                                                             <p className="text-2xl font-black text-slate-900">€{Number(quote.totalAmount).toFixed(2)}</p>
@@ -281,13 +281,13 @@ export default async function LeadDetailPage(props: PageProps) {
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold opacity-60 uppercase">Prossimo Follow-up</p>
                                     <p className="text-lg font-bold text-amber-400">
-                                        {lead.nextFollowupAt ? formatITDateTime(lead.nextFollowupAt) : 'Non programmato'}
+                                        {lead.nextFollowupAt ? formatITDateTime(new Date(lead.nextFollowupAt)) : 'Non programmato'}
                                     </p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-bold opacity-60 uppercase">Ultimo Contatto</p>
                                     <p className="text-sm font-medium">
-                                        {lead.contactedAt ? formatITDateTime(lead.contactedAt) : 'Mai contattato'}
+                                        {lead.contactedAt ? formatITDateTime(new Date(lead.contactedAt)) : 'Mai contattato'}
                                     </p>
                                 </div>
                                 <div className="pt-4 border-t border-white/10">

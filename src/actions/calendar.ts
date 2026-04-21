@@ -77,13 +77,13 @@ export async function getCalendarEvents() {
                     });
                 localAppointments = apps.map(app => ({
                     id: `local-${app.id}`,
-                    title: app.title || `App. ${app.lead.firstName}`,
+                    title: app.title || (app.lead ? `App. ${app.lead.firstName}` : "Appuntamento CRM"),
                     start: app.startTime.toISOString(),
-                    end: new Date(app.startTime.getTime() + app.duration * 60000).toISOString(),
-                    location: app.location,
-                    description: app.notes,
+                    end: new Date(app.startTime.getTime() + (app.duration || 30) * 60000).toISOString(),
+                    location: app.location || "",
+                    description: app.notes || "",
                     calendarName: 'CRM Interno',
-                    calendarColor: '#4f46e5', // Colore indigo per distinguere
+                    calendarColor: '#4f46e5',
                     leadId: app.leadId,
                     googleEventId: app.googleEventId
                 }));
