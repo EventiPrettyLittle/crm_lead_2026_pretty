@@ -18,6 +18,7 @@ export async function sendWhatsAppTemplate({
 }: WhatsAppTemplateParams) {
     const apikey = process.env.WHATSAPP_API_KEY || 'vCZnSEs9OxYtLimo';
     const token = process.env.WHATSAPP_TOKEN || 'DqvljFxnVAJ3i7XK';
+    const baseUrl = "https://app.sendapp.ai/api/whatsapp-meta/send";
 
     // 1. Pulizia numero
     let cleanTo = to.replace(/\D/g, "");
@@ -25,46 +26,47 @@ export async function sendWhatsAppTemplate({
         cleanTo = '39' + cleanTo;
     }
 
-    // 2. Costruzione Messaggio
-    let messageText = "";
-    if (templateName === 'notifica_cliente' || templateName === 'contattato') {
-        messageText = `Ciao ${bodyVariables[0] || 'Cliente'}, siamo di Pretty Little. Ti abbiamo contattato per il tuo interesse.`;
-    } else if (templateName === 'non_risponde') {
-        messageText = `Ciao ${bodyVariables[0] || 'Cliente'}, abbiamo provato a chiamarti ma non abbiamo ricevuto risposta da te. Ti aspettiamo!`;
-    } else {
-        messageText = `Ciao ${bodyVariables[0] || 'Cliente'}, ti confermiamo l'appuntamento per il ${bodyVariables[2] || ''} alle ore ${bodyVariables[3] || ''}.`;
-    }
+    // 2. Costruzione payload (come da tuo CURL)
+    const bodyParameters = bodyVariables.map(text => ({
+        type: "text",
+        text: text
+    }));
 
     const payload = {
-        apikey,
-        instance: token,
+        apikey: apikey,
+        token: token,
         number: cleanTo,
-        message: messageText
+        type: "template",
+        template: {
+            name: templateName,
+            language: { code: languageCode },
+            components: bodyParameters.length > 0 ? [
+                {
+                    type: "body",
+                    parameters: bodyParameters
+                }
+            ] : []
+        }
     };
 
-    // 3. Chiamata API (Gateway V1 - Tentativo su .live)
-    const standardUrl = "https://app.sendapp.live/api/v1/send";
-
     try {
-        const response = await fetch(standardUrl, {
+        const response = await fetch(baseUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
-        const contentType = response.headers.get("content-type") || "";
-        if (contentType.includes("application/json")) {
-            const data = await response.json();
-            if (data.status === "error" || data.error) {
-                return { success: false, error: data.message || "Errore SendApp V1" };
-            }
-            return { success: true, data };
-        } else {
-            const html = await response.text();
-            // Prendiamo più testo per capire l'errore (300 caratteri)
-            const cleanHtml = html.substring(0, 300).replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
-            return { success: false, error: `HTML Resp: ${cleanHtml}` };
+        const data = await response.json();
+
+        if (!response.ok || data.status === "error" || data.error) {
+            const detail = data.message || data.error?.message || JSON.stringify(data);
+            return { 
+                success: false, 
+                error: `Meta API: ${detail}` 
+            };
         }
+
+        return { success: true, data };
     } catch (error: any) {
         return { success: false, error: `Errore Rete: ${error.message}` };
     }
