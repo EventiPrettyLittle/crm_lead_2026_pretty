@@ -3,21 +3,20 @@
 export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
-import { parseLeadsFile, ParsedLead } from '@/lib/import-utils'
+import { parseLeadsFile } from '@/lib/import-utils'
 import { importLeadsAction } from '@/actions/leads'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Upload, FileUp, CheckCircle, AlertCircle, Loader2, Database } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from '@/components/ui/card'
+import { Upload, FileUp, CheckCircle, Loader2, Database, AlertCircle } from 'lucide-react'
 import { GoogleSheetsSync } from '@/components/leads/google-sheets-sync'
+import { cn } from "@/lib/utils"
 
 export default function ImportPage() {
     const [file, setFile] = useState<File | null>(null)
     const [isUploading, setIsUploading] = useState(false)
     const [result, setResult] = useState<{ success: number; errors: number } | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const [activeTab, setActiveTab] = useState<'file' | 'google'>('file')
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -28,172 +27,175 @@ export default function ImportPage() {
     }
 
     const handleUpload = async () => {
-        if (!file) return;
-        setIsUploading(true);
-        setResult(null);
-        setError(null);
+        if (!file) return
+        setIsUploading(true)
+        setResult(null)
+        setError(null)
 
         try {
-            const parsedData = await parseLeadsFile(file);
-            if (parsedData.length === 0) {
-                setError("Nessun lead valido trovato nel file (verifica la colonna 'Email').");
-                setIsUploading(false);
-                return;
-            }
-            const res = await importLeadsAction(parsedData);
-            setResult({ success: res.success, errors: res.errors });
+            const leads = await parseLeadsFile(file)
+            const res = await importLeadsAction(leads)
+            setResult(res)
         } catch (err: any) {
-            console.error(err);
-            setError("Failed to process file: " + (err.message || 'Unknown error'));
+            setError(err.message || 'Errore durante l\'importazione')
         } finally {
-            setIsUploading(false);
+            setIsUploading(false)
         }
-    };
+    }
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] py-16 px-4">
-            <div className="container mx-auto max-w-[900px]">
-                <Card className="border-none shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2.5rem] overflow-hidden bg-white">
-                    <CardHeader className="pt-12 px-12 pb-0">
-                        <div className="flex items-center gap-4 mb-2">
-                           <div className="p-3 bg-slate-900 rounded-2xl text-white">
-                                <Upload className="w-6 h-6" />
-                           </div>
-                           <div>
-                                <CardTitle className="text-3xl font-black italic tracking-tight text-slate-900 uppercase">
-                                    Import Leads
-                                </CardTitle>
-                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Gestione flussi dati esterni</p>
-                           </div>
+        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in duration-700">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 bg-slate-900 rounded-[1.3rem] flex items-center justify-center text-white shadow-xl rotate-3">
+                            <Upload className="w-6 h-6" />
                         </div>
-                    </CardHeader>
+                        <h1 className="text-4xl font-black italic text-slate-900 uppercase tracking-tighter">Importazione Lead</h1>
+                    </div>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest ml-1">V.1.1.4 - PREMIUM SYNC SYSTEM</p>
+                </div>
+            </div>
 
-                    <CardContent className="p-12">
-                        <Tabs defaultValue="file" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 mb-12 bg-slate-100/50 p-1.5 rounded-[1.8rem] h-16">
-                                <TabsTrigger value="file" className="rounded-[1.4rem] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-slate-900 font-black uppercase text-[10px] tracking-widest gap-2">
-                                    <FileUp className="w-4 h-4" />
-                                    Importa File (Excel/CSV)
-                                </TabsTrigger>
-                                <TabsTrigger value="google" className="rounded-[1.4rem] data-[state=active]:bg-white data-[state=active]:shadow-lg data-[state=active]:text-slate-900 font-black uppercase text-[10px] tracking-widest gap-2">
-                                    <Database className="w-4 h-4" />
-                                    Google Sheets
-                                </TabsTrigger>
-                            </TabsList>
+            <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-[3rem] overflow-hidden bg-white/40 backdrop-blur-md border border-white/20">
+                <CardContent className="p-12">
+                    {/* Custom Tab Navigation */}
+                    <div className="grid w-full grid-cols-2 mb-12 bg-slate-100/50 p-1.5 rounded-[1.8rem] h-16 border border-slate-200/30">
+                        <button
+                            onClick={() => setActiveTab('file')}
+                            className={cn(
+                                "rounded-[1.4rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 transition-all",
+                                activeTab === 'file' ? "bg-white shadow-xl text-slate-900" : "text-slate-400 hover:text-slate-600"
+                            )}
+                        >
+                            <FileUp className="w-4 h-4" />
+                            Importa File (Excel/CSV)
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('google')}
+                            className={cn(
+                                "rounded-[1.4rem] font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 transition-all",
+                                activeTab === 'google' ? "bg-white shadow-xl text-slate-900" : "text-slate-400 hover:text-slate-600"
+                            )}
+                        >
+                            <Database className="w-4 h-4" />
+                            Google Sheets
+                        </button>
+                    </div>
 
-                            <TabsContent value="file" className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
-                                <div className="space-y-6">
-                                    <div className="relative group">
-                                        <div className="absolute inset-0 bg-slate-900/5 rounded-[2rem] group-hover:bg-slate-900/[0.07] transition-colors pointer-events-none" />
-                                        <div className="relative p-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-[2rem] hover:border-slate-400 transition-all cursor-pointer">
-                                            <input
-                                                type="file"
-                                                accept=".csv, .xlsx, .xls"
-                                                onChange={handleFileChange}
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                            />
-                                            <div className="h-16 w-16 bg-white rounded-full shadow-md flex items-center justify-center mb-4">
-                                                <Upload className="w-7 h-7 text-slate-400" />
-                                            </div>
-                                            <p className="text-sm font-black text-slate-900 uppercase tracking-tight">
-                                                {file ? file.name : "Scegli file o trascinalo qui"}
-                                            </p>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">.csv, .xlsx, .xls supportati</p>
+                    {activeTab === 'file' ? (
+                        <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                            <div className="space-y-6">
+                                <div className="relative group">
+                                    <div className="absolute inset-0 bg-slate-900/5 rounded-[2rem] group-hover:bg-slate-900/[0.07] transition-colors pointer-events-none" />
+                                    <div className="relative p-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-[2.5rem] hover:border-slate-400 transition-all cursor-pointer bg-white/30 backdrop-blur-sm">
+                                        <input
+                                            type="file"
+                                            accept=".csv, .xlsx, .xls"
+                                            onChange={handleFileChange}
+                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                        />
+                                        <div className="h-20 w-20 bg-white rounded-full shadow-lg flex items-center justify-center mb-6">
+                                            <Upload className="w-8 h-8 text-slate-400 group-hover:text-slate-900 transition-colors" />
                                         </div>
+                                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-1">
+                                            {file ? file.name : "Trascina il tuo database"}
+                                        </h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                            Excel o CSV sono i benvenuti
+                                        </p>
                                     </div>
-
-                                    <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100 flex gap-4">
-                                        <div className="h-10 w-10 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
-                                            <AlertCircle className="w-5 h-5 text-indigo-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-indigo-900 uppercase tracking-widest mb-1">💡 Pro Tip per l'importazione</p>
-                                            <p className="text-[11px] leading-relaxed text-indigo-700/80 font-medium italic">
-                                                Assicurati che il foglio abbia le intestazioni corrette: Colonna 1, Nome, Cognome, Email, Telefono, Codice Paese, ecc. L'Email verrà usata come identificativo unico per evitare duplicati.
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
-                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6 flex items-center gap-2">
-                                            <div className="h-1.5 w-1.5 bg-slate-400 rounded-full" /> 
-                                            Colonne Richieste
-                                        </h4>
-                                        <div className="grid grid-cols-2 gap-y-4 gap-x-8">
-                                            {[
-                                                "Colonna 1 (Data Creazione)",
-                                                "Codice Paese",
-                                                "Tipologia Evento",
-                                                "Numero Invitati",
-                                                "Prodotto Interesse",
-                                                "Data Evento",
-                                                "Luogo Evento",
-                                                "Preferenza Contatto"
-                                            ].map((col, i) => (
-                                                <div key={i} className="flex items-center gap-3">
-                                                    <CheckCircle className="w-3.5 h-3.5 text-slate-300" />
-                                                    <span className="text-[11px] font-black text-slate-700 uppercase tracking-tighter">{col}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        onClick={handleUpload}
-                                        disabled={!file || isUploading}
-                                        className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-[1.5rem] h-16 font-black uppercase tracking-[0.15em] shadow-xl shadow-slate-200 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
-                                    >
-                                        {isUploading ? (
-                                            <>
-                                                <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                                                Processing Data...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <FileUp className="mr-3 h-5 w-5" />
-                                                Inizia Importazione
-                                            </>
-                                        )}
-                                    </Button>
                                 </div>
-                            </TabsContent>
 
-                            <TabsContent value="google" className="animate-in fade-in zoom-in-95 duration-300">
-                                <GoogleSheetsSync />
-                            </TabsContent>
-                        </Tabs>
-
-                        {(result || error) && (
-                            <div className="mt-8 animate-in slide-in-from-bottom-5 duration-500">
-                                {result && (
-                                    <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-[2rem] flex items-center gap-4">
+                                {file && (
+                                    <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-[2rem] flex items-center gap-4 animate-in slide-in-from-top-2 duration-300">
                                         <div className="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
                                             <CheckCircle className="w-6 h-6" />
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-black text-emerald-900 uppercase tracking-tight">Importazione Completata</p>
-                                            <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mt-0.5">
-                                                {result.success} Lead gestiti con successo
-                                            </p>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-black text-emerald-900 uppercase tracking-tight">Pronto per il decollo</p>
+                                            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-0.5">{file.name}</p>
                                         </div>
+                                        <Button 
+                                            variant="ghost" 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setFile(null);
+                                            }}
+                                            className="text-emerald-900 hover:bg-emerald-100 rounded-xl font-black text-[10px] uppercase"
+                                        >
+                                            Elimina
+                                        </Button>
                                     </div>
                                 )}
-                                {error && (
-                                    <div className="bg-rose-50 border border-rose-100 p-6 rounded-[2rem] flex items-center gap-4">
-                                        <div className="h-12 w-12 bg-rose-100 rounded-full flex items-center justify-center text-rose-600">
-                                            <AlertCircle className="w-6 h-6" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-black text-rose-900 uppercase tracking-tight">Errore durante l'import</p>
-                                            <p className="text-xs font-bold text-rose-600 uppercase tracking-widest mt-0.5">{error}</p>
-                                        </div>
-                                    </div>
-                                )}
+
+                                <Button
+                                    size="lg"
+                                    className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-[1.5rem] h-20 font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-900/20 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
+                                    disabled={!file || isUploading}
+                                    onClick={handleUpload}
+                                >
+                                    {isUploading ? (
+                                        <>
+                                            <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                                            Importazione in corso...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Database className="mr-3 h-6 w-6" />
+                                            Lancia Integrazione
+                                        </>
+                                    )}
+                                </Button>
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
+                        </div>
+                    ) : (
+                        <div className="animate-in fade-in zoom-in-95 duration-300">
+                            <GoogleSheetsSync />
+                        </div>
+                    )}
+
+                    {result && (
+                        <div className="mt-8 bg-slate-900 text-white p-8 rounded-[2rem] border border-slate-800 shadow-2xl animate-in slide-in-from-bottom-4 duration-500">
+                            <div className="flex items-center gap-6">
+                                <div className="h-16 w-16 bg-white/10 rounded-2xl flex items-center justify-center text-emerald-400">
+                                    <CheckCircle className="w-8 h-8" />
+                                </div>
+                                <div>
+                                    <h4 className="text-xl font-black uppercase tracking-tighter italic">Importazione Completata</h4>
+                                    <div className="flex gap-4 mt-1">
+                                        <span className="text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20">
+                                            {result.success} Successi
+                                        </span>
+                                        <span className="text-[10px] font-black uppercase bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">
+                                            {result.errors} Saltati
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="mt-8 bg-rose-50 border border-rose-100 p-8 rounded-[2rem] flex items-center gap-6 animate-in shake duration-500">
+                            <div className="h-16 w-16 bg-rose-100 rounded-2xl flex items-center justify-center text-rose-600">
+                                <AlertCircle className="w-8 h-8" />
+                            </div>
+                            <div>
+                                <h4 className="text-xl font-black uppercase tracking-tighter text-rose-900 italic font-black">Attenzione</h4>
+                                <p className="text-[11px] font-bold text-rose-600 uppercase tracking-widest mt-1">{error}</p>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <div className="flex items-center gap-4 justify-center py-8">
+                <div className="h-px bg-slate-200 flex-1" />
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.3em]">Antigravity Premium CRM</p>
+                <div className="h-px bg-slate-200 flex-1" />
             </div>
         </div>
-    );
+    )
 }
