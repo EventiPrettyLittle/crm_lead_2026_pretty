@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { getLeads } from "@/actions/leads";
 import { LeadsTable } from "@/components/leads/leads-table";
 import { Button } from "@/components/ui/button";
