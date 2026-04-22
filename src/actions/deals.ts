@@ -9,19 +9,15 @@ import { serializePrisma } from "@/lib/serialize";
  * Questi sono i nostri "Deal" in fase di produzione.
  */
 export async function getDeals() {
-    const deals = await prisma.lead.findMany({
+    const acceptedQuotes = await prisma.quote.findMany({
         where: {
-            quotes: {
-                some: {
-                    status: 'ACCETTATO'
-                }
-            }
+            status: 'ACCETTATO'
         },
         include: {
-            deal: true,
-            quotes: {
-                where: { status: 'ACCETTATO' },
-                take: 1
+            lead: {
+                include: {
+                    deal: true
+                }
             }
         },
         orderBy: {
@@ -30,8 +26,9 @@ export async function getDeals() {
     });
 
     // Calcolo dell'andamento (0-100%)
-    const dealsWithProgress = deals.map(lead => {
-        const deal = lead.deal;
+    const dealsWithProgress = acceptedQuotes.map(quote => {
+        const lead = quote.lead;
+        const deal = lead?.deal;
         let progress = 0;
         
         if (deal) {
@@ -48,7 +45,9 @@ export async function getDeals() {
 
         return {
             ...lead,
-            progress
+            id: lead?.id || quote.leadId,
+            progress,
+            acceptedQuote: quote // Passiamo anche il riferimento al preventivo specifico
         };
     });
 
