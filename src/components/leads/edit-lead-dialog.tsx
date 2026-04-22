@@ -26,7 +26,6 @@ import {
     FormControl,
     FormField,
     FormItem,
-    FormLabel,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
@@ -145,7 +144,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                     form.setValue('eventProvince', province);
                     form.setValue('eventRegion', region);
                 });
-             } else if (attempts < 10) {
+             } else if (attempts < 15) {
                  attempts++;
                  setTimeout(initAutocomplete, 500);
              }
@@ -251,9 +250,17 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                 <div className="h-4 w-1 rounded-full bg-indigo-500" />
                                 <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">Geolocalizzazione</h3>
                             </div>
-                             <FormField control={form.control} name="eventLocation" render={({ field: { ref: fieldRef, ...fieldProps } }) => (
+                             <FormField control={form.control} name="eventLocation" render={({ field }) => (
                                 <FormItem><FormControl><div className="relative">
-                                    <Input {...fieldProps} ref={(e) => { (inputRef as any).current = e; }} className="h-14 rounded-2xl pl-12 border-2 border-indigo-50 bg-white font-bold text-slate-900 shadow-sm focus:border-indigo-500 transition-all placeholder:text-slate-300" placeholder="Cerca Location o Indirizzo..." />
+                                    <Input 
+                                        {...field} 
+                                        ref={(e) => { 
+                                            field.ref(e); 
+                                            (inputRef as any).current = e; 
+                                        }} 
+                                        className="h-14 rounded-2xl pl-12 border-2 border-indigo-50 bg-white font-bold text-slate-900 shadow-sm focus:border-indigo-500 transition-all placeholder:text-slate-300" 
+                                        placeholder="Cerca Location o Indirizzo..." 
+                                    />
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
                                 </div></FormControl></FormItem>
                             )} />
@@ -305,11 +312,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Salva Modifiche'}
                              </Button>
                         </div>
-
-                        <input type="hidden" {...form.register('eventCity')} />
-                        <input type="hidden" {...form.register('locationName')} />
-                        <input type="hidden" {...form.register('eventProvince')} />
-                        <input type="hidden" {...form.register('eventRegion')} />
                     </form>
                 </Form>
             </DialogContent>

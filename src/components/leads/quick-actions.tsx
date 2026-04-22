@@ -15,15 +15,6 @@ import { Button } from '@/components/ui/button'
 import { updateLeadQuickAction } from '@/actions/lead-actions'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogHeader, 
-    DialogTitle, 
-    DialogFooter,
-    DialogDescription
-} from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
 import { Lead } from '@prisma/client'
 
 interface QuickActionsProps {
@@ -34,9 +25,6 @@ interface QuickActionsProps {
 export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     const router = useRouter()
     const [loading, setLoading] = useState<string | null>(null)
-    const [dialogOpen, setDialogOpen] = useState(false)
-    const [actionType, setActionType] = useState<any>(null)
-    const [notes, setNotes] = useState('')
 
     const handleAction = async (type: any, data: any = {}) => {
         setLoading(type)
@@ -45,8 +33,6 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             if (result.success) {
                 toast.success('Stato aggiornato')
                 router.refresh()
-                setDialogOpen(false)
-                setNotes('')
             }
         } catch (error) {
             toast.error('Errore imprevisto')
@@ -127,11 +113,8 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                         e.stopPropagation();
                         if (action.isExternal && action.onClick) {
                             action.onClick(e);
-                        } else if (action.id === 'contacted' || action.id === 'no-answer' || action.id === 'cancelled') {
-                            handleAction(action.id)
                         } else {
-                            setActionType(action.id)
-                            setDialogOpen(true)
+                            handleAction(action.id)
                         }
                     }}
                     disabled={!!loading}
@@ -149,33 +132,6 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                     {showLabels && <span>{action.label}</span>}
                 </Button>
             ))}
-
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="rounded-[2rem] p-8 bg-white border-none shadow-2xl">
-                    <DialogHeader>
-                        <DialogTitle className="text-xl font-black uppercase tracking-tight">Dettaglio Azione</DialogTitle>
-                        <DialogDescription className="font-bold text-slate-400">Inserisci una nota per concludere l'operazione.</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-2">
-                        <Textarea 
-                            placeholder="Note..." 
-                            className="min-h-[100px] rounded-xl border-slate-100 bg-slate-50 font-bold text-sm"
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button variant="ghost" size="sm" onClick={() => setDialogOpen(false)} className="rounded-lg font-bold">Chiudi</Button>
-                        <Button 
-                            size="sm"
-                            onClick={() => handleAction(actionType, { notes })}
-                            className="rounded-lg bg-indigo-600 font-black uppercase px-6"
-                        >
-                            Salva
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }
