@@ -193,7 +193,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                                     <div className="flex items-center justify-between mb-1">
                                                         <div className="font-black text-slate-800 text-xs uppercase tracking-tight">{activity.type}</div>
                                                         <time className="text-[10px] font-black text-indigo-500">
-                                                        {formatITTime(activity.createdAt)}
+                                                            {activity.createdAt ? formatITTime(activity.createdAt) : '--:--'}
                                                         </time>
                                                     </div>
                                                     <div className="text-slate-500 text-xs font-bold leading-relaxed">
