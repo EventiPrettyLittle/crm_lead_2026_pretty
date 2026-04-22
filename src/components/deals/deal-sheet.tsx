@@ -255,7 +255,8 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                                 <DynamicField label="Grafica 2" field="acc2_graphics" value={data.acc2_graphics || ''} />
                             </div>
                         </div>
-                    </CardContent>
+                        </CardContent>
+                    </Card>
                 </section>
 
                 {/* SECONDA BOMBONIERA (CONDIZIONALE) */}
