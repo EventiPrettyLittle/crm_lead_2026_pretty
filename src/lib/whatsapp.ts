@@ -1,6 +1,6 @@
 /**
  * WhatsApp Meta API Integration
- * Optimized for SendApp Cloud / Meta Templates
+ * EXACT MATCH with SendApp Meta CURL provided by user
  */
 
 interface WhatsAppTemplateParams {
@@ -22,17 +22,31 @@ export async function sendWhatsAppTemplate({
         cleanTo = '39' + cleanTo;
     }
 
-    // Costruzione payload specifico per SendApp Cloud/Meta Templates
+    // Trasformazione variabili nel formato "components" richiesto da Meta
+    const parameters = bodyVariables.map(val => ({
+        type: "text",
+        text: val
+    }));
+
+    // Costruzione payload ESATTA come da CURL fornito
     const payload = {
-        apikey,
-        instance: token,
+        apikey: apikey,
+        token: token, // SendApp Meta lo chiama "token" (non instance)
         number: cleanTo,
-        template: templateName,
-        variables: bodyVariables
+        type: "template",
+        template: {
+            name: templateName,
+            language: { "code": "it" },
+            components: [
+                {
+                    type: "body",
+                    parameters: parameters
+                }
+            ]
+        }
     };
 
-    // Usiamo l'endpoint specifico per Meta se possibile, o quello generale v1 con mapping template
-    const url = "https://app.sendapp.ai/api/v1/send";
+    const url = "https://app.sendapp.ai/api/whatsapp-meta/send";
 
     try {
         const response = await fetch(url, {
@@ -44,12 +58,11 @@ export async function sendWhatsAppTemplate({
         const data = await response.json();
 
         if (data.status === "error" || data.error) {
-            return { success: false, error: data.message || "Template non trovato su SendApp" };
+            return { success: false, error: data.message || "Template Error" };
         }
         return { success: true, data };
     } catch (error: any) {
-        // Se il JSON fallisce, leggiamo il testo per capire l'errore HTML
-        return { success: false, error: `SendApp Offline o Endpoint Errato (HTML Response)` };
+        return { success: false, error: "SendApp Meta Connection Failed" };
     }
 }
 

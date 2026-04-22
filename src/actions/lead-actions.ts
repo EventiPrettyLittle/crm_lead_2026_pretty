@@ -87,6 +87,9 @@ export async function updateLeadDetails(id: string, data: any) {
                 phoneRaw: data.phone || null,
                 eventLocation: data.eventLocation || null,
                 locationName: data.locationName || null,
+                eventCity: data.eventCity || null,
+                eventProvince: data.eventProvince || null, 
+                eventRegion: data.eventRegion || null,
                 notesInternal: data.notesInternal,
                 updatedAt: new Date(),
             } as any
