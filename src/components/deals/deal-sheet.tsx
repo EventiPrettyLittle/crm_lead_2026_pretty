@@ -113,8 +113,10 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
     const [loading, setLoading] = useState(false);
     const [showFavor2, setShowFavor2] = useState(!!(initialData.favor2_colors || initialData.pack2_ribbon));
     const [showFavor3, setShowFavor3] = useState(!!(initialData.favor3_colors || initialData.pack3_ribbon));
+    const [showFavor4, setShowFavor4] = useState(!!(initialData.favor4_colors || initialData.pack4_ribbon));
 
     const quoteItems = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
+    const productAssignments = data.productAssignments ? JSON.parse(data.productAssignments) : [];
 
     // Automazione Live Show basata sui prodotti del preventivo
     useEffect(() => {
@@ -130,6 +132,19 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
 
     const handleChange = (field: string, value: string) => {
         setData((prev: any) => ({ ...prev, [field]: value }));
+    };
+
+    const handleAssignmentChange = (quoteItemId: string, target: string) => {
+        const currentArr = data.productAssignments ? JSON.parse(data.productAssignments) : [];
+        const index = currentArr.findIndex((a: any) => a.quoteItemId === quoteItemId);
+        
+        if (index >= 0) {
+            currentArr[index].target = target;
+        } else {
+            currentArr.push({ quoteItemId, target });
+        }
+        
+        handleChange('productAssignments', JSON.stringify(currentArr));
     };
 
     const handleSave = async () => {
@@ -239,6 +254,10 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                          <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">3° Bomboniera</span>
                          <Switch checked={showFavor3} onCheckedChange={setShowFavor3} />
                     </div>
+                    <div className="flex items-center gap-3 w-full justify-between">
+                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">4° Bomboniera</span>
+                         <Switch checked={showFavor4} onCheckedChange={setShowFavor4} />
+                    </div>
                 </Card>
 
                 <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-6 flex flex-col justify-center items-center text-center">
@@ -276,6 +295,20 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                             <p className="text-xs font-black text-slate-900 truncate uppercase italic leading-tight">
                                                 {item.description || item.name || 'Prodotto'}
                                             </p>
+                                        </div>
+                                        <div className="shrink-0 flex flex-col gap-1 items-end border-l-2 border-slate-50 pl-4 ml-auto">
+                                            <p className="text-[8px] font-black text-indigo-400 uppercase tracking-tighter">Assegna a:</p>
+                                            <select 
+                                                className="text-[9px] font-black uppercase tracking-tighter bg-indigo-50/50 text-indigo-600 rounded-lg px-2 py-1 outline-none border-none cursor-pointer hover:bg-indigo-100 transition-colors"
+                                                value={productAssignments.find((a: any) => a.quoteItemId === item.id)?.target || ''}
+                                                onChange={(e) => handleAssignmentChange(item.id, e.target.value)}
+                                            >
+                                                <option value="">NON ASSEGNATO</option>
+                                                <option value="favor1">1° Bomboniera</option>
+                                                <option value="favor2">2° Bomboniera</option>
+                                                <option value="favor3">3° Bomboniera</option>
+                                                <option value="favor4">4° Bomboniera</option>
+                                            </select>
                                         </div>
                                     </div>
                                 ))}
@@ -426,6 +459,53 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         <DynamicField label="Nastro" field="pack3_ribbon" value={data.pack3_ribbon || ''} onChange={handleChange} />
                                         <DynamicField label="Confetti" field="pack3_confetti" value={data.pack3_confetti || ''} onChange={handleChange} />
                                         <DynamicField label="Grafica Pack" field="pack3_graphics" value={data.pack3_graphics || ''} onChange={handleChange} />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
+
+                {/* QUARTA BOMBONIERA (CONDIZIONALE) */}
+                {showFavor4 && (
+                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
+                        <div className="flex items-center gap-3 px-4">
+                            <Gift className="h-5 w-5 text-indigo-500" />
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Quarta Bomboniera..."
+                                    value={data.favor4_title || ''}
+                                    onChange={(e) => handleChange('favor4_title', e.target.value)}
+                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
+                            </div>
+                        </div>
+                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-indigo-400">
+                            <CardContent className="p-8 space-y-10">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                    <DynamicField label="Colori" field="favor4_colors" value={data.favor4_colors || ''} onChange={handleChange} />
+                                    <DynamicField label="Grafiche" field="favor4_graphics" value={data.favor4_graphics || ''} onChange={handleChange} />
+                                    <DynamicField label="Stick" field="favor4_stick" value={data.favor4_stick || ''} onChange={handleChange} />
+                                    <DynamicField label="Profumi" field="favor4_scents" value={data.favor4_scents || ''} onChange={handleChange} />
+                                </div>
+                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <DynamicField label="Nastro" field="pack4_ribbon" value={data.pack4_ribbon || ''} onChange={handleChange} />
+                                        <DynamicField label="Confetti" field="pack4_confetti" value={data.pack4_confetti || ''} onChange={handleChange} />
+                                        <DynamicField label="Grafica Pack" field="pack4_graphics" value={data.pack4_graphics || ''} onChange={handleChange} />
+                                    </div>
+                                </div>
+                                {/* Accessori 3 */}
+                                <div className="bg-white border-2 border-slate-50 rounded-[2rem] p-8 space-y-6">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Layers className="h-4 w-4 text-indigo-600" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Accessori & Opzioni 3</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <DynamicField label="Prodotto 3" field="acc3_product" value={data.acc3_product || ''} onChange={handleChange} isAccent />
+                                        <DynamicField label="Colori 3" field="acc3_colors" value={data.acc3_colors || ''} onChange={handleChange} />
+                                        <DynamicField label="Grafica 3" field="acc3_graphics" value={data.acc3_graphics || ''} onChange={handleChange} />
                                     </div>
                                 </div>
                             </CardContent>

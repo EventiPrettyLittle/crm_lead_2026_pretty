@@ -240,6 +240,27 @@ model Deal {
   pack3_confetti   String?
   pack3_graphics   String?
   
+  // Favor 4
+  favor4_title      String?
+  favor4_colors     String?
+  favor4_graphics   String?
+  favor4_stick      String?
+  favor4_scents     String?
+  favor4_notes      String?
+
+  // Pack 4
+  pack4_ribbon     String?
+  pack4_confetti   String?
+  pack4_graphics   String?
+
+  // Accessories 3
+  acc3_product     String?
+  acc3_colors      String?
+  acc3_graphics    String?
+
+  // Assignment Mapping (JSON)
+  productAssignments String? // [{"quoteItemId": "...", "target": "favor1", "quantity": 10}]
+  
   // General
   notes             String?
   status            String   @default("IN_LAVORAZIONE") // IN_LAVORAZIONE, PRONTO, CONSEGNATO
