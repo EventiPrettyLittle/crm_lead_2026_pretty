@@ -8,16 +8,16 @@ export async function getCompanySettings() {
         const results: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "CompanySettings" LIMIT 1`);
         if (results.length > 0) {
             const res = results[0];
-            // Mappatura compatibilità lowercase
+            // Mappatura ultra-resiliente per ogni variante di case (lowercase vs camelCase)
             return {
                 id: res.id,
-                companyName: res.companyname || res.companyName,
-                address: res.address,
-                vatNumber: res.vatnumber || res.vatNumber,
-                iban: res.iban,
-                phone: res.phone,
-                email: res.email,
-                referente: res.referente,
+                companyName: res.companyname || res.companyName || res.CompanyName || "",
+                address: res.address || res.Address || "",
+                vatNumber: res.vatnumber || res.vatNumber || res.VatNumber || "",
+                iban: res.iban || res.Iban || res.IBAN || "",
+                phone: res.phone || res.Phone || "",
+                email: res.email || res.Email || "",
+                referente: res.referente || res.Referente || "",
             };
         }
         return null;
