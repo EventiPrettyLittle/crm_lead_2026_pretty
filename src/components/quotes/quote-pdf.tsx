@@ -213,7 +213,7 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                     <View style={styles.logoSection}>
                         {(quote.systemSettings?.logoUrl || true) ? (
                             <Image 
-                                src={quote.systemSettings?.logoUrl || "/logo.png"} 
+                                src={quote.systemSettings?.logoUrl || "/logo_eventi.png"} 
                                 style={{ width: quote.systemSettings?.logoWidth || 160, maxHeight: 60, objectFit: 'contain' }} 
                             />
                         ) : (
