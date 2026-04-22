@@ -115,11 +115,13 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     useEffect(() => {
         if (!open) return;
         
-        // Fix fondamentale: i suggerimenti di Google Maps appaiono in un div .pac-container 
-        // che spesso finisce sotto i dialoghi di Radix/Shadcn. Forziamo il z-index.
-        const style = document.createElement('style');
-        style.innerHTML = '.pac-container { z-index: 9999 !important; border-radius: 1rem; margin-top: 5px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }';
-        document.head.appendChild(style);
+        // Inject global style for Google Autocomplete once
+        if (!document.getElementById('pac-style')) {
+            const style = document.createElement('style');
+            style.id = 'pac-style';
+            style.innerHTML = '.pac-container { z-index: 10000 !important; font-family: inherit; border-radius: 1rem; margin-top: 5px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1); } .pac-item { padding: 8px 12px; cursor: pointer; } .pac-item:hover { background-color: #f8fafc; } .pac-item-query { font-weight: 700; color: #0f172a; }';
+            document.head.appendChild(style);
+        }
 
         const initAutocomplete = () => {
              if (inputRef.current && window.google?.maps?.places) {
@@ -133,13 +135,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                     const place = autoCompleteRef.current.getPlace();
                     if (!place || !place.geometry) return;
                     
-                    if (place.formatted_address) {
-                        form.setValue('eventLocation', place.formatted_address, { shouldDirty: true });
-                    }
-                    if (place.name) {
-                        form.setValue('locationName', place.name, { shouldDirty: true });
-                    }
-                    
+                    // RACCOLTA DATI
                     let city = '', province = '', region = '';
                     if (place.address_components) {
                         for (const component of place.address_components) {
@@ -149,16 +145,24 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                             if (types.includes('administrative_area_level_1')) region = component.long_name;
                         }
                     }
+
+                    // AGGIORNAMENTO MODULO
+                    form.setValue('eventLocation', place.formatted_address || '', { shouldDirty: true, shouldValidate: true });
+                    form.setValue('locationName', place.name || '', { shouldDirty: true, shouldValidate: true });
+                    form.setValue('eventCity', city, { shouldDirty: true, shouldValidate: true });
+                    form.setValue('eventProvince', province, { shouldDirty: true, shouldValidate: true });
+                    form.setValue('eventRegion', region, { shouldDirty: true, shouldValidate: true });
                     
-                    // IMPORTANTE: Impostiamo i valori con shouldDirty per farli vedere al submit
-                    form.setValue('eventCity', city, { shouldDirty: true });
-                    form.setValue('eventProvince', province, { shouldDirty: true });
-                    form.setValue('eventRegion', region, { shouldDirty: true });
-                    
-                    console.log("Autocomplete Updated:", { city, province, region });
+                    toast.success('Dati geografici aggiornati!');
                 });
+
+                // Impedisce a Radix di bloccare l'interazione con la tendina Google
+                const pacContainer = document.querySelector('.pac-container');
+                if (pacContainer) {
+                    pacContainer.addEventListener('mousedown', (e) => e.stopPropagation());
+                }
              } else {
-                 setTimeout(initAutocomplete, 500);
+                 setTimeout(initAutocomplete, 300);
              }
         };
         
@@ -173,18 +177,17 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                 additionalServices: values.additionalServices.join(', '),
                 eventDate: values.eventDate ? new Date(values.eventDate) : undefined
             }
-            console.log("Submitting Values:", finalValues);
             
             const result = await updateLeadDetails(lead.id, finalValues)
             if (result.success) {
-                toast.success('Dati salvati correttamente')
+                toast.success('Lead aggiornato con successo')
                 router.refresh()
                 setOpen(false)
             } else {
-                toast.error('Errore nel salvataggio: ' + (result as any).error)
+                toast.error('Errore: ' + (result as any).error)
             }
-        } catch (error) {
-            toast.error('Errore durante il salvataggio')
+        } catch (error: any) {
+            toast.error('Errore di sistema: ' + error.message)
         } finally {
             setLoading(false)
         }
@@ -198,10 +201,19 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                     Modifica Dati
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[650px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col">
+            <DialogContent 
+                className="sm:max-w-[700px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col"
+                onPointerDownOutside={(e) => {
+                    // CRITICO: Impedisce a Radix di chiudere il dialogo o bloccare il click se si clicca sulla tendina dei suggerimenti Google
+                    const target = e.target as HTMLElement;
+                    if (target?.closest('.pac-container')) {
+                        e.preventDefault();
+                    }
+                }}
+            >
                 <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 p-8 text-white shrink-0 relative">
                     <DialogTitle className="text-3xl font-black tracking-tighter mb-1 uppercase">Gestione Dati Lead</DialogTitle>
-                    <DialogDescription className="text-indigo-100 font-medium text-xs opacity-90 tracking-tight">Perfeziona i dettagli dell'evento e aggiorna i contatti.</DialogDescription>
+                    <DialogDescription className="text-indigo-100 font-medium text-xs opacity-90 tracking-tight">Perfeziona i dettagli dell'evento e aggiorna i contatti territoriali.</DialogDescription>
                     <div className="absolute top-8 right-8 bg-white/10 rounded-full h-12 w-12 flex items-center justify-center backdrop-blur-md border border-white/20">
                         <User className="h-6 w-6 text-white" />
                     </div>
@@ -249,26 +261,12 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                     <FormItem><FormControl><Input type="date" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
-                            <div className="grid grid-cols-2 gap-5">
-                                <FormField control={form.control} name="guestsCount" render={({ field }) => (
-                                    <FormItem><Select onValueChange={field.onChange} value={field.value || undefined}>
-                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Invitati..." /></SelectTrigger></FormControl>
-                                        <SelectContent>{GUEST_RANGES.map(r => <SelectItem key={r} value={r} className="font-bold">{r}</SelectItem>)}</SelectContent>
-                                    </Select></FormItem>
-                                )} />
-                                <FormField control={form.control} name="preferredContactTime" render={({ field }) => (
-                                    <FormItem><Select onValueChange={field.onChange} value={field.value || undefined}>
-                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Contatto..." /></SelectTrigger></FormControl>
-                                        <SelectContent>{CONTACT_TIMES.map(c => <SelectItem key={c} value={c} className="font-bold">{c}</SelectItem>)}</SelectContent>
-                                    </Select></FormItem>
-                                )} />
-                            </div>
                         </div>
 
                         <div className="space-y-4 border-t border-slate-50 pt-8">
                              <div className="flex items-center gap-3 mb-2">
-                                <div className="h-4 w-1 rounded-full bg-indigo-500" />
-                                <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">Geolocalizzazione</h3>
+                                <div className="h-4 w-1 rounded-full bg-indigo-600" />
+                                <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">Geolocalizzazione (Cerca per Nome Villa o Indirizzo)</h3>
                             </div>
                              <FormField control={form.control} name="eventLocation" render={({ field }) => (
                                 <FormItem><FormControl><div className="relative">
@@ -278,13 +276,14 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                             field.ref(e); 
                                             (inputRef as any).current = e; 
                                         }} 
-                                        className="h-14 rounded-2xl pl-12 border-2 border-indigo-100 bg-white font-bold text-slate-900 shadow-lg focus:border-indigo-600 transition-all placeholder:text-slate-300" 
-                                        placeholder="Cerca Location o Indirizzo..." 
+                                        autoComplete="off"
+                                        className="h-16 rounded-2xl pl-12 border-2 border-indigo-100 bg-white font-bold text-slate-900 shadow-xl focus:border-indigo-600 transition-all placeholder:text-slate-300" 
+                                        placeholder="Cerca Villa, Location o Indirizzo..." 
                                     />
-                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-indigo-500" />
                                 </div></FormControl></FormItem>
                             )} />
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-3 gap-3 pt-2">
                                 <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Città</p><p className="text-[11px] font-black text-slate-800">{watchCity || '-'}</p></div>
                                 <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Prov</p><p className="text-[11px] font-black text-slate-800">{watchProvince || '-'}</p></div>
                                 <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-center"><p className="text-[8px] font-bold text-indigo-500 uppercase mb-1">Regione</p><p className="text-[11px] font-black text-slate-800">{watchRegion || '-'}</p></div>
@@ -294,7 +293,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                         <div className="space-y-4 border-t border-slate-50 pt-8 pb-4">
                              <div className="flex items-center gap-3 mb-2">
                                 <div className="h-4 w-1 rounded-full bg-indigo-500" />
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Extra & Servizi</h3>
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Servizi Aggiuntivi</h3>
                             </div>
                             <div className="grid grid-cols-1 gap-3">
                                 {SERVICES.map((service) => (
@@ -329,7 +328,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
                         <div className="pt-2">
                              <Button type="submit" disabled={loading} className="w-full h-16 rounded-[1.8rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.15em] shadow-2xl shadow-indigo-200 transition-all active:scale-95">
-                                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Salva Modifiche'}
+                                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Sincronizza e Salva Modifiche'}
                              </Button>
                         </div>
                     </form>
