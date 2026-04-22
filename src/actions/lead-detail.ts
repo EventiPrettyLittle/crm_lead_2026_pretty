@@ -5,60 +5,66 @@ import { revalidatePath } from 'next/cache'
 import { serializePrisma } from "@/lib/serialize"
 
 export async function getLeadById(id: string) {
-    const lead = await prisma.lead.findUnique({
-        where: { id },
-        include: {
-            activities: {
-                orderBy: { createdAt: 'desc' }
-            },
-            quotes: {
-                include: { items: true },
-                orderBy: { createdAt: 'desc' }
-            },
-            appointments: {
-                orderBy: { createdAt: 'desc' }
-            }
-        }
-    });
-
-    if (lead) {
-        // 1. Storico Preventivi (anche di altri Lead con stesso nome)
-        const associatedQuotes = await prisma.quote.findMany({
-            where: {
-                lead: {
-                    firstName: lead.firstName,
-                    lastName: lead.lastName,
-                    id: { not: lead.id }
+    try {
+        const lead = await prisma.lead.findUnique({
+            where: { id },
+            include: {
+                activities: {
+                    orderBy: { createdAt: 'desc' }
+                },
+                quotes: {
+                    include: { items: true },
+                    orderBy: { createdAt: 'desc' }
+                },
+                appointments: {
+                    orderBy: { createdAt: 'desc' }
                 }
-            },
-            include: { items: true },
-            orderBy: { createdAt: 'desc' }
+            }
         });
 
-        if (associatedQuotes.length > 0) {
-            (lead as any).quotes = [...(lead.quotes || []), ...associatedQuotes].sort(
-                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
+        if (lead) {
+            // 1. Storico Preventivi (anche di altri Lead con stesso nome)
+            const associatedQuotes = await prisma.quote.findMany({
+                where: {
+                    lead: {
+                        firstName: lead.firstName,
+                        lastName: lead.lastName,
+                        id: { not: lead.id }
+                    }
+                },
+                include: { items: true },
+                orderBy: { createdAt: 'desc' }
+            });
+
+            if (associatedQuotes.length > 0) {
+                (lead as any).quotes = [...(lead.quotes || []), ...associatedQuotes].sort(
+                    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
+            }
+
+            // 2. Storico Pagamenti (Sincronizzazione Totale via SQL Raw)
+            let payments: any[] = [];
+            try {
+                payments = await prisma.$queryRawUnsafe(
+                    `SELECT * FROM "Payment" 
+                     WHERE "leadId" = $1 
+                     OR "quoteId" IN (SELECT id FROM "Quote" WHERE "leadId" = $1)
+                     ORDER BY date DESC`,
+                    id
+                );
+            } catch (e) {
+                console.error("Payment raw fetch failed:", e);
+                payments = [];
+            }
+            (lead as any).payments = payments || [];
         }
 
-        // 2. Storico Pagamenti (Sincronizzazione Totale via SQL Raw)
-        let payments: any[] = [];
-        try {
-            payments = await prisma.$queryRawUnsafe(
-                `SELECT * FROM "Payment" 
-                 WHERE "leadId" = $1 
-                 OR "quoteId" IN (SELECT id FROM "Quote" WHERE "leadId" = $1)
-                 ORDER BY date DESC`,
-                id
-            );
-        } catch (e) {
-            console.error("Payment raw fetch failed:", e);
-            payments = [];
-        }
-        (lead as any).payments = payments || [];
+        return serializePrisma(lead);
+    } catch (error: any) {
+        console.error("CRITICAL LEAD FETCH ERROR:", error.message);
+        // Se il DB crasha (es. colonna mancante), non mandiamo l'app in 500
+        return null;
     }
-
-    return serializePrisma(lead);
 }
 
 export async function createActivity(leadId: string, type: string, notes?: string, nextFollowupAt?: Date) {
