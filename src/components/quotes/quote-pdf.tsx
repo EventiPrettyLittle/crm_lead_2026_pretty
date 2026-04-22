@@ -212,8 +212,8 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                     <View style={styles.logoSection}>
                         {(quote.systemSettings?.logoUrl || true) ? (
                             <Image 
-                                src={quote.systemSettings?.logoUrl || "/logo-pdf.png"} 
-                                style={{ width: quote.systemSettings?.logoWidth || 140, maxHeight: 60, objectFit: 'contain' }} 
+                                src={quote.systemSettings?.logoUrl || "/òlogo_eventi.svg"} 
+                                style={{ width: quote.systemSettings?.logoWidth || 160, maxHeight: 60, objectFit: 'contain' }} 
                             />
                         ) : (
                             <>
