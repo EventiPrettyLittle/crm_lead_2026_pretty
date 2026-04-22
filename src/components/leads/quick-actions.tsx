@@ -8,13 +8,9 @@ import {
     UserX,
     Send,
     Loader2,
-    MessageCircle,
     XCircle,
     Clock,
-    FileText,
-    Sparkles,
-    MessageSquare,
-    Bell
+    MessageSquare
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { updateLeadQuickAction } from '@/actions/lead-actions'
@@ -127,16 +123,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
         }
     };
 
-    const openDirectWhatsApp = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!lead.phoneRaw) return;
-        const phone = lead.phoneRaw.replace(/\D/g, '');
-        const text = encodeURIComponent(`Ciao ${lead.firstName}, sono Luca di Pretty. Ti contatto in merito alla tua richiesta...`);
-        window.open(`https://wa.me/${phone.startsWith('39') ? phone : '39' + phone}?text=${text}`, '_blank');
-    }
-
     const actions = [
-        { id: 'whatsapp', label: 'WHATSAPP', icon: MessageCircle, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100', onClick: openDirectWhatsApp },
         { id: 'contacted', label: 'CONTATTATO', icon: Phone, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
         { id: 'no-answer', label: 'NON RISPONDE', icon: UserX, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
         { id: 'appointment', label: 'APPUNTAMENTO', icon: Calendar, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
@@ -152,8 +139,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                     variant="outline"
                     onClick={(e) => {
                         e.stopPropagation();
-                        if (action.id === 'whatsapp') action.onClick!(e);
-                        else handleAction(action.id);
+                        handleAction(action.id);
                     }}
                     disabled={loading}
                     className={cn(
@@ -191,7 +177,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                                     <div className="flex flex-wrap gap-2">
                                         {['showroom', 'call', 'video'].map(type => (
                                             <button key={type} onClick={() => setAppointmentType(type as any)} className={cn(
-                                                "flex-1 flex items-center justify-center gap-2 h-12 px-4 rounded-xl text-[9px] font-black uppercase tracking-tight transition-all",
+                                                "flex-1 flex items-center justify-center gap-2 h-12 px-4 rounded-xl text-[9px] font-black uppercase transition-all",
                                                 appointmentType === type ? "bg-indigo-600 text-white shadow-lg" : "bg-slate-50 text-slate-400 border border-slate-100"
                                             )}>
                                                 {type === 'showroom' ? '🏠' : type === 'call' ? '📞' : '📹'} {type}
