@@ -9,11 +9,11 @@ import { it } from "date-fns/locale"
 
 /**
  * Sends a WhatsApp template based on the lead's current stage/action.
- * FIXED VARIABLE MAPPING FOR SENDAPP:
+ * LOGICA RICHIESTA DA LUCA (SENDAPP):
  * {{1}}: Nome del cliente.
- * {{2}}: Tipo di appuntamento (appuntamento in show room / richiamata).
- * {{3}}: Data dell'appuntamento (es: 15 Aprile).
- * {{4}}: Ora dell'appuntamento (es: 10:30).
+ * {{2}}: Selezione (showroom / richiamata / videochiamata).
+ * {{3}}: Data (Giorno e Mese, es: 15 Aprile).
+ * {{4}}: Ora (es: 10:00).
  */
 export async function sendLeadWhatsAppAction(
     leadId: string, 
@@ -26,19 +26,13 @@ export async function sendLeadWhatsAppAction(
             return { success: false, error: "Lead o numero di telefono non trovato" };
         }
 
-        const isCall = actionType === 'no-answer' || context?.type === 'call';
-        
-        const templateName = actionType === 'appointment'
-            ? (process.env.WHATSAPP_TEMPLATE_NAME_APPOINTMENT || 'notifica_cliente')
-            : actionType === 'contacted'
-            ? (process.env.WHATSAPP_TEMPLATE_NAME_CONTACTED || 'contattato')
-            : (process.env.WHATSAPP_TEMPLATE_NAME_NO_ANSWER || 'non_risponde');
+        // Mapping dei nomi template esatti dalle foto
+        let templateName = '';
+        if (actionType === 'appointment') templateName = 'notifica_cliente';
+        else if (actionType === 'contacted') templateName = 'contattato';
+        else if (actionType === 'no-answer') templateName = 'non_risponde';
 
-        if (!templateName) {
-            return { success: false, error: "Template non configurato" };
-        }
-
-        // Formattazione specifica per le variabili richieste
+        // Formattazione data e ora come richiesto (Giorno Mese / Ora)
         let dayFormatted = "-";
         let timeFormatted = "-";
         
@@ -46,25 +40,19 @@ export async function sendLeadWhatsAppAction(
             try {
                 const dateObj = new Date(context.date);
                 dayFormatted = format(dateObj, "d MMMM", { locale: it }); // es: 15 Aprile
-                timeFormatted = format(dateObj, "HH:mm", { locale: it }); // es: 10:30
+                timeFormatted = format(dateObj, "HH:mm", { locale: it }); // es: 10:00
             } catch (e) {
                 dayFormatted = context.date;
             }
         }
 
-        // Definizione variabili dinamiche in base alla scelta esatta dell'utente
-        const typeValue = actionType === 'contacted'
-            ? "contattato"
-            : actionType === 'no-answer'
-            ? "non_risponde"
-            : context?.type === 'showroom' 
-            ? "Showroom" 
-            : context?.type === 'video'
-            ? "videochiamata"
-            : "richiamata";
+        // Calcolo valore {{2}} in base alla selezione dell'utente
+        let typeValue = "";
+        if (context?.type === 'showroom') typeValue = "showroom";
+        else if (context?.type === 'video') typeValue = "videochiamata";
+        else typeValue = "richiamata";
         
-        // Costruzione array variabili SECONDO LO SCHEMA RICHIESTO
-        // Se è un appuntamento mandiamo tutte le variabili, altrimenti solo il nome
+        // Array variabili SECONDO LO SCHEMA FOTOGRAFICO
         const variables = actionType === 'appointment' 
             ? [
                 lead.firstName || "Cliente", // {{1}}
@@ -85,36 +73,19 @@ export async function sendLeadWhatsAppAction(
         const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
 
         if (res.success) {
-            const activityNote = actionType === 'appointment'
-                ? `Inviato WhatsApp: ${typeValue} per il ${dayFormatted} alle ${timeFormatted}`
-                : `Inviato WhatsApp: ${typeValue}`;
-
             await prisma.activity.create({
                 data: {
                     leadId: lead.id,
                     type: "WHATSAPP",
-                    notes: activityNote
+                    notes: `Inviato template "${templateName}" con variabili: ${variables.join(', ')}`
                 }
             });
 
-            const currentNotes = lead.notesInternal || "";
-            const systemNoteContent = actionType === 'appointment'
-                ? `Inviato "${typeValue}" (${dayFormatted} ore ${timeFormatted})`
-                : `Inviato template "${typeValue}"`;
-            
-            const systemNote = `[WhatsApp - ${timestamp}]: ✅ ${systemNoteContent}\n\n`;
+            // Log veloce nelle note per conferma visiva
+            const systemNote = `[WhatsApp - ${timestamp}]: ✅ Inviato template "${templateName}" a ${lead.firstName}\n\n`;
             await prisma.lead.update({
                 where: { id: leadId },
-                data: { notesInternal: systemNote + currentNotes }
-            });
-        } else {
-            // TRACCIAMENTO ERRORE NELLE NOTE
-            const currentNotes = lead.notesInternal || "";
-            const errorMsg = res.error || "Errore sconosciuto";
-            const systemError = `[WhatsApp - ${timestamp}]: ❌ FALLITO: ${errorMsg} (Template: ${templateName})\n\n`;
-            await prisma.lead.update({
-                where: { id: leadId },
-                data: { notesInternal: systemError + currentNotes }
+                data: { notesInternal: systemNote + (lead.notesInternal || "") }
             });
         }
 
@@ -128,39 +99,20 @@ export async function sendLeadWhatsAppAction(
 export async function sendFreeWhatsAppMessageAction(leadId: string, message: string) {
     try {
         const lead = await getLeadById(leadId);
-        if (!lead || !lead.phoneRaw) {
-            return { success: false, error: "Lead o numero di telefono non trovato" };
-        }
+        if (!lead || !lead.phoneRaw) return { success: false, error: "Lead mancante" };
 
-        const res = await sendWhatsAppMessage({
-            to: lead.phoneRaw,
-            text: message
-        });
+        const res = await sendWhatsAppMessage({ to: lead.phoneRaw, text: message });
 
         if (res.success) {
-            const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
-            
             await prisma.activity.create({
                 data: {
                     leadId: lead.id,
                     type: "WHATSAPP",
-                    notes: `Messaggio libero inviato: ${message}`
+                    notes: `Messaggio libero: ${message}`
                 }
             });
-
-            const currentNotes = lead.notesInternal || "";
-            const systemNote = `[WhatsApp - ${timestamp}]: ${message}\n\n`;
-            await prisma.lead.update({
-                where: { id: leadId },
-                data: { notesInternal: systemNote + currentNotes }
-            });
-
             revalidatePath(`/leads/${leadId}`);
         }
-
         return res;
-    } catch (error) {
-        console.error("Action Free WhatsApp Error:", error);
-        return { success: false, error: "Errore nell'invio del messaggio" };
-    }
+    } catch (error) { return { success: false, error: "Errore invio" }; }
 }
