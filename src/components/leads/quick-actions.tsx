@@ -7,7 +7,8 @@ import {
     Calendar, 
     UserX,
     Send,
-    Loader2
+    Loader2,
+    MessageCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { updateLeadQuickAction } from '@/actions/lead-actions'
@@ -53,14 +54,32 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
         }
     }
 
+    const openWhatsApp = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!lead.phoneRaw) return;
+        const phone = lead.phoneRaw.replace(/\D/g, '');
+        const text = encodeURIComponent(`Ciao ${lead.firstName}, sono Luca di Pretty. Ti contatto in merito alla tua richiesta...`);
+        window.open(`https://wa.me/${phone.startsWith('39') ? phone : '39' + phone}?text=${text}`, '_blank');
+    }
+
     const actions = [
+        {
+            id: 'whatsapp',
+            label: 'WhatsApp',
+            icon: MessageCircle,
+            color: 'bg-emerald-600',
+            textColor: 'text-emerald-600',
+            lightColor: 'bg-emerald-50',
+            isExternal: true,
+            onClick: openWhatsApp
+        },
         {
             id: 'contacted',
             label: 'Contattato',
             icon: Phone,
-            color: 'bg-emerald-500',
-            textColor: 'text-emerald-500',
-            lightColor: 'bg-emerald-50'
+            color: 'bg-blue-500',
+            textColor: 'text-blue-500',
+            lightColor: 'bg-blue-50'
         },
         {
             id: 'no-answer',
@@ -77,14 +96,6 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
             color: 'bg-indigo-500',
             textColor: 'text-indigo-500',
             lightColor: 'bg-indigo-50'
-        },
-        {
-            id: 'preventivo',
-            label: 'Preventivo',
-            icon: Send,
-            color: 'bg-violet-500',
-            textColor: 'text-violet-500',
-            lightColor: 'bg-violet-50'
         }
     ]
 
@@ -97,7 +108,9 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                     size="icon"
                     onClick={(e) => {
                         e.stopPropagation();
-                        if (action.id === 'contacted' || action.id === 'no-answer') {
+                        if (action.isExternal && action.onClick) {
+                            action.onClick(e);
+                        } else if (action.id === 'contacted' || action.id === 'no-answer') {
                             handleAction(action.id)
                         } else {
                             setActionType(action.id)
