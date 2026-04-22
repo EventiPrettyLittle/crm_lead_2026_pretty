@@ -189,20 +189,20 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
     const discount = Number(quote.discountTotal || 0);
     const lead = quote.lead || {};
     const settings = quote.companySettings || {
-        companyName: "PRETTY LITTLE SRL",
-        address: "Napoli, Italia",
-        vatNumber: "In attesa",
+        companyName: "PRETTYLITTLE.IT srls",
+        address: "Corso Umberto 220, 80023 Caivano (NA)",
+        vatNumber: "10477641210",
         phone: "+39",
-        email: "info@prettylittle.it",
+        email: "eventi@prettylittle.it",
         referente: "Luca Vitale"
     };
 
     // Override fallbacks per sicurezza estrema
-    const companyName = settings.companyName || "PRETTY LITTLE SRL";
-    const address = settings.address || "Napoli, Italia";
-    const vatNumber = settings.vatNumber || "In attesa";
+    const companyName = settings.companyName || "PRETTYLITTLE.IT srls";
+    const address = settings.address || "Corso Umberto 220, 80023 Caivano (NA)";
+    const vatNumber = settings.vatNumber || "10477641210";
     const phone = settings.phone || "+39";
-    const email = settings.email || "info@prettylittle.it";
+    const email = settings.email || "eventi@prettylittle.it";
     const referente = quote.createdBy || settings.referente || "Luca Vitale";
 
     return (
@@ -210,10 +210,10 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
             <Page size="A4" style={styles.page}>
                 <View style={styles.header}>
                     <View style={styles.logoSection}>
-                        {quote.systemSettings?.logoUrl ? (
+                        {(quote.systemSettings?.logoUrl || true) ? (
                             <Image 
-                                src={quote.systemSettings.logoUrl} 
-                                style={{ width: quote.systemSettings.logoWidth || 100, maxHeight: 60, objectFit: 'contain' }} 
+                                src={quote.systemSettings?.logoUrl || "/logo-pdf.png"} 
+                                style={{ width: quote.systemSettings?.logoWidth || 140, maxHeight: 60, objectFit: 'contain' }} 
                             />
                         ) : (
                             <>

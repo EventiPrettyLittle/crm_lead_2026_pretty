@@ -11,12 +11,12 @@ export async function getCompanySettings() {
             // Mappatura ultra-resiliente per ogni variante di case (lowercase vs camelCase)
             return {
                 id: res.id,
-                companyName: res.companyname || res.companyName || res.CompanyName || "PRETTY LITTLE SRL",
-                address: res.address || res.Address || "Napoli, Italia",
-                vatNumber: res.vatnumber || res.vatNumber || res.VatNumber || "Partita IVA in attesa",
+                companyName: res.companyname || res.companyName || res.CompanyName || "PRETTYLITTLE.IT srls",
+                address: res.address || res.Address || "Corso Umberto 220, 80023 Caivano (NA)",
+                vatNumber: res.vatnumber || res.vatNumber || res.VatNumber || "10477641210",
                 iban: res.iban || res.Iban || res.IBAN || "",
                 phone: res.phone || res.Phone || "+39",
-                email: res.email || res.Email || "info@prettylittle.it",
+                email: res.email || res.Email || "eventi@prettylittle.it",
                 referente: res.referente || res.Referente || "Luca Vitale",
             };
         }
@@ -24,23 +24,23 @@ export async function getCompanySettings() {
         // PARACADUTE: Se il database è vuoto, restituiamo i dati certi di Pretty Little
         return {
             id: 'fallback',
-            companyName: "PRETTY LITTLE SRL",
-            address: "Napoli, Italia",
-            vatNumber: "00000000000",
+            companyName: "PRETTYLITTLE.IT srls",
+            address: "Corso Umberto 220, 80023 Caivano (NA)",
+            vatNumber: "10477641210",
             iban: "",
             phone: "+39",
-            email: "info@prettylittle.it",
+            email: "eventi@prettylittle.it",
             referente: "Luca Vitale"
         };
     } catch (e) {
         // Se la tabella non esiste, fallback
         return {
             id: 'error_fallback',
-            companyName: "PRETTY LITTLE SRL",
-            address: "Napoli, Italia",
-            vatNumber: "00000000000",
+            companyName: "PRETTYLITTLE.IT srls",
+            address: "Corso Umberto 220, 80023 Caivano (NA)",
+            vatNumber: "10477641210",
             phone: "+39",
-            email: "info@prettylittle.it",
+            email: "eventi@prettylittle.it",
             referente: "Luca Vitale"
         };
     }
