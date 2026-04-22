@@ -139,7 +139,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
     useEffect(() => {
         let retryInterval: NodeJS.Timeout;
-        let autocomplete: google.maps.places.Autocomplete | null = null;
+        let autocomplete: any = null;
 
         const setupAutocomplete = () => {
             const input = document.getElementById('location-input') as HTMLInputElement;
