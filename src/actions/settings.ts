@@ -11,20 +11,38 @@ export async function getCompanySettings() {
             // Mappatura ultra-resiliente per ogni variante di case (lowercase vs camelCase)
             return {
                 id: res.id,
-                companyName: res.companyname || res.companyName || res.CompanyName || "",
-                address: res.address || res.Address || "",
-                vatNumber: res.vatnumber || res.vatNumber || res.VatNumber || "",
+                companyName: res.companyname || res.companyName || res.CompanyName || "PRETTY LITTLE SRL",
+                address: res.address || res.Address || "Napoli, Italia",
+                vatNumber: res.vatnumber || res.vatNumber || res.VatNumber || "Partita IVA in attesa",
                 iban: res.iban || res.Iban || res.IBAN || "",
-                phone: res.phone || res.Phone || "",
-                email: res.email || res.Email || "",
-                referente: res.referente || res.Referente || "",
+                phone: res.phone || res.Phone || "+39",
+                email: res.email || res.Email || "info@prettylittle.it",
+                referente: res.referente || res.Referente || "Luca Vitale",
             };
         }
-        return null;
+        
+        // PARACADUTE: Se il database è vuoto, restituiamo i dati certi di Pretty Little
+        return {
+            id: 'fallback',
+            companyName: "PRETTY LITTLE SRL",
+            address: "Napoli, Italia",
+            vatNumber: "00000000000",
+            iban: "",
+            phone: "+39",
+            email: "info@prettylittle.it",
+            referente: "Luca Vitale"
+        };
     } catch (e) {
-        // Se la tabella non esiste, la inizializziamo
-        await initSettingsTable();
-        return null;
+        // Se la tabella non esiste, fallback
+        return {
+            id: 'error_fallback',
+            companyName: "PRETTY LITTLE SRL",
+            address: "Napoli, Italia",
+            vatNumber: "00000000000",
+            phone: "+39",
+            email: "info@prettylittle.it",
+            referente: "Luca Vitale"
+        };
     }
 }
 

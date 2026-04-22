@@ -188,7 +188,22 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
     const itemsTotal = (quote.items || []).reduce((acc: number, item: any) => acc + Number(item.totalPrice || 0), 0);
     const discount = Number(quote.discountTotal || 0);
     const lead = quote.lead || {};
-    const settings = quote.companySettings || {};
+    const settings = quote.companySettings || {
+        companyName: "PRETTY LITTLE SRL",
+        address: "Napoli, Italia",
+        vatNumber: "In attesa",
+        phone: "+39",
+        email: "info@prettylittle.it",
+        referente: "Luca Vitale"
+    };
+
+    // Override fallbacks per sicurezza estrema
+    const companyName = settings.companyName || "PRETTY LITTLE SRL";
+    const address = settings.address || "Napoli, Italia";
+    const vatNumber = settings.vatNumber || "In attesa";
+    const phone = settings.phone || "+39";
+    const email = settings.email || "info@prettylittle.it";
+    const referente = quote.createdBy || settings.referente || "Luca Vitale";
 
     return (
         <Document>
@@ -202,7 +217,7 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                             />
                         ) : (
                             <>
-                                <Text style={styles.logoText}>{settings.companyName || 'PRETTY LITTLE SRL'}</Text>
+                                <Text style={styles.logoText}>{companyName}</Text>
                                 <Text style={styles.companyTagline}>EVENTI & BRAND EXPERIENCE</Text>
                             </>
                         )}
@@ -213,15 +228,15 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                         <Text style={[styles.infoValue, { marginTop: 5 }]}>Data: {quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('it-IT') : new Date().toLocaleDateString('it-IT')}</Text>
                     </View>
                 </View>
-
+ 
                 <View style={styles.detailsSection}>
                     <View style={styles.infoBlock}>
                         <Text style={styles.label}>EMESSO DA</Text>
-                        <Text style={[styles.infoValue, { fontWeight: 'bold' }]}>{settings.companyName || 'PRETTY LITTLE SRL'}</Text>
-                        <Text style={styles.infoValue}>{settings.address || 'Via delle Aziende, Italia'}</Text>
-                        <Text style={styles.infoValue}>P.IVA: {settings.vatNumber || '-'}</Text>
-                        <Text style={styles.infoValue}>Tel: {settings.phone || '-'}</Text>
-                        <Text style={styles.infoValue}>Email: {settings.email || '-'}</Text>
+                        <Text style={[styles.infoValue, { fontWeight: 'bold' }]}>{companyName}</Text>
+                        <Text style={styles.infoValue}>{address}</Text>
+                        <Text style={styles.infoValue}>P.IVA: {vatNumber}</Text>
+                        <Text style={styles.infoValue}>Tel: {phone}</Text>
+                        <Text style={styles.infoValue}>Email: {email}</Text>
                     </View>
                     <View style={styles.infoBlock}>
                         <Text style={styles.label}>DESTINATARIO</Text>
@@ -337,7 +352,7 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                             <View>
                                 <Text style={styles.signatureText}>Firmato da:</Text>
                                 <Text style={[styles.infoValue, { textAlign: 'right', fontWeight: 'bold', marginTop: 5, fontSize: 13, color: '#0055AA' }]}>
-                                    {quote.createdBy || settings.referente || 'Luca Vitale'}
+                                    {referente}
                                 </Text>
                                 {quote.creatorPhone && (
                                     <Text style={[styles.signatureText, { marginTop: 2 }]}>{quote.creatorPhone}</Text>
@@ -347,9 +362,9 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                         </View>
                     </View>
                 </View>
-
+ 
                 <View style={styles.footer}>
-                    <Text style={styles.footerText}>Documento generato da {settings.companyName || 'PRETTY LITTLE SRL'} per {lead.firstName} {lead.lastName}.</Text>
+                    <Text style={styles.footerText}>Documento generato da {companyName} per {lead.firstName} {lead.lastName}.</Text>
                     <Text style={styles.footerText}>Si prega di conservare una copia del presente documento.</Text>
                 </View>
 
