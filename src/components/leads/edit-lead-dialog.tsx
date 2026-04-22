@@ -115,10 +115,16 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     useEffect(() => {
         if (!open) return;
         
+        // Fix fondamentale: i suggerimenti di Google Maps appaiono in un div .pac-container 
+        // che spesso finisce sotto i dialoghi di Radix/Shadcn. Forziamo il z-index.
+        const style = document.createElement('style');
+        style.innerHTML = '.pac-container { z-index: 9999 !important; border-radius: 1rem; margin-top: 5px; border: 1px solid #e2e8f0; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }';
+        document.head.appendChild(style);
+
         const initAutocomplete = () => {
              if (inputRef.current && window.google?.maps?.places) {
                 autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-                    types: ['geocode', 'establishment'],
+                    types: ['establishment', 'geocode'],
                     componentRestrictions: { country: "it" },
                     fields: ["address_components", "formatted_address", "geometry", "name"]
                 });
