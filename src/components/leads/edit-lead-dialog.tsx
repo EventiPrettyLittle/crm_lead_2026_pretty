@@ -11,7 +11,7 @@ declare global {
     google: any;
   }
 }
-import { Edit2, MapPin, CheckCircle2 } from 'lucide-react'
+import { Edit2, MapPin, CheckCircle2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
