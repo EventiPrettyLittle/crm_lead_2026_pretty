@@ -202,9 +202,17 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
                         <div className="space-y-4 border-t pt-4">
                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Geolocalizzazione</h4>
-                            <FormField control={form.control} name="eventLocation" render={({ field }) => (
+                            <FormField control={form.control} name="eventLocation" render={({ field: { ref: fieldRef, ...fieldProps } }) => (
                                 <FormItem><FormControl><div className="relative">
-                                    <Input ref={(e) => { field.ref(e); (inputRef as any).current = e; }} className="rounded-xl pl-10 font-bold" placeholder="Cerca Indirizzo..." {...field} />
+                                    <Input 
+                                        {...fieldProps}
+                                        ref={(e) => {
+                                            fieldRef(e);
+                                            (inputRef as any).current = e;
+                                        }} 
+                                        className="rounded-xl pl-10 font-bold" 
+                                        placeholder="Cerca Indirizzo..." 
+                                    />
                                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                                 </div></FormControl></FormItem>
                             )} />
