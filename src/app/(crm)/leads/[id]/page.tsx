@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { format } from "date-fns"
 import { formatITDate, formatITDateTime, formatITTime } from "@/lib/utils"
-import { Mail, Phone, MapPin, Calendar, User, FileText, ArrowRight, ArrowLeft, MessageSquare, Users2 } from "lucide-react"
+import { Mail, Phone, MapPin, Calendar, User, FileText, ArrowRight, ArrowLeft, MessageSquare, Users2, ShieldCheck, Maximize2, Navigation } from "lucide-react"
 import QuoteBuilder from "@/components/quotes/quote-builder"
 import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog"
 import { QuoteRowActions } from "@/components/quotes/quote-row-actions"
@@ -19,6 +19,7 @@ import { DeleteLeadButton } from "@/components/leads/delete-lead-button"
 import { Button } from "@/components/ui/button"
 import { LeadInternalNotes } from "@/components/leads/lead-internal-notes"
 import { LeadFinanceTab } from "@/components/leads/lead-finance-tab"
+import { LeadReferentsPanel } from "@/components/leads/lead-referents-panel"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
@@ -109,8 +110,165 @@ export default async function LeadDetailPage(props: PageProps) {
                                 </TabsTrigger>
                             </TabsList>
 
-                            <TabsContent value="finance" className="outline-none">
-                                <LeadFinanceTab lead={lead as any} />
+                            <TabsContent value="details" className="space-y-8 pt-6 outline-none">
+                                
+                                {/* RIGA 1: CONTATTI E REFERENTI (AFFIANCATI) */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <Card className="rounded-[2.2rem] border-slate-200/60 shadow-sm overflow-hidden bg-white">
+                                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
+                                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Contatti & Evento</CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="grid gap-5 pt-6 p-6">
+                                            <div className="flex items-center gap-4 group">
+                                                <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                                    <Mail className="h-5 w-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Email</p>
+                                                    <p className="text-sm font-black text-slate-800">{lead.email || '-'}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between group">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                                                        <Phone className="h-5 w-5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Telefono</p>
+                                                        <p className="text-sm font-black text-slate-800">{lead.phoneRaw || '-'}</p>
+                                                    </div>
+                                                </div>
+                                                <LeadWhatsAppButtons phone={lead.phoneRaw} />
+                                            </div>
+
+                                            <Separator />
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo Evento</p>
+                                                    <p className="text-sm font-black">{lead.eventType || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Data Evento</p>
+                                                    <p className="text-sm font-black">
+                                                        {lead.eventDate ? formatITDate(lead.eventDate) : '-'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <LeadReferentsPanel 
+                                        leadId={lead.id} 
+                                        initialReferents={(lead as any).referents} 
+                                    />
+                                </div>
+
+                                {/* RIGA 2: LOCATION ORIZZONTALE (MAPPA + INFO) */}
+                                <Card className="rounded-[2.5rem] border-slate-200/60 shadow-xl overflow-hidden bg-white">
+                                    <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
+                                        <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                            <MapPin className="h-4 w-4 text-rose-500" /> Location Strategica
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-0">
+                                        <div className="flex flex-col lg:flex-row min-h-[450px]">
+                                            {/* Colonna Mappa (Sviluppata meglio) */}
+                                            <div className="lg:w-[65%] border-r border-slate-100 relative bg-slate-50 min-h-[350px]">
+                                                {/* Qui viene renderizzata la mappa tramite LeadLocationActions o componente dedicato */}
+                                                <div className="p-6 h-full flex flex-col">
+                                                    <div className="flex-1 rounded-[2rem] overflow-hidden shadow-inner border-2 border-white mb-4 relative group">
+                                                        <LeadLocationActions lead={lead as any} />
+                                                        
+                                                        {/* Badge Premium sulla mappa */}
+                                                        <div className="absolute top-4 left-4 z-10">
+                                                            <div className="bg-indigo-600 text-white px-4 py-2 rounded-full shadow-2xl flex items-center gap-2">
+                                                                <Navigation className="h-3 w-3 animate-pulse" />
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-white">Hub Logistico Premium</span>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <Button disabled className="absolute top-4 right-4 z-10 rounded-full bg-indigo-500/90 text-white text-[10px] font-black uppercase px-4 h-8 backdrop-blur-sm">
+                                                            Dati Certificati
+                                                        </Button>
+                                                    </div>
+                                                    
+                                                    {/* Pannello info rapida in basso alla mappa */}
+                                                    <div className="bg-slate-900 rounded-3xl p-5 flex items-center justify-between text-white shadow-2xl">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center">
+                                                                <MapPin className="h-5 w-5 text-indigo-400" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[8px] font-black opacity-40 uppercase tracking-[0.2em] mb-0.5">Indirizzo Destinazione Ufficiale</p>
+                                                                <p className="text-xs font-bold leading-tight max-w-[300px] truncate">{lead.eventLocation || 'Indirizzo non specificato'}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Button variant="ghost" size="sm" className="h-9 rounded-xl font-bold text-white hover:bg-white/10 flex items-center gap-2">
+                                                                <Maximize2 className="h-4 w-4" /> MASSIMIZZA
+                                                            </Button>
+                                                            <Button className="h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-black text-[10px] px-6">
+                                                                PERCORSO RAPIDO...
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Colonna Valori a Destra (Città, Prov, Regione) */}
+                                            <div className="lg:w-[35%] bg-slate-50/20 p-8 flex flex-col justify-between">
+                                                <div className="space-y-6">
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-2 leading-none">Nome Location</p>
+                                                        <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">{lead.locationName || 'Location da definire'}</h2>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-4">
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Ripartizione Territoriale</p>
+                                                        <div className="grid gap-4">
+                                                            <div className="bg-white p-5 rounded-[1.8rem] border border-slate-100 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group">
+                                                                <div className="h-12 w-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                                                    <MapPin className="h-6 w-6" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Città</p>
+                                                                    <p className="text-lg font-black text-slate-800 leading-none">{lead.eventCity || '---'}</p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="bg-white p-5 rounded-[1.8rem] border border-slate-100 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group">
+                                                                <div className="h-12 w-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                                                    <FileText className="h-6 w-6" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Provincia</p>
+                                                                    <p className="text-lg font-black text-slate-800 leading-none">{lead.eventProvince || '---'}</p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="bg-white p-5 rounded-[1.8rem] border border-emerald-100 shadow-sm flex items-center gap-5 transition-all hover:shadow-md group">
+                                                                <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                                                                    <ShieldCheck className="h-6 w-6" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Regione</p>
+                                                                    <p className="text-lg font-black text-slate-800 leading-none">{lead.eventRegion || '---'}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-8 pt-6 border-t border-slate-100">
+                                                    <p className="text-[9px] font-bold text-slate-400 uppercase text-center italic tracking-widest">Certificazione Geografica PrettyCRM - 2026</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
                             </TabsContent>
 
                             <TabsContent value="chat" className="pt-6 outline-none animate-in fade-in zoom-in-95 duration-500">
@@ -119,84 +277,6 @@ export default async function LeadDetailPage(props: PageProps) {
                                     leadName={`${lead.firstName} ${lead.lastName}`}
                                     phone={lead.phoneRaw}
                                 />
-                            </TabsContent>
-
-                            <TabsContent value="details" className="space-y-6 pt-6 outline-none animate-in fade-in zoom-in-95 duration-500">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-6">
-                                        <Card className="rounded-[2rem] border-slate-200/60 shadow-sm overflow-hidden bg-white">
-                                            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
-                                                <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Contatti & Evento</CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="grid gap-5 pt-6 p-6">
-                                                <div className="flex items-center gap-4 group">
-                                                    <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                                        <Mail className="h-5 w-5" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Email</p>
-                                                        <p className="text-sm font-black text-slate-800">{lead.email || '-'}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center justify-between group">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                                                            <Phone className="h-5 w-5" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Telefono</p>
-                                                            <p className="text-sm font-black text-slate-800">{lead.phoneRaw || '-'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <LeadWhatsAppButtons phone={lead.phoneRaw} />
-                                                </div>
-
-                                                <Separator />
-
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo Evento</p>
-                                                        <p className="text-sm font-black">{lead.eventType || '-'}</p>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Data Evento</p>
-                                                        <p className="text-sm font-black">
-                                                            {lead.eventDate ? formatITDate(lead.eventDate) : '-'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-
-                                    <Card className="rounded-[2.2rem] border-slate-200/60 shadow-sm overflow-hidden group hover:border-indigo-100 transition-all bg-white">
-                                        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
-                                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                                <MapPin className="h-4 w-4 text-rose-500" /> Location
-                                            </CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="grid gap-5 pt-6 p-6">
-                                            <div>
-                                                {lead.locationName && (
-                                                    <div className="mb-4">
-                                                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1 leading-none">Nome Location</p>
-                                                        <p className="text-xl font-black text-slate-900 leading-tight">{lead.locationName}</p>
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">Indirizzo Formattato</p>
-                                                    <div className="flex items-start gap-2">
-                                                        <MapPin className="h-4 w-4 text-slate-300 mt-0.5 shrink-0" />
-                                                        <span className="text-sm font-bold text-slate-600 leading-relaxed">{lead.eventLocation || '-'}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {lead.eventLocation && <LeadLocationActions lead={lead as any} />}
-                                        </CardContent>
-                                    </Card>
-                                </div>
-
                             </TabsContent>
 
                             <TabsContent value="activities" className="pt-6 outline-none">
