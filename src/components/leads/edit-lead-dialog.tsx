@@ -136,32 +136,24 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             document.head.appendChild(style);
         }
 
-        const initAutocomplete = () => {
-            if (!inputRef.current) return;
-            
-            // Se google non è ancora pronto o ci sono errori, lasciamo il campo libero per uso manuale
-            if (!window.google?.maps?.places) {
-                console.warn("Google Maps Places non disponibile. Uso modalità manuale.");
-                setTimeout(initAutocomplete, 1000);
-                return;
-            }
+    useEffect(() => {
+        let retryInterval: NodeJS.Timeout;
+        let autocomplete: google.maps.places.Autocomplete | null = null;
+
+        const setupAutocomplete = () => {
+            const input = document.getElementById('location-input') as HTMLInputElement;
+            if (!input || !window.google) return false;
 
             try {
-                // Puliamo istanze precedenti se esistono
-                if (autoCompleteRef.current) {
-                    window.google.maps.event.clearInstanceListeners(autoCompleteRef.current);
-                }
-
-                autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-                    types: ['establishment', 'geocode'],
-                    componentRestrictions: { country: "it" },
-                    fields: ["address_components", "formatted_address", "geometry", "name"]
+                autocomplete = new window.google.maps.places.Autocomplete(input, {
+                    fields: ["formatted_address", "geometry", "name", "address_components"],
+                    types: ["establishment", "geocode"],
                 });
-                
-                autoCompleteRef.current.addListener("place_changed", () => {
-                    const place = autoCompleteRef.current.getPlace();
-                    if (!place || !place.geometry) return;
-                    
+
+                autocomplete.addListener("place_changed", () => {
+                    const place = autocomplete!.getPlace();
+                    if (!place.geometry) return;
+
                     let city = '', province = '', region = '';
                     if (place.address_components) {
                         for (const component of place.address_components) {
@@ -182,26 +174,33 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                     toast.success('Dati aggiornati via Google!');
                 });
 
-                // Impedisce a Radix di bloccare l'interazione con un ascoltatore globale
-                const handlePacMouseDown = (e: any) => {
-                    if (e.target?.closest('.pac-container')) {
-                        e.stopPropagation();
-                    }
-                };
-                document.addEventListener('mousedown', handlePacMouseDown, true);
-                
-                return () => {
-                    document.removeEventListener('mousedown', handlePacMouseDown, true);
-                    if (autoCompleteRef.current) {
-                        window.google.maps.event.clearInstanceListeners(autoCompleteRef.current);
-                    }
-                };
+                autoCompleteRef.current = autocomplete;
+                return true;
             } catch (err) {
-                console.error("Errore inizializzazione Google:", err);
+                console.error("Errore Autocomplete:", err);
+                return false;
             }
         };
-        
-        initAutocomplete();
+
+        if (open) {
+            const success = setupAutocomplete();
+            if (!success) {
+                let attempts = 0;
+                retryInterval = setInterval(() => {
+                    attempts++;
+                    if (setupAutocomplete() || attempts > 20) {
+                        clearInterval(retryInterval);
+                    }
+                }, 100);
+            }
+        }
+
+        return () => {
+            if (retryInterval) clearInterval(retryInterval);
+            if (autocomplete) {
+                window.google.maps.event.clearInstanceListeners(autocomplete);
+            }
+        };
     }, [open, form]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -300,6 +299,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                 <FormItem><FormControl><div className="relative">
                                     <Input 
                                         {...field} 
+                                        id="location-input"
                                         ref={(e) => { 
                                             field.ref(e); 
                                             (inputRef as any).current = e; 
