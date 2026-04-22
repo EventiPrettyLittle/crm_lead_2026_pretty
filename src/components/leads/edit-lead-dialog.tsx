@@ -11,7 +11,7 @@ declare global {
     google: any;
   }
 }
-import { Edit2, MapPin } from 'lucide-react'
+import { Edit2, MapPin, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -87,7 +87,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [statusMessage, setStatusMessage] = useState<string | null>(null)
     const autoCompleteRef = useRef<any>(null)
     const inputRef = useRef<HTMLInputElement>(null)
 
@@ -154,14 +153,12 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             const finalValues = { ...values, additionalServices: values.additionalServices.join(', ') }
             const result = await updateLeadDetails(lead.id, finalValues)
             if (result.success) {
-                toast.success('Dati salvati!')
+                toast.success('Dati aggiornati correttamente')
                 router.refresh()
                 setOpen(false)
-            } else {
-                toast.error(`Errore nel salvataggio`)
             }
         } catch (error) {
-            toast.error('Errore imprevisto')
+            toast.error('Errore durante il salvataggio')
         } finally {
             setLoading(false)
         }
@@ -170,84 +167,141 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="rounded-2xl border-slate-200">
-                    <Edit2 className="mr-2 h-4 w-4" /> Modifica Dati
+                <Button variant="outline" size="sm" className="rounded-2xl border-slate-200 hover:border-indigo-400 group h-12 px-6 font-black transition-all shadow-sm">
+                    <Edit2 className="mr-2 h-4 w-4 text-indigo-500 group-hover:scale-110 transition-transform" />
+                    Modifica Dati
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[620px] rounded-[2.5rem] p-0 overflow-hidden bg-white max-h-[92vh] flex flex-col">
-                <DialogHeader className="bg-slate-900 p-6 text-white shrink-0">
-                    <DialogTitle className="text-xl font-bold">Modifica Lead</DialogTitle>
-                    <DialogDescription className="text-slate-400">Aggiorna i dettagli anagrafici e dell'evento.</DialogDescription>
-                </DialogHeader>
+            <DialogContent className="sm:max-w-[650px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col">
+                {/* PREMUM HEADER */}
+                <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 p-8 text-white shrink-0 relative">
+                    <DialogTitle className="text-3xl font-black tracking-tight mb-1">Gestione Dati Lead</DialogTitle>
+                    <DialogDescription className="text-indigo-100 font-medium text-xs opacity-90">Perfeziona i dettagli dell'evento e aggiorna i contatti.</DialogDescription>
+                    <div className="absolute top-8 right-8 bg-white/10 rounded-full h-12 w-12 flex items-center justify-center backdrop-blur-md border border-white/20">
+                        <User className="h-6 w-6 text-white" />
+                    </div>
+                </div>
                 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="firstName" render={({ field }) => (
-                                <FormItem><FormLabel className="text-[10px] font-bold uppercase text-slate-400">Nome</FormLabel><FormControl><Input className="h-11 rounded-xl border-slate-100 bg-slate-50 font-bold" {...field} /></FormControl></FormItem>
-                            )} />
-                            <FormField control={form.control} name="lastName" render={({ field }) => (
-                                <FormItem><FormLabel className="text-[10px] font-bold uppercase text-slate-400">Cognome</FormLabel><FormControl><Input className="h-11 rounded-xl border-slate-100 bg-slate-50 font-bold" {...field} /></FormControl></FormItem>
-                            )} />
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-10 pt-6 space-y-8 custom-scrollbar">
+                        
+                        {/* SEZIONE 1: INFORMAZIONI CLIENTE */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="h-4 w-1 rounded-full bg-indigo-500" />
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Informazioni Cliente</h3>
+                            </div>
+                            <div className="grid grid-cols-2 gap-5">
+                                <FormField control={form.control} name="firstName" render={({ field }) => (
+                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome</FormLabel><FormControl><Input className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                )} />
+                                <FormField control={form.control} name="lastName" render={({ field }) => (
+                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cognome</FormLabel><FormControl><Input className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                )} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-5">
+                                <FormField control={form.control} name="email" render={({ field }) => (
+                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Email</FormLabel><FormControl><Input className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                )} />
+                                <FormField control={form.control} name="phone" render={({ field }) => (
+                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Telefono</FormLabel><FormControl><Input className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                )} />
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField control={form.control} name="email" render={({ field }) => (
-                                <FormItem><FormLabel className="text-[10px] font-bold uppercase text-slate-400">Email</FormLabel><FormControl><Input className="h-11 rounded-xl border-slate-100 bg-slate-50 font-bold" {...field} /></FormControl></FormItem>
-                            )} />
-                            <FormField control={form.control} name="phone" render={({ field }) => (
-                                <FormItem><FormLabel className="text-[10px] font-bold uppercase text-slate-400">Telefono</FormLabel><FormControl><Input className="h-11 rounded-xl border-slate-100 bg-slate-50 font-bold" {...field} /></FormControl></FormItem>
-                            )} />
-                        </div>
-
-                        <div className="space-y-4 border-t pt-4">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dettagli Evento</h4>
-                            <div className="grid grid-cols-2 gap-4">
+                        {/* SEZIONE 2: CONFIGURAZIONE EVENTO */}
+                        <div className="space-y-4 border-t border-slate-50 pt-8">
+                             <div className="flex items-center gap-3 mb-2">
+                                <div className="h-4 w-1 rounded-full bg-indigo-500" />
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Configurazione Evento</h3>
+                            </div>
+                            <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="eventType" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[10px] font-bold text-slate-400">TIPO</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined}>
-                                        <FormControl><SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100 font-bold"><SelectValue placeholder="Scegli..." /></SelectTrigger></FormControl>
+                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tipologia</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined}>
+                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Scegli..." /></SelectTrigger></FormControl>
                                         <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t} value={t} className="font-bold">{t}</SelectItem>)}</SelectContent>
                                     </Select></FormItem>
                                 )} />
                                 <FormField control={form.control} name="eventDate" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[10px] font-bold text-slate-400">DATA</FormLabel><FormControl><Input type="date" className="h-11 rounded-xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Data</FormLabel><FormControl><Input type="date" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="guestsCount" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[10px] font-bold text-slate-400">INVITATI</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined}>
-                                        <FormControl><SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100 font-bold"><SelectValue placeholder="Range..." /></SelectTrigger></FormControl>
+                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Invitati</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined}>
+                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Range..." /></SelectTrigger></FormControl>
                                         <SelectContent>{GUEST_RANGES.map(r => <SelectItem key={r} value={r} className="font-bold">{r}</SelectItem>)}</SelectContent>
                                     </Select></FormItem>
                                 )} />
                                 <FormField control={form.control} name="preferredContactTime" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[10px] font-bold text-slate-400">CONTATTO</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined}>
-                                        <FormControl><SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-100 font-bold"><SelectValue placeholder="Fascia..." /></SelectTrigger></FormControl>
+                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Contatto</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined}>
+                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Fascia..." /></SelectTrigger></FormControl>
                                         <SelectContent>{CONTACT_TIMES.map(c => <SelectItem key={c} value={c} className="font-bold">{c}</SelectItem>)}</SelectContent>
                                     </Select></FormItem>
                                 )} />
                             </div>
                         </div>
 
-                        <div className="space-y-4 border-t pt-4">
-                            <h4 className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Geolocalizzazione</h4>
-                            <FormField control={form.control} name="eventLocation" render={({ field: { ref: fieldRef, ...fieldProps } }) => (
+                        {/* SEZIONE 3: GEOLOCALIZZAZIONE */}
+                        <div className="space-y-4 border-t border-slate-50 pt-8">
+                             <div className="flex items-center gap-3 mb-2">
+                                <div className="h-4 w-1 rounded-full bg-indigo-500" />
+                                <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">Geolocalizzazione</h3>
+                            </div>
+                             <FormField control={form.control} name="eventLocation" render={({ field: { ref: fieldRef, ...fieldProps } }) => (
                                 <FormItem><FormControl><div className="relative">
-                                    <Input {...fieldProps} ref={(e) => { fieldRef(e); (inputRef as any).current = e; }} className="h-12 rounded-xl pl-10 border-slate-100 bg-slate-50 font-bold" placeholder="Cerca Indirizzo o Location..." />
-                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-rose-500" />
+                                    <Input {...fieldProps} ref={(e) => { fieldRef(e); (inputRef as any).current = e; }} className="h-14 rounded-2xl pl-12 border-2 border-indigo-50 bg-white font-bold text-slate-900 shadow-sm focus:border-indigo-500 transition-all" placeholder="Cerca Location o Indirizzo..." />
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
                                 </div></FormControl></FormItem>
                             )} />
-                            <div className="grid grid-cols-3 gap-2">
-                                <div className="p-3 bg-slate-50 rounded-xl text-center border border-slate-100"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Città</p><p className="text-xs font-black">{watchCity || '-'}</p></div>
-                                <div className="p-3 bg-slate-50 rounded-xl text-center border border-slate-100"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Prov</p><p className="text-xs font-black">{watchProvince || '-'}</p></div>
-                                <div className="p-3 bg-indigo-50 rounded-xl text-center border border-indigo-100"><p className="text-[8px] font-bold text-indigo-500 uppercase mb-1">Regione</p><p className="text-xs font-black">{watchRegion || '-'}</p></div>
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Città</p><p className="text-[11px] font-black text-slate-800">{watchCity || '-'}</p></div>
+                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Prov</p><p className="text-[11px] font-black text-slate-800">{watchProvince || '-'}</p></div>
+                                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-center"><p className="text-[8px] font-bold text-indigo-500 uppercase mb-1">Regione</p><p className="text-[11px] font-black text-slate-800">{watchRegion || '-'}</p></div>
                             </div>
                         </div>
 
-                        <div className="pt-4 pb-2">
-                            <Button type="submit" disabled={loading} className="w-full h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 font-black uppercase tracking-widest shadow-lg shadow-indigo-100">
+                        {/* SEZIONE 4: EXTRA & SERVIZI */}
+                        <div className="space-y-4 border-t border-slate-50 pt-8 pb-4">
+                             <div className="flex items-center gap-3 mb-2">
+                                <div className="h-4 w-1 rounded-full bg-indigo-500" />
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Extra & Servizi</h3>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3">
+                                {SERVICES.map((service) => (
+                                    <FormField
+                                        key={service.id}
+                                        control={form.control}
+                                        name="additionalServices"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center space-x-3 space-y-0 bg-slate-50/50 p-5 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:shadow-md group">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value?.includes(service.label)}
+                                                        onCheckedChange={(checked) => {
+                                                            const current = field.value || []
+                                                            const updated = checked 
+                                                                ? [...current, service.label]
+                                                                : current.filter((val) => val !== service.label)
+                                                            field.onChange(updated)
+                                                        }}
+                                                        className="h-6 w-6 rounded-lg border-2 border-slate-200 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                                                    />
+                                                </FormControl>
+                                                <FormLabel className="text-sm font-black text-slate-700 leading-none cursor-pointer group-hover:text-indigo-600 transition-colors">
+                                                    {service.label}
+                                                </FormLabel>
+                                            </FormItem>
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="pt-2">
+                             <Button type="submit" disabled={loading} className="w-full h-16 rounded-[1.8rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.15em] shadow-2xl shadow-indigo-200 transition-all active:scale-95">
                                 {loading ? 'Salvataggio...' : 'Salva Modifiche'}
-                            </Button>
+                             </Button>
                         </div>
 
                         <input type="hidden" {...form.register('eventCity')} />
