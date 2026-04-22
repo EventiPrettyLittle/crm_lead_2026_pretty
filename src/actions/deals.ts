@@ -69,7 +69,19 @@ export async function getDealById(leadId: string) {
         });
     }
 
-    return serializePrisma(deal);
+    // Cerchiamo anche il preventivo accettato associato
+    const acceptedQuote = await prisma.quote.findFirst({
+        where: { 
+            leadId,
+            status: 'ACCETTATO'
+        },
+        orderBy: { updatedAt: 'desc' }
+    });
+
+    return serializePrisma({
+        ...deal,
+        acceptedQuote
+    });
 }
 
 /**

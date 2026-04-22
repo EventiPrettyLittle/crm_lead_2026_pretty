@@ -9,15 +9,17 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { useEffect } from "react";
 import { updateDeal } from "@/actions/deals";
 import { toast } from "sonner";
-import { Save, FileText, Gift, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers } from "lucide-react";
+import { Save, FileText, Gift, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks } from "lucide-react";
 
 interface DealSheetProps {
     leadId: string;
     initialData: any;
     leadName: string;
     leadLocation?: string;
+    acceptedQuote?: any;
 }
 
 // SPOSTATO FUORI per evitare perdita di focus durante la digitazione
@@ -105,11 +107,23 @@ const DynamicField = ({
     );
 };
 
-export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealSheetProps) {
+export function DealSheet({ leadId, initialData, leadName, leadLocation, acceptedQuote }: DealSheetProps) {
     const [data, setData] = useState(initialData);
     const [loading, setLoading] = useState(false);
     const [showFavor2, setShowFavor2] = useState(!!(initialData.favor2_colors || initialData.pack2_ribbon));
     const [showFavor3, setShowFavor3] = useState(!!(initialData.favor3_colors || initialData.pack3_ribbon));
+
+    // Automazione Live Show basata sui prodotti del preventivo
+    useEffect(() => {
+        const items = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
+        const hasLiveShow = items.some((item: any) => 
+            (item.name || "").toLowerCase().includes("live show")
+        );
+
+        if (hasLiveShow && data.deliveryType !== 'LIVE SHOW') {
+            handleChange('deliveryType', 'LIVE SHOW');
+        }
+    }, [acceptedQuote]);
 
     const handleChange = (field: string, value: string) => {
         setData((prev: any) => ({ ...prev, [field]: value }));
@@ -231,6 +245,32 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                     </select>
                 </Card>
             </div>
+            
+            {/* RIEPILOGO PRODOTTI DA PREVENTIVO */}
+            {acceptedQuote?.items && (
+                <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="flex items-center gap-3 px-4">
+                        <ListChecks className="h-5 w-5 text-indigo-600" />
+                        <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase">Prodotti da Preventivo Accettato</h2>
+                    </div>
+                    <Card className="rounded-[2.5rem] border-none shadow-sm bg-indigo-50/50 overflow-hidden">
+                        <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {(Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []).map((item: any, idx: number) => (
+                                <div key={idx} className="bg-white rounded-[1.5rem] p-4 shadow-sm flex items-center gap-4 border-2 border-transparent hover:border-indigo-200 transition-all group">
+                                    <div className="h-12 w-12 rounded-xl bg-indigo-600 flex flex-col items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-100">
+                                        <span className="text-[10px] font-black leading-none opacity-60">QTY</span>
+                                        <span className="text-lg font-black leading-none italic">{item.quantity}</span>
+                                    </div>
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Descrizione Prodotto</p>
+                                        <p className="text-xs font-black text-slate-900 truncate uppercase italic">{item.name}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                </section>
+            )}
 
             {/* SEZIONI BOMBONIERE */}
             <div className="space-y-10">
