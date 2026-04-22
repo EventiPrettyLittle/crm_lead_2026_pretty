@@ -56,11 +56,18 @@ export function LeadLocationActions({ lead }: LeadLocationActionsProps) {
               className="grayscale-[0.2] contrast-[1.1] group-hover:grayscale-0 transition-all duration-700"
               title="Preview Map"
             ></iframe>
-            <div className="absolute top-4 left-4 bg-white/95 backdrop-blur px-5 py-2.5 rounded-2xl shadow-2xl border border-slate-100 animate-in fade-in slide-in-from-top-2">
-               <p className="text-[10px] font-black text-slate-800 flex items-center gap-2 uppercase tracking-widest">
-                  <MapPin className="h-4 w-4 text-rose-500" /> Target Location
+            <a 
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="absolute top-4 left-4 bg-white/95 backdrop-blur px-5 py-2.5 rounded-2xl shadow-2xl border border-slate-100 animate-in fade-in slide-in-from-top-2 hover:bg-indigo-600 hover:text-white transition-all group/loc"
+            >
+               <p className="text-[10px] font-black flex items-center gap-3 uppercase tracking-widest">
+                  <MapPin className="h-4 w-4 text-rose-500 group-hover/loc:text-white transition-colors" /> 
+                  Target Location
+                  <Maximize2 className="h-3 w-3 opacity-30 group-hover/loc:opacity-100" />
                </p>
-            </div>
+            </a>
           </div>
 
           <div className="mt-6 bg-slate-900 rounded-[2rem] p-5 flex items-center justify-between text-white shadow-2xl">
@@ -73,33 +80,21 @@ export function LeadLocationActions({ lead }: LeadLocationActionsProps) {
                       <p className="text-xs font-bold text-white truncate leading-tight">{location}</p>
                   </div>
               </div>
-              <div className="flex items-center gap-2">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-9 rounded-xl font-bold text-white hover:bg-white/10 flex items-center gap-2">
-                        <Maximize2 className="h-4 w-4" /> <span className="hidden sm:inline">MASSIMIZZA</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-6xl h-[85vh] p-2 rounded-[3.5rem] border-none">
-                      <iframe width="100%" height="100%" frameBorder="0" src={locationEmbedUrl} className="rounded-[3.2rem]"></iframe>
-                    </DialogContent>
-                  </Dialog>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="h-9 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-black text-[10px] px-4 shadow-lg shadow-indigo-900/40">
-                         PERCORSO
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-7xl h-[90vh] p-2 rounded-[4rem] border-none">
-                      <iframe width="100%" height="100%" frameBorder="0" src={directionsEmbedUrl} className="rounded-[3.7rem]"></iframe>
-                    </DialogContent>
-                  </Dialog>
-              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-10 px-4 rounded-xl font-bold text-white hover:bg-white/10 flex items-center gap-2">
+                    <Maximize2 className="h-4 w-4" /> <span className="hidden sm:inline">MASSIMIZZA</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-6xl h-[85vh] p-2 rounded-[3.5rem] border-none bg-white">
+                  <iframe width="100%" height="100%" frameBorder="0" src={locationEmbedUrl} className="rounded-[3.2rem]"></iframe>
+                </DialogContent>
+              </Dialog>
           </div>
         </div>
 
         {/* LATO DESTRO: VALORI (DETTAGLI TERRITORIALI) */}
-        <div className="lg:w-[40%] p-10 flex flex-col justify-between bg-slate-50/20">
+        <div className="lg:w-[40%] p-10 flex flex-col justify-between bg-slate-50/20 relative">
           <div className="space-y-8">
             <div className="bg-white p-6 rounded-[2.2rem] shadow-sm border border-slate-100">
                <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-2 leading-none">Nome Location</p>
@@ -107,7 +102,19 @@ export function LeadLocationActions({ lead }: LeadLocationActionsProps) {
             </div>
 
             <div className="space-y-5">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Ripartizione Territoriale</p>
+               <div className="flex items-center justify-between px-2">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ripartizione Territoriale</p>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="h-8 rounded-full bg-indigo-600 hover:bg-indigo-500 font-black text-[9px] px-4 shadow-lg shadow-indigo-200">
+                         PERCORSO
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-7xl h-[90vh] p-2 rounded-[4rem] border-none bg-white">
+                      <iframe width="100%" height="100%" frameBorder="0" src={directionsEmbedUrl} className="rounded-[3.7rem]"></iframe>
+                    </DialogContent>
+                  </Dialog>
+               </div>
                
                <div className="grid gap-3">
                   {/* CITTÀ */}
