@@ -115,7 +115,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     useEffect(() => {
         if (!open) return;
         
-        let attempts = 0;
         const initAutocomplete = () => {
              if (inputRef.current && window.google?.maps?.places) {
                 autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
@@ -126,10 +125,14 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                 
                 autoCompleteRef.current.addListener("place_changed", () => {
                     const place = autoCompleteRef.current.getPlace();
-                    if (!place.geometry) return;
+                    if (!place || !place.geometry) return;
                     
-                    if (place.formatted_address) form.setValue('eventLocation', place.formatted_address);
-                    if (place.name) form.setValue('locationName', place.name);
+                    if (place.formatted_address) {
+                        form.setValue('eventLocation', place.formatted_address, { shouldDirty: true });
+                    }
+                    if (place.name) {
+                        form.setValue('locationName', place.name, { shouldDirty: true });
+                    }
                     
                     let city = '', province = '', region = '';
                     if (place.address_components) {
@@ -140,12 +143,15 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                             if (types.includes('administrative_area_level_1')) region = component.long_name;
                         }
                     }
-                    form.setValue('eventCity', city);
-                    form.setValue('eventProvince', province);
-                    form.setValue('eventRegion', region);
+                    
+                    // IMPORTANTE: Impostiamo i valori con shouldDirty per farli vedere al submit
+                    form.setValue('eventCity', city, { shouldDirty: true });
+                    form.setValue('eventProvince', province, { shouldDirty: true });
+                    form.setValue('eventRegion', region, { shouldDirty: true });
+                    
+                    console.log("Autocomplete Updated:", { city, province, region });
                 });
-             } else if (attempts < 15) {
-                 attempts++;
+             } else {
                  setTimeout(initAutocomplete, 500);
              }
         };
@@ -156,12 +162,19 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setLoading(true)
         try {
-            const finalValues = { ...values, additionalServices: values.additionalServices.join(', ') }
+            const finalValues = { 
+                ...values, 
+                additionalServices: values.additionalServices.join(', ') 
+            }
+            console.log("Submitting Values:", finalValues);
+            
             const result = await updateLeadDetails(lead.id, finalValues)
             if (result.success) {
-                toast.success('Dati aggiornati correttamente')
+                toast.success('Dati salvati correttamente')
                 router.refresh()
                 setOpen(false)
+            } else {
+                toast.error('Errore nel salvataggio: ' + (result as any).error)
             }
         } catch (error) {
             toast.error('Errore durante il salvataggio')
@@ -180,7 +193,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[650px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col">
                 <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 p-8 text-white shrink-0 relative">
-                    <DialogTitle className="text-3xl font-black tracking-tight mb-1 uppercase tracking-tighter">Gestione Dati Lead</DialogTitle>
+                    <DialogTitle className="text-3xl font-black tracking-tighter mb-1 uppercase">Gestione Dati Lead</DialogTitle>
                     <DialogDescription className="text-indigo-100 font-medium text-xs opacity-90 tracking-tight">Perfeziona i dettagli dell'evento e aggiorna i contatti.</DialogDescription>
                     <div className="absolute top-8 right-8 bg-white/10 rounded-full h-12 w-12 flex items-center justify-center backdrop-blur-md border border-white/20">
                         <User className="h-6 w-6 text-white" />
@@ -258,7 +271,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                             field.ref(e); 
                                             (inputRef as any).current = e; 
                                         }} 
-                                        className="h-14 rounded-2xl pl-12 border-2 border-indigo-50 bg-white font-bold text-slate-900 shadow-sm focus:border-indigo-500 transition-all placeholder:text-slate-300" 
+                                        className="h-14 rounded-2xl pl-12 border-2 border-indigo-100 bg-white font-bold text-slate-900 shadow-lg focus:border-indigo-600 transition-all placeholder:text-slate-300" 
                                         placeholder="Cerca Location o Indirizzo..." 
                                     />
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />

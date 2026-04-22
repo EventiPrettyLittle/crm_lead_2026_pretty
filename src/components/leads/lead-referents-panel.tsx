@@ -29,6 +29,15 @@ export function LeadReferentsPanel({ leadId, initialReferents }: LeadReferentsPa
         }
     })
 
+    // Sincronizzazione fondamentale: quando le props cambiano (es. dopo router.refresh), aggiorna lo stato locale
+    useEffect(() => {
+        try {
+            if (initialReferents) {
+                setReferents(JSON.parse(initialReferents))
+            }
+        } catch (e) {}
+    }, [initialReferents])
+
     const [isAdding, setIsAdding] = useState(false)
     const [newRole, setNewRole] = useState('')
     const [newName, setNewName] = useState('')
