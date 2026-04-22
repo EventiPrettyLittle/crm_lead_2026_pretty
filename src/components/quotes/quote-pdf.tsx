@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         borderBottomWidth: 2,
-        borderBottomColor: '#E982A3',
+        borderBottomColor: '#000000',
         paddingBottom: 20,
         marginBottom: 30,
     },
@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     },
     logoText: {
         fontSize: 22,
-        color: '#E982A3',
+        color: '#000000',
         fontWeight: 'bold',
         letterSpacing: 1,
     },
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     },
     quoteNumber: {
         fontSize: 14,
-        color: '#E982A3',
+        color: '#000000',
         marginTop: 5,
     },
     detailsSection: {
@@ -70,9 +70,9 @@ const styles = StyleSheet.create({
     },
     tableHeader: {
         flexDirection: 'row',
-        backgroundColor: '#FFF5F7',
+        backgroundColor: '#F8F9FA',
         borderBottomWidth: 1,
-        borderBottomColor: '#FFD1DC',
+        borderBottomColor: '#E9ECEF',
         paddingVertical: 8,
         paddingHorizontal: 5,
     },
@@ -137,12 +137,12 @@ const styles = StyleSheet.create({
     grandTotalLabel: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#E982A3',
+        color: '#000000',
     },
     grandTotalValue: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#E982A3',
+        color: '#000000',
     },
     footer: {
         position: 'absolute',
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
         width: '55%',
         marginTop: 20,
         padding: 10,
-        backgroundColor: '#FFF9FB',
+        backgroundColor: '#F8F9FA',
         borderRadius: 4,
     },
     signatureBlock: {
@@ -249,8 +249,8 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
 
                 {/* Event Details Section */}
                 {(lead.eventDate || lead.locationName || lead.eventLocation) && (
-                    <View style={{ backgroundColor: '#FFF5F7', padding: 15, borderRadius: 12, marginBottom: 30, borderLeftWidth: 3, borderLeftColor: '#E982A3' }}>
-                        <Text style={[styles.label, { color: '#E982A3', marginBottom: 10 }]}>Dettagli Logistici Evento</Text>
+                    <View style={{ backgroundColor: '#F8F9FA', padding: 15, borderRadius: 12, marginBottom: 30, borderLeftWidth: 3, borderLeftColor: '#000000' }}>
+                        <Text style={[styles.label, { color: '#000000', marginBottom: 10 }]}>Dettagli Logistici Evento</Text>
                         <View style={{ flexDirection: 'row', gap: 40 }}>
                             {lead.eventDate && !isNaN(new Date(lead.eventDate).getTime()) && (
                                 <View>
@@ -350,7 +350,7 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                         <View style={styles.signatureBlock}>
                             <View>
                                 <Text style={styles.signatureText}>Firmato da:</Text>
-                                <Text style={[styles.infoValue, { textAlign: 'right', fontWeight: 'bold', marginTop: 5, fontSize: 13, color: '#E982A3' }]}>
+                                <Text style={[styles.infoValue, { textAlign: 'right', fontWeight: 'bold', marginTop: 5, fontSize: 13, color: '#000000' }]}>
                                     {referente}
                                 </Text>
                                 {quote.creatorPhone && (
