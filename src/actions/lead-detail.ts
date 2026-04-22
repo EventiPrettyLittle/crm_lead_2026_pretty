@@ -6,24 +6,20 @@ import { serializePrisma } from "@/lib/serialize"
 
 export async function getLeadById(id: string) {
     try {
+        // Query ultra-sicura con selezione esplicita dei campi
         const lead = await prisma.lead.findUnique({
             where: { id },
             include: {
-                activities: {
-                    orderBy: { createdAt: 'desc' }
-                },
-                quotes: {
-                    include: { items: true },
-                    orderBy: { createdAt: 'desc' }
-                },
-                appointments: {
-                    orderBy: { createdAt: 'desc' }
-                }
+                activities: { orderBy: { createdAt: 'desc' } },
+                quotes: { include: { items: true }, orderBy: { createdAt: 'desc' } },
+                appointments: { orderBy: { createdAt: 'desc' } }
             }
         });
 
-        if (lead) {
-            // 1. Storico Preventivi (anche di altri Lead con stesso nome)
+        if (!lead) return null;
+
+        // 1. Storico Preventivi Associati
+        try {
             const associatedQuotes = await prisma.quote.findMany({
                 where: {
                     lead: {
@@ -41,28 +37,35 @@ export async function getLeadById(id: string) {
                     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
                 );
             }
+        } catch (e) {}
 
-            // 2. Storico Pagamenti (Sincronizzazione Totale via SQL Raw)
-            let payments: any[] = [];
-            try {
-                payments = await prisma.$queryRawUnsafe(
-                    `SELECT * FROM "Payment" 
-                     WHERE "leadId" = $1 
-                     OR "quoteId" IN (SELECT id FROM "Quote" WHERE "leadId" = $1)
-                     ORDER BY date DESC`,
-                    id
-                );
-            } catch (e) {
-                console.error("Payment raw fetch failed:", e);
-                payments = [];
-            }
-            (lead as any).payments = payments || [];
+        // 2. Storico Pagamenti (SQL Raw per massima stabilità)
+        let payments: any[] = [];
+        try {
+            payments = await prisma.$queryRawUnsafe(
+                `SELECT * FROM "Payment" WHERE "leadId" = $1 OR "quoteId" IN (SELECT id FROM "Quote" WHERE "leadId" = $1) ORDER BY date DESC`,
+                id
+            );
+        } catch (e) {
+            payments = [];
         }
+        (lead as any).payments = payments || [];
 
         return serializePrisma(lead);
     } catch (error: any) {
-        console.error("CRITICAL LEAD FETCH ERROR:", error.message);
-        // Se il DB crasha (es. colonna mancante), non mandiamo l'app in 500
+        console.error("LEAD FETCH CRASH:", error.message);
+        // Fallback estremo se prisma crasha: proviamo SQL Raw per il lead base
+        try {
+            const rawLeads: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Lead" WHERE id = $1`, id);
+            if (rawLeads.length > 0) {
+                const rawLead = rawLeads[0];
+                rawLead.activities = [];
+                rawLead.quotes = [];
+                rawLead.appointments = [];
+                rawLead.payments = [];
+                return serializePrisma(rawLead);
+            }
+        } catch (innerError) {}
         return null;
     }
 }
