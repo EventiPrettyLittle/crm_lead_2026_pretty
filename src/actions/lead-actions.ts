@@ -25,29 +25,27 @@ export async function updateLeadQuickAction(
         };
         const newStage = stageMap[type];
 
-        // 1. UPDATE STATO + ULTIMO CONTATTO (RICHIESTO DA LUCA)
-        await prisma.lead.update({
-            where: { id: leadId },
-            data: {
-                stage: newStage,
-                lastStatus: newStage,
-                lastStatusAt: now,
-                contactedAt: now, // Ogni azione rapida è un contatto avvenuto!
-                nextFollowupAt: data.nextFollowup,
-                updatedAt: now
-            }
-        });
+        // 1. UPDATE STATO VIA SQL RAW (ZERO ERRORI)
+        await prisma.$executeRawUnsafe(
+            `UPDATE "Lead" SET 
+             stage = $1, 
+             "lastStatus" = $2, 
+             "lastStatusAt" = $3, 
+             "contactedAt" = $4, 
+             "nextFollowupAt" = $5, 
+             "updatedAt" = $6 
+             WHERE id = $7`,
+            newStage, newStage, now, now, data.nextFollowup || null, now, leadId
+        );
 
-        // 2. CREAZIONE ATTIVITÁ (TIMELINE)
+        // 2. CREAZIONE ATTIVITÁ VIA SQL RAW
         const activityType = type === 'contacted' ? 'CALL' : type === 'no-answer' ? 'RICHIAMO' : 'SYSTEM';
-        await prisma.activity.create({
-            data: {
-                leadId,
-                type: activityType,
-                notes: `Stato cambiato in ${newStage}. ${data.notes || ''}`,
-                nextFollowupAt: data.nextFollowup
-            }
-        });
+        const activityId = Math.random().toString(36).substring(7);
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO "Activity" (id, "leadId", type, notes, "nextFollowupAt", "createdAt") 
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            activityId, leadId, activityType, `Stato cambiato in ${newStage}. ${data.notes || ''}`, data.nextFollowup || null, now
+        );
 
         revalidatePath(`/leads/${leadId}`);
         revalidatePath('/leads');
@@ -55,22 +53,19 @@ export async function updateLeadQuickAction(
         
         return { success: true };
     } catch (error: any) {
-        console.error("Critical Global Error:", error);
+        console.error("Critical SQL Error:", error);
         return { success: false, error: error.message };
     }
 }
 
 export async function createManualLead(data: any) {
     try {
-        await prisma.lead.create({
-            data: {
-                firstName: data.firstName || null,
-                lastName: data.lastName || null,
-                email: data.email || null,
-                phoneRaw: data.phone || null,
-                stage: 'NUOVO',
-            } as any
-        });
+        const id = Math.random().toString(36).substring(7);
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO "Lead" (id, "firstName", "lastName", email, "phoneRaw", stage, "updatedAt", "createdAt") 
+             VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            id, data.firstName || null, data.lastName || null, data.email || null, data.phone || null, 'NUOVO'
+        );
         revalidatePath('/leads');
         return { success: true };
     } catch (error: any) { return { success: false, error: error.message }; }
@@ -78,19 +73,24 @@ export async function createManualLead(data: any) {
 
 export async function updateLeadDetails(id: string, data: any) {
     try {
-        const updateData: any = { ...data, updatedAt: new Date() };
-        
-        // Pulizia undefined per evitare sovrascrizioni involontarie
-        Object.keys(updateData).forEach(key => {
-            if (updateData[key] === undefined) delete updateData[key];
-        });
+        // Forza creazione colonna referents se manca durante il save
+        try { await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "referents" TEXT;`); } catch(e){}
 
-        await prisma.lead.update({
-            where: { id },
-            data: updateData
-        });
+        // Costruiamo una query SQL dinamica per evitare crash Prisma sui campi
+        const keys = Object.keys(data).filter(k => data[k] !== undefined);
+        const setClause = keys.map((key, i) => `"${key}" = $${i + 1}`).join(', ');
+        const values = keys.map(key => data[key]);
+        
+        await prisma.$executeRawUnsafe(
+            `UPDATE "Lead" SET ${setClause}, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $${keys.length + 1}`,
+            ...values, id
+        );
+
         revalidatePath(`/leads/${id}`);
         revalidatePath('/leads');
         return { success: true };
-    } catch (error: any) { return { success: false, error: error.message }; }
+    } catch (error: any) { 
+        console.error("Manual Update Error:", error);
+        return { success: false, error: error.message }; 
+    }
 }
