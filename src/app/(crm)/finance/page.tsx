@@ -120,7 +120,12 @@ export default async function FinancePage() {
             {/* Orders & Payments Table */}
             <div className="space-y-4 pt-4">
                 <div className="flex justify-between items-center px-4">
-                    <h2 className="text-2xl font-black text-slate-900 italic">Dettaglio Ordini Attivi</h2>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-2xl font-black text-slate-900 italic">Dettaglio Ordini Attivi</h2>
+                        <span className="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-xs font-black">
+                            {quotes.length} ORDINI
+                        </span>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6">

@@ -142,11 +142,23 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end mr-4">
-                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Location Evento</span>
-                         <span className="text-sm font-black text-slate-900 flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-indigo-600" />
-                            {leadLocation || 'Location non definita'}
-                         </span>
+                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tipologia & Location</span>
+                         <div className="flex flex-col items-end gap-1">
+                            <select 
+                                value={data.deliveryType || ''} 
+                                onChange={(e) => handleChange('deliveryType', e.target.value)}
+                                className="text-[11px] font-black uppercase tracking-tighter bg-indigo-50 text-indigo-600 rounded-lg px-2 py-1 outline-none border-none cursor-pointer"
+                            >
+                                <option value="">Seleziona Tipologia...</option>
+                                <option value="CONSEGNA">Consegna</option>
+                                <option value="CONSEGNA IN LOCATION">Consegna in Location</option>
+                                <option value="LIVE SHOW">Live Show</option>
+                            </select>
+                            <span className="text-sm font-black text-slate-900 flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-indigo-600" />
+                                {leadLocation || 'Location non definita'}
+                            </span>
+                         </div>
                     </div>
                     <Button 
                         onClick={handleSave} 
@@ -226,7 +238,15 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                 <section className="space-y-4">
                     <div className="flex items-center gap-3 px-4">
                         <Gift className="h-5 w-5 text-indigo-600" />
-                        <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase underline decoration-indigo-200 decoration-4 underline-offset-4">Prima Bomboniera</h2>
+                        <div className="flex-1">
+                            <Input 
+                                placeholder="Titolo Prima Bomboniera... (es: Mielino)"
+                                value={data.favor1_title || ''}
+                                onChange={(e) => handleChange('favor1_title', e.target.value)}
+                                className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                            />
+                            <div className="h-1 w-20 bg-indigo-200 mt-1" />
+                        </div>
                     </div>
                     <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
                         <CardContent className="p-8 space-y-10">
@@ -286,7 +306,15 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                     <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
                         <div className="flex items-center gap-3 px-4">
                             <Gift className="h-5 w-5 text-emerald-500" />
-                            <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase underline decoration-emerald-100 decoration-4 underline-offset-4">Seconda Bomboniera</h2>
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Seconda Bomboniera..."
+                                    value={data.favor2_title || ''}
+                                    onChange={(e) => handleChange('favor2_title', e.target.value)}
+                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <div className="h-1 w-20 bg-emerald-100 mt-1" />
+                            </div>
                         </div>
                         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-emerald-400">
                             <CardContent className="p-8 space-y-10">
@@ -313,7 +341,15 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                     <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
                         <div className="flex items-center gap-3 px-4">
                             <Gift className="h-5 w-5 text-amber-500" />
-                            <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase underline decoration-amber-100 decoration-4 underline-offset-4">Terza Bomboniera</h2>
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Terza Bomboniera..."
+                                    value={data.favor3_title || ''}
+                                    onChange={(e) => handleChange('favor3_title', e.target.value)}
+                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <div className="h-1 w-20 bg-amber-100 mt-1" />
+                            </div>
                         </div>
                         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-amber-400">
                             <CardContent className="p-8 space-y-10">

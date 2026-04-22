@@ -18,6 +18,14 @@ export default async function DealsPage() {
                     </h1>
                     <p className="text-slate-400 font-bold text-lg">Monitora l'andamento delle schede tecniche e la preparazione degli eventi.</p>
                 </div>
+
+                {/* Counter Badge */}
+                <div className="bg-white px-6 py-4 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center justify-center min-w-[140px] animate-in slide-in-from-right duration-700">
+                    <span className="text-[10px] font-black tracking-widest text-slate-300 uppercase">Totale Eventi</span>
+                    <span className="text-3xl font-black text-indigo-600 tracking-tighter">
+                        {deals.length}
+                    </span>
+                </div>
             </div>
 
             {/* List with Filters Component */}

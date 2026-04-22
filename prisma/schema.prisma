@@ -189,8 +189,10 @@ model Deal {
   numFavors         String?
   arrivalTime       String?
   endTime           String?
+  deliveryType      String?  // CONSEGNA, CONSEGNA IN LOCATION, LIVE SHOW
   
   // Favor 1
+  favor1_title      String?
   favor1_colors     String?
   favor1_graphics   String?
   favor1_stick      String?
@@ -213,6 +215,7 @@ model Deal {
   acc2_graphics    String?
   
   // Favor 2
+  favor2_title      String?
   favor2_colors     String?
   favor2_graphics   String?
   favor2_stick      String?
@@ -225,6 +228,7 @@ model Deal {
   pack2_graphics   String?
 
   // Favor 3
+  favor3_title      String?
   favor3_colors     String?
   favor3_graphics   String?
   favor3_stick      String?

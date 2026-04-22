@@ -93,15 +93,33 @@ export function DealsList({ initialDeals }: DealsListProps) {
                             <Link href={`/deals/${deal.id}`}>
                                 <div className="p-8 space-y-6">
                                     <div className="flex justify-between items-start">
-                                        <div>
+                                        <div className="space-y-2">
                                             <h3 className="text-2xl font-black text-slate-900 leading-tight">
                                                 {deal.firstName} {deal.lastName}
                                             </h3>
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <Calendar className="h-3 w-3 text-slate-400" />
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                    {deal.eventDate ? new Date(deal.eventDate).toLocaleDateString('it-IT') : 'Data non impostata'}
-                                                </span>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar className="h-3 w-3 text-slate-400" />
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                        {deal.eventDate ? new Date(deal.eventDate).toLocaleDateString('it-IT') : 'Data non impostata'}
+                                                    </span>
+                                                </div>
+                                                {deal.deal?.deliveryType && (
+                                                    <div className="flex items-center gap-2">
+                                                        <div className={cn(
+                                                            "h-1.5 w-1.5 rounded-full",
+                                                            deal.deal.deliveryType === 'CONSEGNA' ? "bg-blue-500" :
+                                                            deal.deal.deliveryType === 'LIVE SHOW' ? "bg-purple-500" : "bg-emerald-500"
+                                                        )} />
+                                                        <span className={cn(
+                                                            "text-[9px] font-black uppercase tracking-tighter",
+                                                            deal.deal.deliveryType === 'CONSEGNA' ? "text-blue-600" :
+                                                            deal.deal.deliveryType === 'LIVE SHOW' ? "text-purple-600" : "text-emerald-600"
+                                                        )}>
+                                                            {deal.deal.deliveryType}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold text-[9px] uppercase tracking-tighter">
