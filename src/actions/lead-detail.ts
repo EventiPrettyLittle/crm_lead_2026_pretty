@@ -5,6 +5,13 @@ import { revalidatePath } from 'next/cache'
 import { serializePrisma } from "@/lib/serialize"
 
 export async function getLeadById(id: string) {
+    // AUTO-REPAIR: Forza la creazione della colonna referents se manca su Supabase
+    try {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "referents" TEXT;`);
+    } catch (e) {
+        // Se già esiste o errore permessi, procediamo comunque
+    }
+
     try {
         // Query ultra-sicura con selezione esplicita dei campi
         const lead = await prisma.lead.findUnique({
