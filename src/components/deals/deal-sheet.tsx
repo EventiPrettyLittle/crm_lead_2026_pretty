@@ -12,7 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { useEffect } from "react";
 import { updateDeal } from "@/actions/deals";
 import { toast } from "sonner";
-import { Save, FileText, Gift, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks } from "lucide-react";
+import { Save, FileText, Gift, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, Eye } from "lucide-react";
+import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog";
 
 interface DealSheetProps {
     leadId: string;
@@ -152,8 +153,14 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-600">Scheda Tecnica Produzione</span>
                     </div>
-                    <h1 className="text-4xl font-black italic tracking-tighter text-slate-900 uppercase">
+                    <h1 className="text-4xl font-black italic tracking-tighter text-slate-900 uppercase flex items-center gap-4">
                         {leadName}
+                        {acceptedQuote && (
+                            <div className="flex items-center">
+                                <QuotePreviewDialog quote={acceptedQuote} />
+                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest ml-1">Vedi Prev.</span>
+                            </div>
+                        )}
                     </h1>
                 </div>
                 <div className="flex items-center gap-4">
