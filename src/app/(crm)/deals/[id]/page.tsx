@@ -20,6 +20,15 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
     // Recuperiamo (o creiamo) il deal
     const deal = await getDealById(id);
 
+    // Recuperiamo i prodotti dal preventivo accettato per i suggerimenti
+    const quote = await prisma.quote.findFirst({
+        where: { leadId: id, status: 'ACCETTATO' },
+        include: { items: true },
+        orderBy: { updatedAt: 'desc' }
+    });
+
+    const quoteProducts = quote?.items.map(item => item.description) || [];
+
     return (
         <div className="p-8 bg-slate-50/50 min-h-screen">
             <div className="max-w-5xl mx-auto mb-8">
@@ -35,6 +44,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 initialData={deal} 
                 leadName={`${lead.firstName} ${lead.lastName}`} 
                 leadLocation={lead.locationName || ''}
+                quoteProducts={quoteProducts}
             />
         </div>
     );

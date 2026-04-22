@@ -18,7 +18,50 @@ interface DealSheetProps {
     initialData: any;
     leadName: string;
     leadLocation?: string;
+    quoteProducts?: string[];
 }
+
+const FavorTitleSelector = ({ 
+    title, 
+    onTitleChange, 
+    suggestions = [] 
+}: { 
+    title: string, 
+    onTitleChange: (val: string) => void,
+    suggestions?: string[]
+}) => {
+    return (
+        <div className="space-y-3 w-full max-w-lg mb-4">
+            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Titolo Bomboniera / Prodotto Selezionato</Label>
+            <div className="flex flex-col gap-3">
+                <Input 
+                    value={title || ''} 
+                    onChange={(e) => onTitleChange(e.target.value)}
+                    placeholder="Esempio: Mielino, Profumatore, ecc."
+                    className="h-12 rounded-2xl bg-white border-2 border-slate-100 font-black text-slate-900 focus:border-indigo-600 transition-all placeholder:font-normal"
+                />
+                {suggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                        {suggestions.map((prod, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => onTitleChange(prod)}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter transition-all ring-1",
+                                    title === prod 
+                                        ? "bg-indigo-600 text-white ring-indigo-600 shadow-lg shadow-indigo-200" 
+                                        : "bg-white text-slate-400 ring-slate-100 hover:ring-indigo-200 hover:text-indigo-600"
+                                )}
+                            >
+                                {prod}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 // SPOSTATO FUORI per evitare perdita di focus durante la digitazione
 const DynamicField = ({ 
@@ -105,7 +148,7 @@ const DynamicField = ({
     );
 };
 
-export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealSheetProps) {
+export function DealSheet({ leadId, initialData, leadName, leadLocation, quoteProducts = [] }: DealSheetProps) {
     const [data, setData] = useState(initialData);
     const [loading, setLoading] = useState(false);
     const [showFavor2, setShowFavor2] = useState(!!(initialData.favor2_colors || initialData.pack2_ribbon));
@@ -230,6 +273,13 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                     </div>
                     <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
                         <CardContent className="p-8 space-y-10">
+                            {/* SELETTORE TITOLO BOMBONIERA 1 */}
+                            <FavorTitleSelector 
+                                title={data.favor1_title} 
+                                onTitleChange={(val) => handleChange('favor1_title', val)}
+                                suggestions={quoteProducts}
+                            />
+
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                                 <DynamicField label="Colori" field="favor1_colors" value={data.favor1_colors || ''} onChange={handleChange} />
                                 <DynamicField label="Grafiche" field="favor1_graphics" value={data.favor1_graphics || ''} onChange={handleChange} />
@@ -290,6 +340,13 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                         </div>
                         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-emerald-400">
                             <CardContent className="p-8 space-y-10">
+                                {/* SELETTORE TITOLO BOMBONIERA 2 */}
+                                <FavorTitleSelector 
+                                    title={data.favor2_title} 
+                                    onTitleChange={(val) => handleChange('favor2_title', val)}
+                                    suggestions={quoteProducts}
+                                />
+
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                                     <DynamicField label="Colori" field="favor2_colors" value={data.favor2_colors || ''} onChange={handleChange} />
                                     <DynamicField label="Grafiche" field="favor2_graphics" value={data.favor2_graphics || ''} onChange={handleChange} />
@@ -317,6 +374,13 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                         </div>
                         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-amber-400">
                             <CardContent className="p-8 space-y-10">
+                                {/* SELETTORE TITOLO BOMBONIERA 3 */}
+                                <FavorTitleSelector 
+                                    title={data.favor3_title} 
+                                    onTitleChange={(val) => handleChange('favor3_title', val)}
+                                    suggestions={quoteProducts}
+                                />
+
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                                     <DynamicField label="Colori" field="favor3_colors" value={data.favor3_colors || ''} onChange={handleChange} />
                                     <DynamicField label="Grafiche" field="favor3_graphics" value={data.favor3_graphics || ''} onChange={handleChange} />
