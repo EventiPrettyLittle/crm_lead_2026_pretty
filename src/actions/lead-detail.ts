@@ -19,8 +19,9 @@ export async function getLeadById(id: string) {
         if (!lead) return null;
 
         // 1. Storico Preventivi Associati
+        let associatedQuotes: any[] = [];
         try {
-            const associatedQuotes = await prisma.quote.findMany({
+            associatedQuotes = await prisma.quote.findMany({
                 where: {
                     lead: {
                         firstName: lead.firstName,
@@ -31,13 +32,15 @@ export async function getLeadById(id: string) {
                 include: { items: true },
                 orderBy: { createdAt: 'desc' }
             });
+        } catch (e) {
+            console.warn("Associated quotes fetch failed, but continuing...");
+        }
 
-            if (associatedQuotes.length > 0) {
-                (lead as any).quotes = [...(lead.quotes || []), ...associatedQuotes].sort(
-                    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-                );
-            }
-        } catch (e) {}
+        if (associatedQuotes && associatedQuotes.length > 0) {
+            (lead as any).quotes = [...(lead.quotes || []), ...associatedQuotes].sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+        }
 
         // 2. Storico Pagamenti (SQL Raw per massima stabilità)
         let payments: any[] = [];
