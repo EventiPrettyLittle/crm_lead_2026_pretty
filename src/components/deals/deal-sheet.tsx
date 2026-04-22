@@ -118,15 +118,20 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
     const quoteItems = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
     const productAssignments = data.productAssignments ? JSON.parse(data.productAssignments) : [];
 
-    // Automazione Live Show basata sui prodotti del preventivo
+    // Automazione Live Show/Consegna basata sui prodotti del preventivo
     useEffect(() => {
+        if (!acceptedQuote) return;
+        
         const items = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
         const hasLiveShow = items.some((item: any) => 
-            (item.name || "").toLowerCase().includes("live show")
+            (item.description || item.name || "").toLowerCase().includes("live show")
         );
 
-        if (hasLiveShow && data.deliveryType !== 'LIVE SHOW') {
-            handleChange('deliveryType', 'LIVE SHOW');
+        if (hasLiveShow) {
+            if (data.deliveryType !== 'LIVE SHOW') handleChange('deliveryType', 'LIVE SHOW');
+        } else {
+            // Se non c'è live show, il default è CONSEGNA (se non già impostato diversamente)
+            if (!data.deliveryType || data.deliveryType === '') handleChange('deliveryType', 'CONSEGNA');
         }
     }, [acceptedQuote]);
 
@@ -138,13 +143,22 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
         const currentArr = data.productAssignments ? JSON.parse(data.productAssignments) : [];
         const index = currentArr.findIndex((a: any) => a.quoteItemId === quoteItemId);
         
+        const item = quoteItems.find((i: any) => i.id === quoteItemId);
+        const itemTitle = item?.description || item?.name || '';
+
         if (index >= 0) {
             currentArr[index].target = target;
         } else {
             currentArr.push({ quoteItemId, target });
         }
         
-        handleChange('productAssignments', JSON.stringify(currentArr));
+        // AUTO-UPDATE TITLE: Se assegniamo a una bomboniera, aggiorniamo il titolo della sezione
+        const newData = { ...data, productAssignments: JSON.stringify(currentArr) };
+        if (target && target.startsWith('favor') && itemTitle) {
+            newData[`${target}_title`] = itemTitle.toUpperCase();
+        }
+        
+        setData(newData);
     };
 
     const handleSave = async () => {
