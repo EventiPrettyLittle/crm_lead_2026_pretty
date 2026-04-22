@@ -16,13 +16,40 @@ import { cn } from "@/lib/utils"
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { QuoteDocument } from './quote-pdf';
 
-export function QuotePreviewDialog({ quote, autoPrint = false }: { quote: any, autoPrint?: boolean }) {
+import { getQuote } from "@/actions/quotes";
+
+export function QuotePreviewDialog({ quote: initialQuote, autoPrint = false }: { quote: any, autoPrint?: boolean }) {
     const [isClient, setIsClient] = useState(false);
     const [isOpened, setIsOpened] = useState(false);
+    const [quote, setQuote] = useState(initialQuote);
+    const [fetching, setFetching] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
     }, []);
+
+    // Se il quote iniziale cambia (es. navigazione tra preventivi dello stesso lead), aggiorniamo lo stato
+    useEffect(() => {
+        setQuote(initialQuote);
+    }, [initialQuote]);
+
+    const fetchFullData = async () => {
+        if (fetching) return;
+        // Se mancano i dati fondamentali (lead o impostazioni aziendali), ricarichiamo tutto
+        if (!quote.companySettings || !quote.lead) {
+            setFetching(true);
+            try {
+                const fullQuote = await getQuote(quote.id);
+                if (fullQuote) {
+                    setQuote(fullQuote);
+                }
+            } catch (error) {
+                console.error("Errore recupero preventivo completo:", error);
+            } finally {
+                setFetching(false);
+            }
+        }
+    };
 
     if (!quote) return null;
 
@@ -35,7 +62,8 @@ export function QuotePreviewDialog({ quote, autoPrint = false }: { quote: any, a
     return (
         <Dialog onOpenChange={(open) => { 
             setIsOpened(open);
-            if(open && autoPrint) setTimeout(handlePrint, 500);
+            if (open) fetchFullData();
+            if (open && autoPrint) setTimeout(handlePrint, 500);
         }}>
             <DialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 hover:bg-white hover:shadow-md transition-all group/btn">
