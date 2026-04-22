@@ -161,8 +161,9 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
             try {
                 const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-                    fields: ["formatted_address", "geometry", "name", "address_components"],
-                    types: ["establishment", "geocode"],
+                    types: ['establishment', 'geocode'],
+                    componentRestrictions: { country: "it" },
+                    fields: ["address_components", "formatted_address", "geometry", "name"]
                 });
 
                 autocomplete.addListener("place_changed", () => {
