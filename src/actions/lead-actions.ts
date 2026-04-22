@@ -25,20 +25,19 @@ export async function updateLeadQuickAction(
         };
         const newStage = stageMap[type];
 
-        // 1. UPDATE STATO (VELOCE)
+        // 1. UPDATE STATO + ULTIMO CONTATTO (RICHIESTO DA LUCA)
         await prisma.lead.update({
             where: { id: leadId },
             data: {
                 stage: newStage,
                 lastStatus: newStage,
                 lastStatusAt: now,
+                contactedAt: now, // Ogni azione rapida è un contatto avvenuto!
                 updatedAt: now
-                // Abbiamo rimosso notesInternal: qui non scriviamo più log automatici!
             }
         });
 
         // 2. CREAZIONE ATTIVITÁ (TIMELINE)
-        // Questo è il posto giusto per i log!
         const activityType = type === 'contacted' ? 'CALL' : type === 'no-answer' ? 'RICHIAMO' : 'SYSTEM';
         await prisma.activity.create({
             data: {
@@ -90,6 +89,7 @@ export async function updateLeadDetails(id: string, data: any) {
                 eventCity: data.eventCity || null,
                 eventProvince: data.eventProvince || null, 
                 eventRegion: data.eventRegion || null,
+                referents: data.referents || null, // AGGIUNTO REFERENTI
                 notesInternal: data.notesInternal,
                 updatedAt: new Date(),
             } as any

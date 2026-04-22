@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useRouter } from 'next/navigation'
@@ -11,7 +11,7 @@ declare global {
     google: any;
   }
 }
-import { Edit2, MapPin, Navigation, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Edit2, MapPin, Plus, Trash2, UserPlus, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -60,6 +60,10 @@ const formSchema = z.object({
     productInterest: z.string().optional(),
     preferredContactTime: z.string().optional(),
     additionalServices: z.array(z.string()).default([]),
+    referents: z.array(z.object({
+        role: z.string(),
+        name: z.string()
+    })).default([])
 })
 
 interface EditLeadDialogProps {
@@ -67,26 +71,15 @@ interface EditLeadDialogProps {
 }
 
 const EVENT_TYPES = [
-    "Matrimonio",
-    "Comunione",
-    "Battesimo",
-    "Laurea",
-    "Compleanno",
-    "Evento Aziendale",
-    "Altro"
+    "Matrimonio", "Comunione", "Battesimo", "Laurea", "Compleanno", "Evento Aziendale", "Altro"
 ]
 
 const GUEST_RANGES = [
-    "Meno di 50",
-    "Tra 51 e 100",
-    "Più di 100"
+    "Meno di 50", "Tra 51 e 100", "Più di 100"
 ]
 
 const CONTACT_TIMES = [
-    "Mattina (9:30 - 13:00)",
-    "Pausa Pranzo (13:00 - 15:00)",
-    "Pomeriggio (15:30 - 18:00)",
-    "Sera (19:00 - 20:30)"
+    "Mattina (9:30 - 13:00)", "Pausa Pranzo (13:00 - 15:00)", "Pomeriggio (15:30 - 18:00)", "Sera (19:00 - 20:30)"
 ]
 
 const SERVICES = [
@@ -101,6 +94,16 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     const [statusMessage, setStatusMessage] = useState<string | null>(null)
     const autoCompleteRef = useRef<any>(null)
     const inputRef = useRef<HTMLInputElement>(null)
+
+    // Parsing referents from stringified JSON
+    let initialReferents = [];
+    try {
+        if ((lead as any).referents) {
+            initialReferents = JSON.parse((lead as any).referents);
+        }
+    } catch (e) {
+        console.error("Error parsing referents:", e);
+    }
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema) as any,
@@ -120,8 +123,14 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             productInterest: lead.productInterest || '',
             preferredContactTime: (lead as any).preferredContactTime || '',
             additionalServices: (lead as any).additionalServices ? (lead as any).additionalServices.split(', ') : [],
+            referents: initialReferents,
         },
     })
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "referents"
+    });
 
     const watchCity = form.watch('eventCity')
     const watchProvince = form.watch('eventProvince')
@@ -140,91 +149,41 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                 
                 autoCompleteRef.current.addListener("place_changed", () => {
                     const place = autoCompleteRef.current.getPlace();
-                    console.log("Full Place Object:", place);
-                    
                     if (!place.geometry) {
                         setStatusMessage("Seleziona un'opzione dall'elenco suggerito");
                         return;
                     }
-
                     setStatusMessage(null);
-                    
-                    // Indirizzo Formattato
-                    if (place.formatted_address) {
-                        form.setValue('eventLocation', place.formatted_address);
-                    } else if (place.name) {
-                        form.setValue('eventLocation', place.name);
-                    }
+                    if (place.formatted_address) form.setValue('eventLocation', place.formatted_address);
+                    if (place.name) form.setValue('locationName', place.name);
 
-                    if (place.name) {
-                        form.setValue('locationName', place.name);
-                    }
-
-                    let city = '';
-                    let province = '';
-                    let region = '';
-
-                    // 1. Estrazione Standard dai componenti
+                    let city = '', province = '', region = '';
                     if (place.address_components) {
                         for (const component of place.address_components) {
                             const types = component.types;
-                            
-                            // Logica robusta per la Città (Locality o rimpiazzi)
-                            if (types.includes('locality')) {
-                                city = component.long_name;
-                            } else if (!city && types.includes('administrative_area_level_3')) {
-                                city = component.long_name;
-                            } else if (!city && types.includes('sublocality_level_1')) {
-                                city = component.long_name;
-                            }
-
-                            // Provincia (Livello 2)
-                            if (types.includes('administrative_area_level_2')) {
-                                province = component.short_name; // RM, SA, MI
-                            }
-
-                            // Regione (Livello 1)
-                            if (types.includes('administrative_area_level_1')) {
-                                region = component.long_name;
-                            }
+                            if (types.includes('locality')) city = component.long_name;
+                            else if (!city && types.includes('administrative_area_level_3')) city = component.long_name;
+                            if (types.includes('administrative_area_level_2')) province = component.short_name;
+                            if (types.includes('administrative_area_level_1')) region = component.long_name;
                         }
                     }
-
-                    // 2. Fallback: Se la città è ancora vuota, proviamo a cercarla nel formatted_address
-                    if (!city && place.formatted_address) {
-                        const parts = place.formatted_address.split(',');
-                        if (parts.length >= 2) {
-                            // Spesso la città è la penultima o terzultima parte prima della provincia/CAP
-                            city = parts[parts.length - 3]?.trim() || parts[parts.length - 2]?.trim() || '';
-                        }
-                    }
-
-                    form.setValue('eventCity', city, { shouldDirty: true, shouldValidate: true });
-                    form.setValue('eventProvince', province, { shouldDirty: true, shouldValidate: true });
-                    form.setValue('eventRegion', region, { shouldDirty: true, shouldValidate: true });
+                    form.setValue('eventCity', city, { shouldDirty: true });
+                    form.setValue('eventProvince', province, { shouldDirty: true });
+                    form.setValue('eventRegion', region, { shouldDirty: true });
                 });
              }
         };
 
-        const scriptId = 'google-maps-script';
         if (!window.google) {
-            // Fallback alla chiave hardcoded se la variabile d'ambiente non è disponibile nel build corrente
             const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBOTQRShuod2e9ipkQ1FhR2nOJvASevr6k';
-            if (!document.getElementById(scriptId)) {
-                const script = document.createElement('script');
-                script.id = scriptId;
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-                script.async = true;
-                script.onload = () => initAutocomplete();
-                document.head.appendChild(script);
-            } else {
-                // Script già nel DOM, aspetta che sia pronto
-                setTimeout(initAutocomplete, 500);
-            }
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+            script.async = true;
+            script.onload = () => initAutocomplete();
+            document.head.appendChild(script);
         } else {
-            setTimeout(initAutocomplete, 200); // Ritardo leggero per garantire il mount
+            setTimeout(initAutocomplete, 200);
         }
-
     }, [open, form]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -232,7 +191,8 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
         try {
             const finalValues = {
                 ...values,
-                additionalServices: values.additionalServices.join(', ')
+                additionalServices: values.additionalServices.join(', '),
+                referents: JSON.stringify(values.referents) // Convert to string for DB
             }
             const result = await updateLeadDetails(lead.id, finalValues)
             if (result.success) {
@@ -257,43 +217,34 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                     Modifica Dati
                 </Button>
             </DialogTrigger>
-            <DialogContent 
-                onInteractOutside={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (target.closest('.pac-container')) {
-                        e.preventDefault();
-                    }
-                }}
-                className="sm:max-w-[620px] rounded-[2.5rem] border border-slate-200/50 shadow-2xl p-0 overflow-hidden bg-white flex flex-col max-h-[92vh]"
-            >
-                <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 p-6 text-white relative h-32 flex flex-col justify-end shrink-0">
+            <DialogContent className="sm:max-w-[700px] rounded-[2.5rem] border border-slate-200/50 shadow-2xl p-0 overflow-hidden bg-white flex flex-col max-h-[95vh]">
+                <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 p-6 text-white relative h-28 flex flex-col justify-end shrink-0">
                     <DialogTitle className="text-2xl font-black tracking-tight leading-none mb-1 text-white">
                          Gestione Dati Lead
                     </DialogTitle>
-                    <DialogDescription className="text-indigo-100 font-medium opacity-90 max-w-sm leading-relaxed text-[11px]">
-                        Perfeziona i dettagli dell'evento e aggiorna i contatti.
+                    <DialogDescription className="text-indigo-100 font-medium opacity-90 text-[11px]">
+                        Perfeziona i dettagli dell'evento e aggiorna i referenti.
                     </DialogDescription>
                 </div>
                 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden bg-white">
-                        <div className="flex-1 overflow-y-auto p-6 pt-3 space-y-5 custom-scrollbar pb-8">
-                             {/* Anagrafica */}
-                             <div className="space-y-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-4 w-1 rounded-full bg-indigo-500" />
-                                    <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Informazioni Cliente</h4>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
+                        <div className="flex-1 overflow-y-auto p-8 pt-4 space-y-6 custom-scrollbar pb-10">
+                             
+                             {/* Anagrafica e Referenti */}
+                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                                <div className="space-y-5">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="h-4 w-1 rounded-full bg-indigo-500" />
+                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Dati Principali</h4>
+                                    </div>
                                     <FormField
                                         control={form.control}
                                         name="firstName"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2 block">Nome</FormLabel>
-                                                <FormControl>
-                                                    <Input className="h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-50 border-2 font-bold transition-all" {...field} />
-                                                </FormControl>
+                                                <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Nome</FormLabel>
+                                                <FormControl><Input className="h-11 rounded-xl border-slate-100 bg-slate-50/50 font-bold" {...field} /></FormControl>
                                             </FormItem>
                                         )}
                                     />
@@ -302,229 +253,175 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                         name="lastName"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2 block">Cognome</FormLabel>
-                                                <FormControl>
-                                                    <Input className="h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-50 border-2 font-bold transition-all" {...field} />
-                                                </FormControl>
+                                                <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Cognome</FormLabel>
+                                                <FormControl><Input className="h-11 rounded-xl border-slate-100 bg-slate-50/50 font-bold" {...field} /></FormControl>
                                             </FormItem>
                                         )}
                                     />
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="phone"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Telefono</FormLabel>
+                                                    <FormControl><Input className="h-11 rounded-xl border-slate-100 bg-slate-50/50 font-bold" {...field} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="email"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2 block">Email</FormLabel>
-                                                <FormControl>
-                                                    <Input className="h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-50 border-2 font-bold transition-all" {...field} />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="phone"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2 block">Telefono</FormLabel>
-                                                <FormControl>
-                                                    <Input className="h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-indigo-50 border-2 font-bold transition-all" {...field} />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
 
-                             {/* Dettagli Evento */}
-                             <div className="space-y-6 pt-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-6 w-1 rounded-full bg-indigo-500" />
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Configurazione Evento</h4>
-                                </div>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="eventType"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2 block">Tipologia</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:ring-indigo-500 font-bold border-2">
-                                                            <SelectValue placeholder="Seleziona..." />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="rounded-2xl border-slate-100 shadow-xl p-2">
-                                                        {EVENT_TYPES.map(t => (
-                                                            <SelectItem key={t} value={t} className="rounded-xl font-bold text-slate-600 focus:bg-indigo-50 focus:text-indigo-600 my-1">{t}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="eventDate"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-[11px] font-extrabold uppercase text-slate-400 tracking-wider">Data</FormLabel>
-                                                <FormControl>
-                                                    <Input type="date" className="rounded-xl border-slate-200 bg-slate-50/50 font-bold h-12" {...field} />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="guestsCount"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2 block">Invitati</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:ring-indigo-500 font-bold border-2">
-                                                            <SelectValue placeholder="Range..." />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="rounded-2xl border-slate-100 shadow-xl p-2">
-                                                        {GUEST_RANGES.map(r => (
-                                                            <SelectItem key={r} value={r} className="rounded-xl font-bold text-slate-600 focus:bg-indigo-50 focus:text-indigo-600 my-1">{r}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="preferredContactTime"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2 block">Contatto</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value || undefined}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-12 rounded-2xl border-slate-100 bg-slate-50/50 focus:ring-indigo-500 font-bold border-2">
-                                                            <SelectValue placeholder="Fascia..." />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="rounded-2xl border-slate-100 shadow-xl p-2">
-                                                        {CONTACT_TIMES.map(c => (
-                                                            <SelectItem key={c} value={c} className="rounded-xl font-bold text-slate-600 focus:bg-indigo-50 focus:text-indigo-600 my-1">{c}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
+                                {/* SEZIONE REFERENTI RICHIESTA DA LUCA */}
+                                <div className="space-y-4 bg-slate-50/30 p-6 rounded-[2rem] border border-slate-100">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <UserPlus className="h-4 w-4 text-indigo-500" />
+                                            <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Referenti</h4>
+                                        </div>
+                                        <Button 
+                                            type="button" 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            onClick={() => append({ role: '', name: '' })}
+                                            className="h-8 rounded-full bg-white border border-slate-100 text-indigo-600 font-bold text-[10px] hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                        >
+                                            <Plus className="h-3.5 w-3.5 mr-1" /> AGGIUNGI
+                                        </Button>
+                                    </div>
 
-                            {/* Location Search */}
-                            <div className="space-y-4 pt-4">
-                                <h4 className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                                    Geolocalizzazione
-                                </h4>
-                                <FormField
-                                    control={form.control}
-                                    name="eventLocation"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                <div className="relative">
+                                    {fields.length === 0 && (
+                                        <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-2xl">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase italic">Nessun referente aggiunto</p>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-3">
+                                        {fields.map((field, index) => (
+                                            <div key={field.id} className="flex gap-2 items-end animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <div className="flex-1 space-y-1">
                                                     <Input 
-                                                        autoComplete="off"
-                                                        className="rounded-2xl border-2 border-slate-100 bg-slate-50/30 py-8 pl-14 pr-6 font-black text-slate-800 focus:ring-indigo-500 shadow-inner" 
-                                                        placeholder="Cerca Ville, Location o Indirizzo..." 
+                                                        placeholder="es. Sposo" 
+                                                        className="h-9 rounded-xl border-slate-200 bg-white text-[11px] font-bold"
+                                                        {...form.register(`referents.${index}.role` as const)}
+                                                    />
+                                                </div>
+                                                <div className="flex-[1.5] space-y-1">
+                                                    <Input 
+                                                        placeholder="Nome Referente" 
+                                                        className="h-9 rounded-xl border-slate-200 bg-white text-[11px] font-bold"
+                                                        {...form.register(`referents.${index}.name` as const)}
+                                                    />
+                                                </div>
+                                                <Button 
+                                                    type="button" 
+                                                    variant="ghost" 
+                                                    size="icon" 
+                                                    onClick={() => remove(index)}
+                                                    className="h-9 w-9 rounded-xl text-rose-300 hover:text-rose-600 hover:bg-rose-50"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                             </div>
+
+                             <div className="grid grid-cols-2 gap-8 pt-4">
+                                {/* Geolocalizzazione */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-rose-500" />
+                                        <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Location</h4>
+                                    </div>
+                                    <FormField
+                                        control={form.control}
+                                        name="eventLocation"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Input 
+                                                        className="rounded-xl border-2 border-slate-100 bg-slate-50/50 h-11 font-bold text-[11px]" 
+                                                        placeholder="Cerca Location..." 
                                                         {...field}
                                                         ref={(e) => {
                                                             field.ref(e);
                                                             (inputRef as any).current = e;
                                                         }}
                                                     />
-                                                    <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
-                                                </div>
-                                            </FormControl>
-                                            {statusMessage && (
-                                                <p className="text-[11px] font-bold text-rose-500 mt-2">{statusMessage}</p>
-                                            )}
-                                        </FormItem>
-                                    )}
-                                />
-                                <div className="grid grid-cols-3 gap-4">
-                                   <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Città</p>
-                                      <p className="text-xs font-black text-slate-800 truncate">{watchCity || '---'}</p>
-                                   </div>
-                                   <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Prov</p>
-                                      <p className="text-xs font-black text-slate-800 truncate">{watchProvince || '---'}</p>
-                                   </div>
-                                   <div className="rounded-2xl border border-indigo-100 bg-indigo-50/30 p-4">
-                                      <p className="text-[10px] font-bold text-indigo-500 uppercase mb-1">Regione</p>
-                                      <p className="text-xs font-black text-slate-800 truncate">{watchRegion || '---'}</p>
-                                   </div>
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-2 text-center">
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase">Città</p>
+                                            <p className="text-[10px] font-black text-slate-800 truncate">{watchCity || '-'}</p>
+                                        </div>
+                                        <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-2 text-center">
+                                            <p className="text-[8px] font-bold text-slate-400 uppercase">Prov</p>
+                                            <p className="text-[10px] font-black text-slate-800 truncate">{watchProvince || '-'}</p>
+                                        </div>
+                                        <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-2 text-center">
+                                            <p className="text-[8px] font-bold text-indigo-500 uppercase">Regione</p>
+                                            <p className="text-[10px] font-black text-slate-800 truncate">{watchRegion || '-'}</p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                             {/* Servizi Aggiuntivi */}
-                             <div className="space-y-6 pt-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-6 w-1 rounded-full bg-indigo-500" />
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Extra & Servizi</h4>
-                                </div>
-                                <div className="grid grid-cols-1 gap-4">
-                                    {SERVICES.map((s) => (
+                                {/* Dettagli Evento */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <Info className="h-4 w-4 text-indigo-500" />
+                                        <h4 className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Dettagli Evento</h4>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
                                         <FormField
-                                            key={s.id}
                                             control={form.control}
-                                            name="additionalServices"
-                                            render={({ field }) => {
-                                                const isChecked = field.value?.includes(s.label);
-                                                return (
-                                                    <FormItem className={cn(
-                                                        "flex flex-row items-center space-x-4 space-y-0 rounded-[1.25rem] border-2 p-5 transition-all cursor-pointer group",
-                                                        isChecked ? "border-indigo-500 bg-indigo-50/30" : "border-slate-50 bg-slate-50/30 hover:border-slate-100"
-                                                    )}>
-                                                        <FormControl>
-                                                            <Checkbox
-                                                                checked={isChecked}
-                                                                onCheckedChange={(checked) => {
-                                                                    return checked
-                                                                        ? field.onChange([...field.value, s.label])
-                                                                        : field.onChange(field.value?.filter((v) => v !== s.label))
-                                                                }}
-                                                                className="h-6 w-6 rounded-lg border-2 border-slate-200 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                                                            />
-                                                        </FormControl>
-                                                        <FormLabel className="text-sm font-black text-slate-700 cursor-pointer w-full group-hover:text-indigo-600 transition-colors">
-                                                            {s.label}
-                                                        </FormLabel>
-                                                    </FormItem>
-                                                )
-                                            }}
+                                            name="eventType"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <Select onValueChange={field.onChange} value={field.value || undefined}>
+                                                        <FormControl><SelectTrigger className="h-11 rounded-xl bg-slate-50/50 border-slate-100 font-bold text-[11px]"><SelectValue placeholder="Tipo..." /></SelectTrigger></FormControl>
+                                                        <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t} value={t} className="font-bold">{t}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
                                         />
-                                    ))}
+                                        <FormField
+                                            control={form.control}
+                                            name="eventDate"
+                                            render={({ field }) => (
+                                                <FormItem><FormControl><Input type="date" className="h-11 rounded-xl bg-slate-50/50 border-slate-100 font-bold text-[11px]" {...field} /></FormControl></FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4">
+                                         <FormField
+                                            control={form.control}
+                                            name="productInterest"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl><Input placeholder="Interesse Prodotto" className="h-11 rounded-xl bg-slate-50/50 border-slate-100 font-bold text-[11px]" {...field} /></FormControl>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                             </div>
 
-                            {/* Hidden Inputs */}
-                            <input type="hidden" {...form.register('eventCity')} />
-                            <input type="hidden" {...form.register('locationName')} />
-                            <input type="hidden" {...form.register('eventProvince')} />
-                            <input type="hidden" {...form.register('eventRegion')} />
+                             {/* Hidden Inputs per i valori della mappa Google */}
+                             <input type="hidden" {...form.register('eventCity')} />
+                             <input type="hidden" {...form.register('locationName')} />
+                             <input type="hidden" {...form.register('eventProvince')} />
+                             <input type="hidden" {...form.register('eventRegion')} />
                         </div>
 
-                        <DialogFooter className="p-5 border-t border-slate-50 flex items-center justify-end shrink-0 gap-4 bg-slate-50/30">
-                            <Button variant="ghost" onClick={() => setOpen(false)} type="button" className="font-bold text-slate-400 h-11 px-6 hover:bg-transparent hover:text-slate-600">Annulla</Button>
-                            <Button type="submit" disabled={loading} className="rounded-full bg-indigo-600 hover:bg-indigo-700 font-extrabold px-10 h-11 text-[11px] uppercase tracking-widest shadow-xl shadow-indigo-100 transition-all hover:scale-105 active:scale-95">
-                                {loading ? 'Salvataggio...' : 'Salva Modifiche'}
+                        <DialogFooter className="p-6 border-t border-slate-50 flex items-center justify-end shrink-0 gap-4 bg-slate-50/30">
+                            <Button variant="ghost" onClick={() => setOpen(false)} type="button" className="font-bold text-slate-400 h-10 hover:bg-transparent">Annulla</Button>
+                            <Button type="submit" disabled={loading} className="rounded-full bg-indigo-600 hover:bg-indigo-700 font-extrabold px-10 h-10 text-[10px] uppercase tracking-widest shadow-xl transition-all">
+                                {loading ? 'Salvataggio...' : 'Salva Tutte le Modifiche'}
                             </Button>
                         </DialogFooter>
                     </form>

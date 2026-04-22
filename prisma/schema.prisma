@@ -61,6 +61,7 @@ model Lead {
   lastStatus      String?   // CONTATTATO, NON_RISPONDE, DA_RICONTATTARE
   lastStatusAt    DateTime?
   lostReason      String?   // Nessuna risposta, Prezzo alto, Perso vs competitor, ecc.
+  referents       String?   // JSON stringified: [{role, name}]
   quoteSentAt     DateTime?
   createdBy       String?   // Referente che ha creato o gestisce
 
