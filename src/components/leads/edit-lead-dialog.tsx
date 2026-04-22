@@ -229,7 +229,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={setOpen} modal={false}>
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="rounded-2xl border-slate-200 hover:border-indigo-400 group h-12 px-6 font-black transition-all shadow-sm">
                     <Edit2 className="mr-2 h-4 w-4 text-indigo-500 group-hover:scale-110 transition-transform" />
@@ -238,12 +238,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             </DialogTrigger>
             <DialogContent 
                 className="sm:max-w-[700px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col"
-                onPointerDownOutside={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (target?.closest('.pac-container')) {
-                        e.preventDefault();
-                    }
-                }}
             >
                 <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 p-8 text-white shrink-0 relative">
                     <DialogTitle className="text-3xl font-black tracking-tighter mb-1 uppercase">Gestione Dati Lead</DialogTitle>
