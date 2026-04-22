@@ -33,6 +33,7 @@ export async function updateLeadQuickAction(
                 lastStatus: newStage,
                 lastStatusAt: now,
                 contactedAt: now, // Ogni azione rapida è un contatto avvenuto!
+                nextFollowupAt: data.nextFollowup,
                 updatedAt: now
             }
         });
