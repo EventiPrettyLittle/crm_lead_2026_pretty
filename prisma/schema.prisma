@@ -158,6 +158,18 @@ model Appointment {
   updatedAt     DateTime @updatedAt
 }
 
+model CompanySettings {
+  id           String   @id @default("settings_main")
+  companyName  String?
+  address      String?
+  vatNumber    String?
+  iban         String?
+  phone        String?
+  email        String?
+  referente    String?
+  updatedAt    DateTime @updatedAt
+}
+
 model SystemSettings {
   id        String   @id @default("global")
   logoUrl   String?
