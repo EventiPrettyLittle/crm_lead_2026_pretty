@@ -1,17 +1,22 @@
-'use client'
+"use client"
 
 import { useState, useEffect, useRef } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
 import { useRouter } from 'next/navigation'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import * as z from 'zod'
+import { 
+    Edit2, 
+    Loader2, 
+    MapPin, 
+    User, 
+    Calendar, 
+    Type, 
+    MessageSquare,
+    CheckCircle2
+} from 'lucide-react'
+import { toast } from 'sonner'
 
-declare global {
-  interface Window {
-    google: any;
-  }
-}
-import { Edit2, MapPin, User, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
@@ -26,6 +31,7 @@ import {
     FormControl,
     FormField,
     FormItem,
+    FormLabel,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
@@ -36,59 +42,54 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { updateLeadDetails } from '@/actions/lead-actions'
-import { toast } from 'sonner'
-import { Lead } from '@prisma/client'
-import { cn } from "@/lib/utils"
-
-const formSchema = z.object({
-    firstName: z.string().min(2, 'Richiesto'),
-    lastName: z.string().min(2, 'Richiesto'),
-    email: z.string().email('Email non valida').optional().or(z.literal('')),
-    phoneRaw: z.string().optional(),
-    eventType: z.string().optional(),
-    eventDate: z.string().optional(),
-    eventLocation: z.string().optional(),
-    locationName: z.string().optional(),
-    eventCity: z.string().optional(),
-    eventProvince: z.string().optional(),
-    eventRegion: z.string().optional(),
-    guestsCount: z.string().optional(),
-    productInterest: z.string().optional(),
-    preferredContactTime: z.string().optional(),
-    additionalServices: z.array(z.string()).default([]),
-})
-
-interface EditLeadDialogProps {
-    lead: Lead;
-}
+import { updateLeadDetails } from '@/actions/leads'
 
 const EVENT_TYPES = [
-    "Matrimonio", "Comunione", "Battesimo", "Laurea", "Compleanno", "Evento Aziendale", "Altro"
-]
-
-const GUEST_RANGES = [
-    "Meno di 50", "Tra 51 e 100", "Più di 100"
-]
-
-const CONTACT_TIMES = [
-    "Mattina (9:30 - 13:00)", "Pausa Pranzo (13:00 - 15:00)", "Pomeriggio (15:30 - 18:00)", "Sera (19:00 - 20:30)"
+  'Matrimonio',
+  'Comunione',
+  'Battesimo',
+  'Compleanno',
+  'Diciottesimo',
+  'Evento Aziendale',
+  'Altro'
 ]
 
 const SERVICES = [
-    { id: "live_show", label: "Live Show (Personalizzazione in LOCATION)" },
-    { id: "delivery", label: "Consegna in Location" }
+  { id: 'musica', label: 'Musica' },
+  { id: 'animazione', label: 'Animazione' },
+  { id: 'allestimento', label: 'Allestimento Floreale' },
+  { id: 'fotografo', label: 'Servizio Fotografico' },
+  { id: 'bomboniere', label: 'Bomboniere' },
 ]
 
+const formSchema = z.object({
+  firstName: z.string().min(2, 'Nome troppo corto'),
+  lastName: z.string().min(2, 'Cognome troppo corto'),
+  email: z.string().email('Email non valida').optional().or(z.literal('')),
+  phoneRaw: z.string().optional().or(z.literal('')),
+  eventType: z.string().optional().or(z.literal('')),
+  eventDate: z.string().optional().or(z.literal('')),
+  eventLocation: z.string().optional().or(z.literal('')),
+  locationName: z.string().optional().or(z.literal('')),
+  eventCity: z.string().optional().or(z.literal('')),
+  eventProvince: z.string().optional().or(z.literal('')),
+  eventRegion: z.string().optional().or(z.literal('')),
+  additionalServices: z.array(z.string()).default([]),
+})
+
+interface EditLeadDialogProps {
+  lead: any
+}
+
 export function EditLeadDialog({ lead }: EditLeadDialogProps) {
-    const router = useRouter()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
-    const autoCompleteRef = useRef<any>(null)
+    const router = useRouter()
     const inputRef = useRef<HTMLInputElement>(null)
+    const autoCompleteRef = useRef<any>(null)
 
     const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema) as any,
+        resolver: zodResolver(formSchema),
         defaultValues: {
             firstName: lead.firstName || '',
             lastName: lead.lastName || '',
@@ -97,14 +98,11 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             eventType: lead.eventType || '',
             eventDate: lead.eventDate ? new Date(lead.eventDate).toISOString().split('T')[0] : '',
             eventLocation: lead.eventLocation || '',
-            locationName: (lead as any).locationName || '',
+            locationName: lead.locationName || '',
             eventCity: lead.eventCity || '',
             eventProvince: lead.eventProvince || '',
             eventRegion: lead.eventRegion || '',
-            guestsCount: lead.guestsCount ? String(lead.guestsCount) : '',
-            productInterest: lead.productInterest || '',
-            preferredContactTime: (lead as any).preferredContactTime || '',
-            additionalServices: (lead as any).additionalServices ? (lead as any).additionalServices.split(', ') : [],
+            additionalServices: lead.additionalServices ? lead.additionalServices.split(', ') : [],
         },
     })
 
@@ -114,76 +112,22 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
     useEffect(() => {
         if (!open) return;
-        
-        // Inject global style for Google Autocomplete once - FORZA VISIBILITÀ TOTALE
-        if (!document.getElementById('pac-style')) {
-            const style = document.createElement('style');
-            style.id = 'pac-style';
-            style.innerHTML = `
-                .pac-container { 
-                    z-index: 99999 !important; 
-                    pointer-events: auto !important;
-                    font-family: inherit; 
-                    border-radius: 1.5rem; 
-                    margin-top: 8px; 
-                    border: 2px solid #6366f1; 
-                    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5); 
-                } 
-                .pac-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f1f5f9; } 
-                .pac-item:hover { background-color: #f8fafc; } 
-                .pac-item-query { font-weight: 700; color: #4f46e6; font-size: 14px; }
-            `;
-            document.head.appendChild(style);
-        }
-    }, [open]);
 
-    useEffect(() => {
-        if (!open) return;
-
-        // Forza stile ultra-prioritario per la tendina Google
-        const styleId = 'google-autocomplete-fix';
-        if (!document.getElementById(styleId)) {
-            const style = document.createElement('style');
-            style.id = styleId;
-            style.innerHTML = `
-                .pac-container { 
-                    z-index: 1000000 !important; 
-                    pointer-events: auto !important;
-                    visibility: visible !important;
-                    display: block !important;
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        const initGoogle = () => {
-            if (!window.google) {
-                toast.error("Google Maps non è caricato. Controlla la connessione o la chiave API.");
+        const initAutocomplete = () => {
+            if (!inputRef.current || !window.google) {
+                setTimeout(initAutocomplete, 500);
                 return;
             }
-            
-            if (!window.google.maps.places) {
-                toast.error("Servizio 'Places' di Google non disponibile. Verifica la chiave API.");
-                return;
-            }
-
-            if (!inputRef.current) return;
 
             try {
-                const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+                autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
                     types: ['establishment', 'geocode'],
                     componentRestrictions: { country: "it" },
                     fields: ["address_components", "formatted_address", "geometry", "name"]
                 });
 
-                // Ascoltatore per gestire i casi in cui l'utente clicca ma Google dà errore
-                window.google.maps.event.addListener(autocomplete, 'error', (err: any) => {
-                    console.error("Errore Autocomplete:", err);
-                    toast.error("Errore Google Maps: " + (err.message || "Problema di comunicazione"));
-                });
-
-                autocomplete.addListener("place_changed", () => {
-                    const place = autocomplete.getPlace();
+                autoCompleteRef.current.addListener("place_changed", () => {
+                    const place = autoCompleteRef.current.getPlace();
                     if (!place || !place.geometry) return;
 
                     let city = '', province = '', region = '';
@@ -195,26 +139,19 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                             if (types.includes('administrative_area_level_1')) region = component.long_name;
                         }
                     }
-
-                    const finalName = place.name || place.formatted_address || '';
-                    form.setValue('eventLocation', finalName, { shouldDirty: true });
+                    
+                    form.setValue('eventLocation', place.formatted_address || '', { shouldDirty: true });
                     form.setValue('locationName', place.name || '', { shouldDirty: true });
                     form.setValue('eventCity', city, { shouldDirty: true });
                     form.setValue('eventProvince', province, { shouldDirty: true });
                     form.setValue('eventRegion', region, { shouldDirty: true });
-                    
-                    toast.success('Dati aggiornati via Google!');
                 });
-
-                autoCompleteRef.current = autocomplete;
             } catch (err) {
-                console.error("Errore Autocomplete:", err);
+                console.error("Autocomplete Error:", err);
             }
         };
 
-        // Piccolo timeout per lasciare che Radix finisca di montare l'input
-        const timer = setTimeout(initGoogle, 500);
-        return () => clearTimeout(timer);
+        initAutocomplete();
     }, [open, form]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -228,14 +165,14 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             
             const result = await updateLeadDetails(lead.id, finalValues)
             if (result.success) {
-                toast.success('Lead aggiornato con successo')
+                toast.success('Dati salvati correttamente')
                 router.refresh()
                 setOpen(false)
             } else {
                 toast.error('Errore: ' + (result as any).error)
             }
         } catch (error: any) {
-            toast.error('Errore di sistema: ' + error.message)
+            toast.error('Errore di sistema')
         } finally {
             setLoading(false)
         }
@@ -244,132 +181,92 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen} modal={false}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="rounded-2xl border-slate-200 hover:border-indigo-400 group h-12 px-6 font-black transition-all shadow-sm">
-                    <Edit2 className="mr-2 h-4 w-4 text-indigo-500 group-hover:scale-110 transition-transform" />
+                <Button variant="outline" size="sm" className="rounded-2xl border-slate-200 hover:border-slate-400 group h-12 px-6 font-bold transition-all shadow-sm">
+                    <Edit2 className="mr-2 h-4 w-4 text-slate-500 group-hover:scale-110 transition-transform" />
                     Modifica Dati
                 </Button>
             </DialogTrigger>
-            <DialogContent 
-                className="sm:max-w-[700px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col"
-            >
-                <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 p-8 text-white shrink-0 relative">
-                    <DialogTitle className="text-3xl font-black tracking-tighter mb-1 uppercase">Gestione Dati Lead</DialogTitle>
-                    <DialogDescription className="text-indigo-100 font-medium text-xs opacity-90 tracking-tight">Perfeziona i dettagli dell'evento e aggiorna i contatti territoriali.</DialogDescription>
-                    <div className="absolute top-8 right-8 bg-white/10 rounded-full h-12 w-12 flex items-center justify-center backdrop-blur-md border border-white/20">
+            <DialogContent className="sm:max-w-[700px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col">
+                <div className="bg-slate-950 p-8 text-white shrink-0 relative">
+                    <DialogTitle className="text-3xl font-black tracking-tighter mb-1 uppercase">Gestione Lead</DialogTitle>
+                    <DialogDescription className="text-slate-400 font-medium text-xs opacity-90 tracking-tight uppercase">Configurazione Evento e Geolocalizzazione</DialogDescription>
+                    <div className="absolute top-8 right-8 bg-white/5 rounded-full h-12 w-12 flex items-center justify-center border border-white/10">
                         <User className="h-6 w-6 text-white" />
                     </div>
                 </div>
                 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-10 pt-6 space-y-8 custom-scrollbar">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-10 pt-6 space-y-8">
                         
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="h-4 w-1 rounded-full bg-indigo-500" />
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Informazioni Cliente</h3>
+                                <div className="h-4 w-1 rounded-full bg-slate-950" />
+                                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Informazioni Cliente</h3>
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="firstName" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Nome" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Nome" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                                 <FormField control={form.control} name="lastName" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Cognome" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Cognome" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="email" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Email" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Email" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                                 <FormField control={form.control} name="phoneRaw" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Telefono" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Telefono" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
                         </div>
 
                         <div className="space-y-4 border-t border-slate-50 pt-8">
                              <div className="flex items-center gap-3 mb-2">
-                                <div className="h-4 w-1 rounded-full bg-indigo-500" />
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Configurazione Evento</h3>
+                                <div className="h-4 w-1 rounded-full bg-slate-950" />
+                                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Configurazione Evento</h3>
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="eventType" render={({ field }) => (
-                                    <FormItem><Select onValueChange={field.onChange} value={field.value || undefined}>
-                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Scegli..." /></SelectTrigger></FormControl>
+                                    <FormItem><Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold"><SelectValue placeholder="Scegli..." /></SelectTrigger></FormControl>
                                         <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t} value={t} className="font-bold">{t}</SelectItem>)}</SelectContent>
                                     </Select></FormItem>
                                 )} />
                                 <FormField control={form.control} name="eventDate" render={({ field }) => (
-                                    <FormItem><FormControl><Input type="date" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input type="date" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
                         </div>
 
                         <div className="space-y-4 border-t border-slate-50 pt-8">
                              <div className="flex items-center gap-3 mb-2">
-                                <div className="h-4 w-1 rounded-full bg-indigo-600" />
-                                <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">Geolocalizzazione (Cerca per Nome Villa o Indirizzo)</h3>
+                                <div className="h-4 w-1 rounded-full bg-slate-400" />
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Geolocalizzazione</h3>
                             </div>
                              <FormField control={form.control} name="eventLocation" render={({ field }) => (
                                 <FormItem><FormControl><div className="relative">
                                     <Input 
                                         {...field} 
-                                        id="location-input"
                                         ref={(e) => { 
                                             field.ref(e); 
                                             (inputRef as any).current = e; 
                                         }} 
-                                        autoComplete="off"
-                                        className="h-16 rounded-2xl pl-12 border-2 border-indigo-100 bg-white font-bold text-slate-900 shadow-xl focus:border-indigo-600 transition-all placeholder:text-slate-300" 
+                                        className="h-16 rounded-2xl pl-12 border-2 border-slate-100 bg-white font-bold text-slate-950 shadow-xl focus:border-slate-800 transition-all placeholder:text-slate-300" 
                                         placeholder="Cerca Villa o Indirizzo..." 
                                     />
-                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-indigo-500" />
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-400" />
                                 </div></FormControl></FormItem>
                             )} />
                             <div className="grid grid-cols-3 gap-3 pt-2">
-                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Città</p><p className="text-[11px] font-black text-slate-800">{watchCity || '-'}</p></div>
-                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Prov</p><p className="text-[11px] font-black text-slate-800">{watchProvince || '-'}</p></div>
-                                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-center"><p className="text-[8px] font-bold text-indigo-500 uppercase mb-1">Regione</p><p className="text-[11px] font-black text-slate-800">{watchRegion || '-'}</p></div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 border-t border-slate-50 pt-8 pb-4">
-                             <div className="flex items-center gap-3 mb-2">
-                                <div className="h-4 w-1 rounded-full bg-indigo-500" />
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Servizi Aggiuntivi</h3>
-                            </div>
-                            <div className="grid grid-cols-1 gap-3">
-                                {SERVICES.map((service) => (
-                                    <FormField
-                                        key={service.id}
-                                        control={form.control}
-                                        name="additionalServices"
-                                        render={({ field }) => (
-                                            <FormItem className="flex items-center space-x-3 space-y-0 bg-slate-50/50 p-5 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:shadow-md group">
-                                                <FormControl>
-                                                    <Checkbox
-                                                        checked={field.value?.includes(service.label)}
-                                                        onCheckedChange={(checked) => {
-                                                            const current = field.value || []
-                                                            const updated = checked 
-                                                                ? [...current, service.label]
-                                                                : current.filter((val) => val !== service.label)
-                                                            field.onChange(updated)
-                                                        }}
-                                                        className="h-6 w-6 rounded-lg border-2 border-slate-200 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
-                                                    />
-                                                </FormControl>
-                                                <label className="text-sm font-black text-slate-700 leading-none cursor-pointer group-hover:text-indigo-600 transition-colors">
-                                                    {service.label}
-                                                </label>
-                                            </FormItem>
-                                        )}
-                                    />
-                                ))}
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Città</p><p className="text-[11px] font-black text-slate-900">{watchCity || '-'}</p></div>
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Prov</p><p className="text-[11px] font-black text-slate-900">{watchProvince || '-'}</p></div>
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Regione</p><p className="text-[11px] font-black text-slate-900">{watchRegion || '-'}</p></div>
                             </div>
                         </div>
 
                         <div className="pt-2">
-                             <Button type="submit" disabled={loading} className="w-full h-16 rounded-[1.8rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.15em] shadow-2xl shadow-indigo-200 transition-all active:scale-95">
+                             <Button type="submit" disabled={loading} className="w-full h-16 rounded-[1.8rem] bg-slate-950 hover:bg-black text-white font-black uppercase tracking-[0.15em] shadow-2xl shadow-slate-200 transition-all active:scale-95">
                                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Sincronizza e Salva Modifiche'}
                              </Button>
                         </div>
