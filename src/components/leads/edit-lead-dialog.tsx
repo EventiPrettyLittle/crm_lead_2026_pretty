@@ -146,14 +146,15 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                         }
                     }
 
-                    // AGGIORNAMENTO MODULO
-                    form.setValue('eventLocation', place.formatted_address || '', { shouldDirty: true, shouldValidate: true });
-                    form.setValue('locationName', place.name || '', { shouldDirty: true, shouldValidate: true });
-                    form.setValue('eventCity', city, { shouldDirty: true, shouldValidate: true });
-                    form.setValue('eventProvince', province, { shouldDirty: true, shouldValidate: true });
-                    form.setValue('eventRegion', region, { shouldDirty: true, shouldValidate: true });
+                    // AGGIORNAMENTO MODULO CON PRIORITÀ AL NOME
+                    const finalName = place.name || place.formatted_address || '';
+                    form.setValue('eventLocation', finalName, { shouldDirty: true });
+                    form.setValue('locationName', place.name || '', { shouldDirty: true });
+                    form.setValue('eventCity', city, { shouldDirty: true });
+                    form.setValue('eventProvince', province, { shouldDirty: true });
+                    form.setValue('eventRegion', region, { shouldDirty: true });
                     
-                    toast.success('Dati geografici aggiornati!');
+                    toast.success('Location selezionata: ' + finalName);
                 });
 
                 // Impedisce a Radix di bloccare l'interazione con la tendina Google
@@ -276,8 +277,8 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                             field.ref(e); 
                                             (inputRef as any).current = e; 
                                         }} 
-                                        autoComplete="off"
-                                        className="h-16 rounded-2xl pl-12 border-2 border-indigo-100 bg-white font-bold text-slate-900 shadow-xl focus:border-indigo-600 transition-all placeholder:text-slate-300" 
+                                        autoComplete="new-password"
+                                        className="h-16 rounded-2xl pl-12 border-2 border-indigo-100 bg-white font-bold text-slate-900 shadow-xl focus:border-indigo-600 transition-all placeholder:text-slate-300 ring-offset-transparent focus-visible:ring-0 focus-visible:ring-offset-0" 
                                         placeholder="Cerca Villa, Location o Indirizzo..." 
                                     />
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-indigo-500" />
