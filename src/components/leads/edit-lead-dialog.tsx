@@ -170,7 +170,8 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
         try {
             const finalValues = { 
                 ...values, 
-                additionalServices: values.additionalServices.join(', ') 
+                additionalServices: values.additionalServices.join(', '),
+                eventDate: values.eventDate ? new Date(values.eventDate) : undefined
             }
             console.log("Submitting Values:", finalValues);
             
