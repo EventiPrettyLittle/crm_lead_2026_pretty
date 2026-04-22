@@ -19,145 +19,86 @@ interface LeadLocationActionsProps {
 export function LeadLocationActions({ lead }: LeadLocationActionsProps) {
   const origin = "Via Fosse Ardeatine 30, 80024 Cardito (NA)";
   const location = lead.eventLocation || "";
-  const locationName = (lead as any).locationName || "Location non specificata";
+  const locationName = (lead as any).locationName || "Villa non specificata";
   
-  const cityName = lead.eventCity || "-";
-  const province = lead.eventProvince || "-";
-  const region = lead.eventRegion || "-";
+  const cityName = lead.eventCity || "Città";
+  const province = lead.eventProvince || "Provincia";
+  const region = lead.eventRegion || "Regione";
 
   const locationEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
-  const directionsEmbedUrl = `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(location)}&output=embed`;
 
   return (
-    <div className="rounded-[2.5rem] border border-slate-200/60 bg-white overflow-hidden shadow-2xl transition-all hover:shadow-indigo-100/50 mt-6 font-sans">
-      <div className="flex flex-col lg:flex-row min-h-[420px]">
-        
-        {/* LATO SINISTRO: MAPPA (PIÙ GRANDE) */}
-        <div className="lg:w-[60%] p-8 bg-slate-50/50 border-r border-slate-100 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
-                <Navigation className="h-5 w-5 animate-pulse" />
-              </div>
-              <div className="space-y-0.5">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500">Hub Logistico Pretty</span>
-                <p className="text-xs font-bold text-slate-900 tracking-tight">Sede Cardito (NA)</p>
-              </div>
+    <div className="bg-white rounded-[3rem] border border-slate-200/50 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Header Premium */}
+      <div className="px-10 py-6 border-b border-slate-100 flex items-center gap-3">
+        <div className="h-8 w-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-500">
+          <MapPin className="h-4 w-4" />
+        </div>
+        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Location</h3>
+      </div>
+
+      <div className="p-10 space-y-8">
+        {/* Info Principali */}
+        <div className="space-y-2">
+          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Nome Location</p>
+          <h2 className="text-4xl font-black text-slate-900 tracking-tighter leading-tight">{locationName}</h2>
+          <div className="flex items-center gap-2 pt-2">
+            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Indirizzo Formattato</p>
+            <div className="flex items-center gap-2 text-sm font-bold text-slate-500">
+              <MapPin className="h-3.5 w-3.5 text-slate-300" />
+              {location || "Nessun indirizzo salvato"}
             </div>
-            <Badge className="bg-white text-indigo-600 border border-indigo-100 px-4 py-2 text-[10px] font-black uppercase rounded-xl">Dati Certificati</Badge>
-          </div>
-
-          <div className="flex-1 relative rounded-[2rem] overflow-hidden border-4 border-white shadow-xl group">
-            <iframe
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              src={locationEmbedUrl}
-              className="grayscale-[0.2] contrast-[1.1] group-hover:grayscale-0 transition-all duration-700"
-              title="Preview Map"
-            ></iframe>
-            <a 
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute top-4 left-4 bg-white/95 backdrop-blur px-5 py-2.5 rounded-2xl shadow-2xl border border-slate-100 animate-in fade-in slide-in-from-top-2 hover:bg-indigo-600 hover:text-white transition-all group/loc"
-            >
-               <p className="text-[10px] font-black flex items-center gap-3 uppercase tracking-widest">
-                  <MapPin className="h-4 w-4 text-rose-500 group-hover/loc:text-white transition-colors" /> 
-                  Target Location
-                  <Maximize2 className="h-3 w-3 opacity-30 group-hover/loc:opacity-100" />
-               </p>
-            </a>
-          </div>
-
-          <div className="mt-6 bg-slate-900 rounded-[2rem] p-5 flex items-center justify-between text-white shadow-2xl">
-              <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/5">
-                      <Map className="h-5 w-5 text-indigo-400" />
-                  </div>
-                  <div className="overflow-hidden max-w-[280px]">
-                      <p className="text-[8px] font-black opacity-40 uppercase tracking-[0.2em] mb-0.5 whitespace-nowrap">Indirizzo Destinazione Ufficiale</p>
-                      <p className="text-xs font-bold text-white truncate leading-tight">{location}</p>
-                  </div>
-              </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-10 px-4 rounded-xl font-bold text-white hover:bg-white/10 flex items-center gap-2">
-                    <Maximize2 className="h-4 w-4" /> <span className="hidden sm:inline">MASSIMIZZA</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-6xl h-[85vh] p-2 rounded-[3.5rem] border-none bg-white">
-                  <iframe width="100%" height="100%" frameBorder="0" src={locationEmbedUrl} className="rounded-[3.2rem]"></iframe>
-                </DialogContent>
-              </Dialog>
           </div>
         </div>
 
-        {/* LATO DESTRO: VALORI (DETTAGLI TERRITORIALI) */}
-        <div className="lg:w-[40%] p-10 flex flex-col justify-between bg-slate-50/20 relative">
-          <div className="space-y-8">
-            <div className="bg-white p-6 rounded-[2.2rem] shadow-sm border border-slate-100">
-               <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-2 leading-none">Nome Location</p>
-               <h2 className="text-xl font-black text-slate-900 tracking-tight leading-tight">{locationName}</h2>
+        {/* Box Mappa & Hub */}
+        <div className="bg-slate-50/50 rounded-[2.5rem] p-8 border border-slate-100 space-y-6">
+          <div className="flex justify-between items-center px-2">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Navigation className="h-4 w-4 text-indigo-600 rotate-45" />
+                <h4 className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.2em]">Hub Logistico Premium</h4>
+              </div>
+              <p className="text-[10px] font-bold text-slate-500 ml-6">Sede Cardito (NA)</p>
             </div>
-
-            <div className="space-y-5">
-               <div className="flex items-center justify-between px-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ripartizione Territoriale</p>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="h-8 rounded-full bg-indigo-600 hover:bg-indigo-500 font-black text-[9px] px-4 shadow-lg shadow-indigo-200">
-                         PERCORSO
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-7xl h-[90vh] p-2 rounded-[4rem] border-none bg-white">
-                      <iframe width="100%" height="100%" frameBorder="0" src={directionsEmbedUrl} className="rounded-[3.7rem]"></iframe>
-                    </DialogContent>
-                  </Dialog>
-               </div>
-               
-               <div className="grid gap-3">
-                  {/* CITTÀ */}
-                  <div className="flex items-center gap-5 p-5 bg-white rounded-[1.8rem] border border-slate-100 shadow-sm transition-all hover:bg-slate-50 hover:scale-[1.02] cursor-default group">
-                     <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
-                        <MapPin className="h-6 w-6" />
-                     </div>
-                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Città</p>
-                        <p className="text-lg font-black text-slate-800 leading-none">{cityName}</p>
-                     </div>
-                  </div>
-
-                  {/* PROVINCIA */}
-                  <div className="flex items-center gap-5 p-5 bg-white rounded-[1.8rem] border border-slate-100 shadow-sm transition-all hover:bg-slate-50 hover:scale-[1.02] cursor-default group">
-                     <div className="h-12 w-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
-                        <Landmark className="h-6 w-6" />
-                     </div>
-                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Provincia</p>
-                        <p className="text-lg font-black text-slate-800 leading-none">{province}</p>
-                     </div>
-                  </div>
-
-                  {/* REGIONE */}
-                  <div className="flex items-center gap-5 p-5 bg-white rounded-[1.8rem] border border-emerald-100 shadow-sm transition-all hover:bg-slate-50 hover:scale-[1.02] cursor-default group">
-                     <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
-                        <ShieldCheck className="h-6 w-6" />
-                     </div>
-                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Regione</p>
-                        <p className="text-lg font-black text-slate-800 leading-none">{region}</p>
-                     </div>
-                  </div>
-               </div>
-            </div>
+            <Badge className="bg-indigo-600/90 text-white border-none py-2 px-6 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100">
+              Dati Certificati
+            </Badge>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-slate-100 text-center opacity-40">
-             <p className="text-[9px] font-bold text-slate-500 uppercase tracking-[0.3em]">Pretty Logistics Analysis - 2026</p>
+          <div className="relative aspect-video rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl group">
+             <iframe width="100%" height="100%" frameBorder="0" src={locationEmbedUrl} className="grayscale-[0.1] contrast-[1.1] transition-all group-hover:grayscale-0 duration-1000"></iframe>
+             <div className="absolute top-6 left-6 bg-white px-5 py-2.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-100">
+                <MapPin className="h-4 w-4 text-rose-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Target Location</span>
+             </div>
+          </div>
+
+          {/* Ripartizione Territoriale Orizzontale */}
+          <div className="grid grid-cols-3 gap-4 pt-4">
+             <div className="bg-white rounded-[2rem] p-5 flex flex-col items-center justify-center border border-slate-100 shadow-sm group hover:scale-[1.05] transition-transform">
+                <div className="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 mb-3">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <p className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mb-1">Città</p>
+                <p className="text-xs font-black text-slate-800">{cityName}</p>
+             </div>
+             <div className="bg-white rounded-[2rem] p-5 flex flex-col items-center justify-center border border-slate-100 shadow-sm group hover:scale-[1.05] transition-transform">
+                <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mb-3">
+                  <Landmark className="h-5 w-5" />
+                </div>
+                <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1">Prov.</p>
+                <p className="text-xs font-black text-slate-800">{province}</p>
+             </div>
+             <div className="bg-white rounded-[2rem] p-5 flex flex-col items-center justify-center border border-emerald-50 shadow-sm group hover:scale-[1.05] transition-transform">
+                <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-3">
+                  <Globe className="h-5 w-5" />
+                </div>
+                <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-1">Regione</p>
+                <p className="text-xs font-black text-slate-800">{region}</p>
+             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -182,11 +182,20 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                     toast.success('Dati aggiornati via Google!');
                 });
 
-                // Impedisce a Radix di bloccare l'interazione
-                const pacContainer = document.querySelector('.pac-container');
-                if (pacContainer) {
-                    pacContainer.addEventListener('mousedown', (e) => e.stopPropagation());
-                }
+                // Impedisce a Radix di bloccare l'interazione con un ascoltatore globale
+                const handlePacMouseDown = (e: any) => {
+                    if (e.target?.closest('.pac-container')) {
+                        e.stopPropagation();
+                    }
+                };
+                document.addEventListener('mousedown', handlePacMouseDown, true);
+                
+                return () => {
+                    document.removeEventListener('mousedown', handlePacMouseDown, true);
+                    if (autoCompleteRef.current) {
+                        window.google.maps.event.clearInstanceListeners(autoCompleteRef.current);
+                    }
+                };
             } catch (err) {
                 console.error("Errore inizializzazione Google:", err);
             }
@@ -229,7 +238,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             </DialogTrigger>
             <DialogContent 
                 className="sm:max-w-[700px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col"
-                onOpenAutoFocus={(e) => e.preventDefault()}
                 onPointerDownOutside={(e) => {
                     const target = e.target as HTMLElement;
                     if (target?.closest('.pac-container')) {
