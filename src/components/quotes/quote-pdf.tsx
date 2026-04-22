@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
 
 // Define styles
+// Version: 1.0.1 - Black Theme - Force Deploy 22/04/2026 16:38
 const styles = StyleSheet.create({
     page: {
         flexDirection: 'column',
