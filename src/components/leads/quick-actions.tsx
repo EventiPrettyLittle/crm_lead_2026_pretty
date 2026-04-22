@@ -8,7 +8,8 @@ import {
     UserX,
     Send,
     Loader2,
-    MessageCircle
+    MessageCircle,
+    XCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { updateLeadQuickAction } from '@/actions/lead-actions'
@@ -65,52 +66,68 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     const actions = [
         {
             id: 'whatsapp',
-            label: 'WhatsApp',
+            label: 'WHATSAPP',
             icon: MessageCircle,
-            color: 'bg-emerald-600',
-            textColor: 'text-emerald-600',
-            lightColor: 'bg-emerald-50',
+            color: 'text-emerald-700',
+            bg: 'bg-emerald-50',
+            border: 'border-emerald-100',
             isExternal: true,
             onClick: openWhatsApp
         },
         {
             id: 'contacted',
-            label: 'Contattato',
+            label: 'CONTATTATO',
             icon: Phone,
-            color: 'bg-blue-500',
-            textColor: 'text-blue-500',
-            lightColor: 'bg-blue-50'
+            color: 'text-emerald-600',
+            bg: 'bg-emerald-50',
+            border: 'border-emerald-100'
         },
         {
             id: 'no-answer',
-            label: 'Non Risponde',
+            label: 'NON RISPONDE',
             icon: UserX,
-            color: 'bg-rose-500',
-            textColor: 'text-rose-500',
-            lightColor: 'bg-rose-50'
+            color: 'text-amber-600',
+            bg: 'bg-amber-50',
+            border: 'border-amber-100'
         },
         {
             id: 'appointment',
-            label: 'Appuntamento',
+            label: 'APPUNTAMENTO',
             icon: Calendar,
-            color: 'bg-indigo-500',
-            textColor: 'text-indigo-500',
-            lightColor: 'bg-indigo-50'
+            color: 'text-indigo-600',
+            bg: 'bg-indigo-50',
+            border: 'border-indigo-100'
+        },
+        {
+            id: 'preventivo',
+            label: 'PREVENTIVO',
+            icon: Send,
+            color: 'text-violet-600',
+            bg: 'bg-violet-50',
+            border: 'border-violet-100'
+        },
+        {
+            id: 'cancelled',
+            label: 'CANCELLATO',
+            icon: XCircle,
+            color: 'text-rose-600',
+            bg: 'bg-rose-50',
+            border: 'border-rose-100'
         }
     ]
 
     return (
-        <div className={cn("flex items-center", showLabels ? "gap-2" : "gap-1")}>
+        <div className="flex items-center gap-1.5 flex-wrap">
             {actions.map((action) => (
                 <Button
                     key={action.id}
-                    variant="ghost"
-                    size="icon"
+                    variant="outline"
+                    size={showLabels ? "default" : "sm"}
                     onClick={(e) => {
                         e.stopPropagation();
                         if (action.isExternal && action.onClick) {
                             action.onClick(e);
-                        } else if (action.id === 'contacted' || action.id === 'no-answer') {
+                        } else if (action.id === 'contacted' || action.id === 'no-answer' || action.id === 'cancelled') {
                             handleAction(action.id)
                         } else {
                             setActionType(action.id)
@@ -119,42 +136,42 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                     }}
                     disabled={!!loading}
                     className={cn(
-                        "transition-all duration-200",
-                        showLabels 
-                            ? cn("h-12 px-6 rounded-2xl text-white font-black uppercase tracking-widest text-[10px] flex items-center gap-2", action.color)
-                            : cn("h-9 w-9 rounded-full h-8 w-8", action.lightColor, action.textColor, "hover:bg-indigo-600 hover:text-white shadow-sm")
+                        "transition-all h-9 rounded-xl border font-black text-[9px] uppercase tracking-wider flex items-center gap-2 px-4 shadow-none",
+                        action.bg, action.color, action.border,
+                        "hover:opacity-80 active:scale-95"
                     )}
                 >
                     {loading === action.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                        <action.icon className={cn(showLabels ? "h-4 w-4" : "h-3.5 w-3.5")} />
+                        <action.icon className="h-3.5 w-3.5" />
                     )}
                     {showLabels && <span>{action.label}</span>}
                 </Button>
             ))}
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="rounded-[2.5rem] p-10 bg-white border-none shadow-2xl">
+                <DialogContent className="rounded-[2rem] p-8 bg-white border-none shadow-2xl">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-black uppercase tracking-tight">Regista Azione</DialogTitle>
-                        <DialogDescription className="font-bold text-slate-400">Aggiungi un dettaglio per aggiornare la timeline.</DialogDescription>
+                        <DialogTitle className="text-xl font-black uppercase tracking-tight">Dettaglio Azione</DialogTitle>
+                        <DialogDescription className="font-bold text-slate-400">Inserisci una nota per concludere l'operazione.</DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
+                    <div className="py-2">
                         <Textarea 
-                            placeholder="Scrivi qui eventuali note..." 
-                            className="min-h-[120px] rounded-2xl border-slate-100 bg-slate-50 font-bold"
+                            placeholder="Note..." 
+                            className="min-h-[100px] rounded-xl border-slate-100 bg-slate-50 font-bold text-sm"
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                         />
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDialogOpen(false)} className="rounded-xl font-bold">Annulla</Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDialogOpen(false)} className="rounded-lg font-bold">Chiudi</Button>
                         <Button 
+                            size="sm"
                             onClick={() => handleAction(actionType, { notes })}
-                            className="rounded-xl bg-indigo-600 font-black uppercase px-8 h-12 shadow-lg"
+                            className="rounded-lg bg-indigo-600 font-black uppercase px-6"
                         >
-                            Conferma e Salva
+                            Salva
                         </Button>
                     </DialogFooter>
                 </DialogContent>
