@@ -115,11 +115,24 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     useEffect(() => {
         if (!open) return;
         
-        // Inject global style for Google Autocomplete once
+        // Inject global style for Google Autocomplete once - FORZA VISIBILITÀ TOTALE
         if (!document.getElementById('pac-style')) {
             const style = document.createElement('style');
             style.id = 'pac-style';
-            style.innerHTML = '.pac-container { z-index: 10000 !important; font-family: inherit; border-radius: 1rem; margin-top: 5px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1); } .pac-item { padding: 8px 12px; cursor: pointer; } .pac-item:hover { background-color: #f8fafc; } .pac-item-query { font-weight: 700; color: #0f172a; }';
+            style.innerHTML = `
+                .pac-container { 
+                    z-index: 99999 !important; 
+                    pointer-events: auto !important;
+                    font-family: inherit; 
+                    border-radius: 1.5rem; 
+                    margin-top: 8px; 
+                    border: 2px solid #6366f1; 
+                    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5); 
+                } 
+                .pac-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f1f5f9; } 
+                .pac-item:hover { background-color: #f8fafc; } 
+                .pac-item-query { font-weight: 700; color: #4f46e6; font-size: 14px; }
+            `;
             document.head.appendChild(style);
         }
 
@@ -277,9 +290,9 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                             field.ref(e); 
                                             (inputRef as any).current = e; 
                                         }} 
-                                        autoComplete="new-password"
+                                        autoComplete="off"
                                         className="h-16 rounded-2xl pl-12 border-2 border-indigo-100 bg-white font-bold text-slate-900 shadow-xl focus:border-indigo-600 transition-all placeholder:text-slate-300 ring-offset-transparent focus-visible:ring-0 focus-visible:ring-offset-0" 
-                                        placeholder="Cerca Villa, Location o Indirizzo..." 
+                                        placeholder="Inizia a scrivere il nome della Villa..." 
                                     />
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-indigo-500" />
                                 </div></FormControl></FormItem>
