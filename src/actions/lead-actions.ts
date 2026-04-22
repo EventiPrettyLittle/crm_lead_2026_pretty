@@ -85,7 +85,9 @@ export async function updateLeadDetails(id: string, data: any) {
                 lastName: data.lastName || null,
                 email: data.email || null,
                 phoneRaw: data.phone || null,
-                notesInternal: data.notesInternal, // Le note qui le salviamo solo se scritte dall'utente
+                eventLocation: data.eventLocation || null,
+                locationName: data.locationName || null,
+                notesInternal: data.notesInternal,
                 updatedAt: new Date(),
             } as any
         });
