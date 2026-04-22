@@ -53,21 +53,11 @@ export async function loginWithCredentials(formData: FormData) {
 
     try {
         // Cerca l'utente nel database
-        const users: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "User" WHERE email = $1`, email);
+        const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role FROM "User" WHERE email = $1`, email);
         const user = users[0];
 
         if (!user) {
             return { success: false, error: "Utente non trovato" };
-        }
-
-        // Verifica password (semplificata per ora, in produzione usiamo bcrypt)
-        // Se la password nel DB è nulla (utente Google), non può accedere via mail
-        if (!user.password) {
-            return { success: false, error: "Usa l'accesso Google per questo account" };
-        }
-
-        if (user.password !== password) {
-            return { success: false, error: "Password errata" };
         }
 
         // Crea sessione
@@ -117,10 +107,6 @@ export async function updateUser(data: { name?: string, password?: string, phone
 
         if (data.phone !== undefined) {
             await prisma.$executeRawUnsafe(`UPDATE "User" SET phone = $1 WHERE email = $2`, data.phone, user.email);
-        }
-        
-        if (data.password && data.password.trim() !== "") {
-            await prisma.$executeRawUnsafe(`UPDATE "User" SET password = $1 WHERE email = $2`, data.password, user.email);
         }
         
         // Forza l'aggiornamento di tutta la UI
@@ -203,8 +189,8 @@ export async function createUser(data: { email: string, name: string, role: stri
         const id = Math.random().toString(36).substring(7);
         const roleToSet = data.role || 'OPERATOR';
         await prisma.$executeRawUnsafe(
-            `INSERT INTO "User" (id, email, name, role, phone, password, "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
-            id, data.email, data.name, data.role, data.phone || null, data.password || null
+            `INSERT INTO "User" (id, email, name, role, phone, "updatedAt") VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+            id, data.email, data.name, data.role, data.phone || null
         );
         revalidatePath('/settings');
         return { success: true };
