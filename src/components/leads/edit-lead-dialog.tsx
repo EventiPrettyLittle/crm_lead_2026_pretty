@@ -114,7 +114,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
         if (!open) return;
 
         const initAutocomplete = () => {
-            if (!inputRef.current || !window.google) {
+            if (!inputRef.current || !(window as any).google) {
                 setTimeout(initAutocomplete, 500);
                 return;
             }
