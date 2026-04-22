@@ -14,6 +14,7 @@ export async function getDeals() {
             status: 'ACCETTATO'
         },
         include: {
+            items: true,
             lead: {
                 include: {
                     deal: true
@@ -69,11 +70,14 @@ export async function getDealById(leadId: string) {
         });
     }
 
-    // Cerchiamo anche il preventivo accettato associato
+    // Cerchiamo anche il preventivo accettato associato con i suoi prodotti
     const acceptedQuote = await prisma.quote.findFirst({
         where: { 
             leadId,
             status: 'ACCETTATO'
+        },
+        include: {
+            items: true
         },
         orderBy: { updatedAt: 'desc' }
     });
