@@ -10,7 +10,11 @@ import {
     Database, 
     Wallet, 
     MonitorPlay, 
-    Puzzle 
+    Puzzle,
+    Euro,
+    Workflow,
+    Clock,
+    Map
 } from "lucide-react"
 
 export const sidebarLinks = [
@@ -40,9 +44,14 @@ export const sidebarLinks = [
         icon: FileText,
     },
     {
+        title: "Deal",
+        href: "/deals",
+        icon: Workflow,
+    },
+    {
         title: "Incassi & Pagamenti",
         href: "/finance",
-        icon: Wallet,
+        icon: Euro,
     },
     {
         title: "Presentazione",

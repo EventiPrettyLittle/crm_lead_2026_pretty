@@ -70,6 +70,8 @@ model Lead {
   quotes       Quote[]
   appointments Appointment[]
   payments     Payment[]
+  deal         Deal?
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -175,4 +177,69 @@ model SystemSettings {
   logoUrl   String?
   logoWidth Int      @default(150)
   updatedAt DateTime @updatedAt
+}
+
+model Deal {
+  id                String   @id @default(cuid())
+  leadId            String   @unique
+  lead              Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  // Event Details
+  numGuests         String?
+  numFavors         String?
+  arrivalTime       String?
+  endTime           String?
+  
+  // Favor 1
+  favor1_colors     String?
+  favor1_graphics   String?
+  favor1_stick      String?
+  favor1_scents     String?
+  favor1_notes      String?
+  
+  // Pack 1
+  pack1_ribbon     String?
+  pack1_confetti   String?
+  pack1_graphics   String?
+  
+  // Accessories 1
+  acc1_product     String?
+  acc1_colors      String?
+  acc1_graphics    String?
+
+  // Accessories 2
+  acc2_product     String?
+  acc2_colors      String?
+  acc2_graphics    String?
+  
+  // Favor 2
+  favor2_colors     String?
+  favor2_graphics   String?
+  favor2_stick      String?
+  favor2_scents     String?
+  favor2_notes      String?
+  
+  // Pack 2
+  pack2_ribbon     String?
+  pack2_confetti   String?
+  pack2_graphics   String?
+
+  // Favor 3
+  favor3_colors     String?
+  favor3_graphics   String?
+  favor3_stick      String?
+  favor3_scents     String?
+  favor3_notes      String?
+  
+  // Pack 3
+  pack3_ribbon     String?
+  pack3_confetti   String?
+  pack3_graphics   String?
+  
+  // General
+  notes             String?
+  status            String   @default("IN_LAVORAZIONE") // IN_LAVORAZIONE, PRONTO, CONSEGNATO
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
