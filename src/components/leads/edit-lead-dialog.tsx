@@ -68,7 +68,7 @@ const formSchema = z.object({
   eventCity: z.string().optional().or(z.literal('')),
   eventProvince: z.string().optional().or(z.literal('')),
   eventRegion: z.string().optional().or(z.literal('')),
-  additionalServices: z.array(z.string()).default([]),
+  additionalServices: z.array(z.string()),
 })
 
 interface EditLeadDialogProps {
