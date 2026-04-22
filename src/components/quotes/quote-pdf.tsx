@@ -235,7 +235,6 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
                         <Text style={[styles.infoValue, { fontWeight: 'bold' }]}>{companyName}</Text>
                         <Text style={styles.infoValue}>{address}</Text>
                         <Text style={styles.infoValue}>P.IVA: {vatNumber}</Text>
-                        <Text style={styles.infoValue}>Tel: {phone}</Text>
                         <Text style={styles.infoValue}>Email: {email}</Text>
                     </View>
                     <View style={styles.infoBlock}>
