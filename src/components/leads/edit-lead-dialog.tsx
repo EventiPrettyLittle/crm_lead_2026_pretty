@@ -42,7 +42,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { updateLeadDetails } from '@/actions/leads'
+import { updateLeadDetails } from '@/actions/lead-actions'
 
 const EVENT_TYPES = [
   'Matrimonio',
