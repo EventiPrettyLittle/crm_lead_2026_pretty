@@ -8,15 +8,22 @@ import { Euro, CreditCard, Clock, CheckCircle2, MoreHorizontal, Plus, Trash2, Wa
 import { AddPaymentDialog } from "@/components/finance/add-payment-dialog";
 import { PaymentList } from "@/components/finance/payment-list";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default async function FinancePage() {
     const quotes = await getAcceptedQuotes();
 
     const totalToCollect = quotes.reduce((acc: number, q: any) => acc + Number(q.totalAmount || q.totalamount || 0), 0);
     const totalCollected = quotes.reduce((acc: number, q: any) => {
-        const paymentsTotal = q.payments?.reduce((pAcc: number, p: any) => pAcc + Number(p.amount || p.amount || 0), 0) || 0;
+        const paymentsTotal = q.payments?.reduce((pAcc: number, p: any) => pAcc + Number(p.amount || 0), 0) || 0;
         return acc + paymentsTotal;
     }, 0);
+
+    const allPayments = quotes.flatMap((q: any) => q.payments || []);
+    const cashTotal = allPayments.filter((p: any) => p.method === 'CONTANTI').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const bankTotal = allPayments.filter((p: any) => p.method === 'BONIFICO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const cardTotal = allPayments.filter((p: any) => p.method === 'CARTA').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const checkTotal = allPayments.filter((p: any) => p.method === 'ASSEGNO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
 
     const balance = totalToCollect - totalCollected;
 
@@ -64,7 +71,33 @@ export default async function FinancePage() {
                         <h3 className="text-4xl font-black text-white mt-1 italic tracking-tighter">€{totalCollected.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</h3>
                         <div className="mt-4 flex items-center gap-2">
                              <Progress value={(totalCollected / totalToCollect) * 100} className="h-1.5 bg-white/5" />
-                             <span className="text-[10px] font-black text-emerald-400">{Math.floor((totalCollected / totalToCollect) * 100)}%</span>
+                             <span className="text-[10px] font-black text-emerald-400">{Math.floor((totalCollected / (totalToCollect || 1)) * 100)}%</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-4 border-t border-white/5 pt-4">
+                            {bankTotal > 0 && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Bonifici</span>
+                                    <span className="text-[11px] font-black text-white">€{bankTotal.toLocaleString('it-IT')}</span>
+                                </div>
+                            )}
+                            {cashTotal > 0 && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Contanti</span>
+                                    <span className="text-[11px] font-black text-white">€{cashTotal.toLocaleString('it-IT')}</span>
+                                </div>
+                            )}
+                            {cardTotal > 0 && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Carte/POS</span>
+                                    <span className="text-[11px] font-black text-white">€{cardTotal.toLocaleString('it-IT')}</span>
+                                </div>
+                            )}
+                            {checkTotal > 0 && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Assegni</span>
+                                    <span className="text-[11px] font-black text-white">€{checkTotal.toLocaleString('it-IT')}</span>
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
