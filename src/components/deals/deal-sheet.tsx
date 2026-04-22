@@ -20,6 +20,91 @@ interface DealSheetProps {
     leadLocation?: string;
 }
 
+// SPOSTATO FUORI per evitare perdita di focus durante la digitazione
+const DynamicField = ({ 
+    label, 
+    field, 
+    value, 
+    onChange, 
+    placeholder = "", 
+    isAccent = false 
+}: { 
+    label: string, 
+    field: string, 
+    value: string, 
+    onChange: (field: string, val: string) => void,
+    placeholder?: string, 
+    isAccent?: boolean 
+}) => {
+    const values = value ? value.split(',').map(v => v.trim()) : [''];
+
+    const updatePart = (index: number, newValue: string) => {
+        const newValues = [...values];
+        newValues[index] = newValue;
+        onChange(field, newValues.join(', '));
+    };
+
+    const addRow = () => {
+        onChange(field, [...values, ''].join(', '));
+    };
+
+    const removeRow = (index: number) => {
+        if (values.length <= 1) {
+            onChange(field, '');
+            return;
+        }
+        const newValues = values.filter((_, i) => i !== index);
+        onChange(field, newValues.join(', '));
+    };
+
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</Label>
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    type="button"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        addRow();
+                    }}
+                    className="h-5 w-5 p-0 rounded-full bg-slate-100 text-slate-500 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                >
+                    <Plus className="h-2.5 w-2.5" />
+                </Button>
+            </div>
+            <div className="space-y-1.5 pr-1 max-h-[150px] overflow-y-auto custom-scrollbar">
+                {values.map((v, i) => (
+                    <div key={`${field}-${i}`} className="flex gap-2 group animate-in slide-in-from-left-2 duration-200">
+                        <Input 
+                            value={v} 
+                            placeholder={placeholder}
+                            onChange={(e) => updatePart(i, e.target.value)} 
+                            className={cn(
+                                "h-10 rounded-xl bg-slate-50 border-slate-100 font-bold text-xs focus:bg-white transition-all",
+                                isAccent && "text-indigo-600"
+                            )}
+                        />
+                        {values.length > 1 && (
+                            <button 
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    removeRow(i);
+                                }}
+                                type="button"
+                                className="p-2 text-slate-300 hover:text-rose-500 transition-all focus:outline-none"
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealSheetProps) {
     const [data, setData] = useState(initialData);
     const [loading, setLoading] = useState(false);
@@ -40,69 +125,6 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
         } else {
             toast.error("Errore durante il salvataggio: " + res.error);
         }
-    };
-
-    const DynamicField = ({ label, field, value, placeholder = "", isAccent = false }: { label: string, field: string, value: string, placeholder?: string, isAccent?: boolean }) => {
-        const values = value ? value.split(',').map(v => v.trim()) : [''];
-
-        const updatePart = (index: number, newValue: string) => {
-            const newValues = [...values];
-            newValues[index] = newValue;
-            handleChange(field, newValues.join(', '));
-        };
-
-        const addRow = () => {
-            handleChange(field, [...values, ''].join(', '));
-        };
-
-        const removeRow = (index: number) => {
-            if (values.length <= 1) {
-                handleChange(field, '');
-                return;
-            }
-            const newValues = values.filter((_, i) => i !== index);
-            handleChange(field, newValues.join(', '));
-        };
-
-        return (
-            <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</Label>
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={addRow}
-                        className="h-5 w-5 p-0 rounded-full bg-slate-100 text-slate-500 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                    >
-                        <Plus className="h-2.5 w-2.5" />
-                    </Button>
-                </div>
-                <div className="space-y-1.5 pr-1 max-h-[150px] overflow-y-auto custom-scrollbar">
-                    {values.map((v, i) => (
-                        <div key={i} className="flex gap-2 group animate-in slide-in-from-left-2 duration-200">
-                            <Input 
-                                value={v} 
-                                placeholder={placeholder}
-                                onChange={(e) => updatePart(i, e.target.value)} 
-                                className={cn(
-                                    "h-10 rounded-xl bg-slate-50 border-slate-100 font-bold text-xs focus:bg-white transition-all",
-                                    isAccent && "text-indigo-600"
-                                )}
-                            />
-                            {values.length > 1 && (
-                                <button 
-                                    onClick={() => removeRow(i)}
-                                    type="button"
-                                    className="p-2 text-slate-300 hover:text-rose-500 transition-all"
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
     };
 
     return (
@@ -209,52 +231,52 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                     <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
                         <CardContent className="p-8 space-y-10">
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                            <DynamicField label="Colori" field="favor1_colors" value={data.favor1_colors || ''} />
-                            <DynamicField label="Grafiche" field="favor1_graphics" value={data.favor1_graphics || ''} />
-                            <DynamicField label="Stick" field="favor1_stick" value={data.favor1_stick || ''} />
-                            <DynamicField label="Profumi" field="favor1_scents" value={data.favor1_scents || ''} />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                             {/* Packaging */}
-                            <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Package className="h-4 w-4 text-indigo-600" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Configurazione Packaging</span>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <DynamicField label="Nastro" field="pack1_ribbon" value={data.pack1_ribbon || ''} />
-                                    <DynamicField label="Confetti" field="pack1_confetti" value={data.pack1_confetti || ''} />
-                                    <DynamicField label="Grafica Pack" field="pack1_graphics" value={data.pack1_graphics || ''} />
-                                </div>
+                                <DynamicField label="Colori" field="favor1_colors" value={data.favor1_colors || ''} onChange={handleChange} />
+                                <DynamicField label="Grafiche" field="favor1_graphics" value={data.favor1_graphics || ''} onChange={handleChange} />
+                                <DynamicField label="Stick" field="favor1_stick" value={data.favor1_stick || ''} onChange={handleChange} />
+                                <DynamicField label="Profumi" field="favor1_scents" value={data.favor1_scents || ''} onChange={handleChange} />
                             </div>
 
-                            {/* Accessori 1 */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                 {/* Packaging */}
+                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Package className="h-4 w-4 text-indigo-600" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Configurazione Packaging</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <DynamicField label="Nastro" field="pack1_ribbon" value={data.pack1_ribbon || ''} onChange={handleChange} />
+                                        <DynamicField label="Confetti" field="pack1_confetti" value={data.pack1_confetti || ''} onChange={handleChange} />
+                                        <DynamicField label="Grafica Pack" field="pack1_graphics" value={data.pack1_graphics || ''} onChange={handleChange} />
+                                    </div>
+                                </div>
+
+                                {/* Accessori 1 */}
+                                <div className="bg-white border-2 border-slate-50 rounded-[2rem] p-8 space-y-6">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Layers className="h-4 w-4 text-indigo-600" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Accessori & Opzioni 1</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <DynamicField label="Prodotto" field="acc1_product" value={data.acc1_product || ''} onChange={handleChange} isAccent />
+                                        <DynamicField label="Colori" field="acc1_colors" value={data.acc1_colors || ''} onChange={handleChange} />
+                                        <DynamicField label="Grafica" field="acc1_graphics" value={data.acc1_graphics || ''} onChange={handleChange} />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Accessori 2 */}
                             <div className="bg-white border-2 border-slate-50 rounded-[2rem] p-8 space-y-6">
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-4">
                                     <Layers className="h-4 w-4 text-indigo-600" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Accessori & Opzioni 1</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Accessori & Opzioni 2</span>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <DynamicField label="Prodotto" field="acc1_product" value={data.acc1_product || ''} isAccent />
-                                    <DynamicField label="Colori" field="acc1_colors" value={data.acc1_colors || ''} />
-                                    <DynamicField label="Grafica" field="acc1_graphics" value={data.acc1_graphics || ''} />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                    <DynamicField label="Prodotto 2" field="acc2_product" value={data.acc2_product || ''} onChange={handleChange} isAccent />
+                                    <DynamicField label="Colori 2" field="acc2_colors" value={data.acc2_colors || ''} onChange={handleChange} />
+                                    <DynamicField label="Grafica 2" field="acc2_graphics" value={data.acc2_graphics || ''} onChange={handleChange} />
                                 </div>
                             </div>
-                        </div>
-                        
-                        {/* Accessori 2 */}
-                        <div className="bg-white border-2 border-slate-50 rounded-[2rem] p-8 space-y-6">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Layers className="h-4 w-4 text-indigo-600" />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Accessori & Opzioni 2</span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <DynamicField label="Prodotto 2" field="acc2_product" value={data.acc2_product || ''} isAccent />
-                                <DynamicField label="Colori 2" field="acc2_colors" value={data.acc2_colors || ''} />
-                                <DynamicField label="Grafica 2" field="acc2_graphics" value={data.acc2_graphics || ''} />
-                            </div>
-                        </div>
                         </CardContent>
                     </Card>
                 </section>
@@ -266,20 +288,22 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                             <Gift className="h-5 w-5 text-emerald-500" />
                             <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase underline decoration-emerald-100 decoration-4 underline-offset-4">Seconda Bomboniera</h2>
                         </div>
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden p-8 space-y-10 border-l-8 border-emerald-400">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                <DynamicField label="Colori" field="favor2_colors" value={data.favor2_colors || ''} />
-                                <DynamicField label="Grafiche" field="favor2_graphics" value={data.favor2_graphics || ''} />
-                                <DynamicField label="Stick" field="favor2_stick" value={data.favor2_stick || ''} />
-                                <DynamicField label="Profumi" field="favor2_scents" value={data.favor2_scents || ''} />
-                            </div>
-                            <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <DynamicField label="Nastro" field="pack2_ribbon" value={data.pack2_ribbon || ''} />
-                                    <DynamicField label="Confetti" field="pack2_confetti" value={data.pack2_confetti || ''} />
-                                    <DynamicField label="Grafica Pack" field="pack2_graphics" value={data.pack2_graphics || ''} />
+                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-emerald-400">
+                            <CardContent className="p-8 space-y-10">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                    <DynamicField label="Colori" field="favor2_colors" value={data.favor2_colors || ''} onChange={handleChange} />
+                                    <DynamicField label="Grafiche" field="favor2_graphics" value={data.favor2_graphics || ''} onChange={handleChange} />
+                                    <DynamicField label="Stick" field="favor2_stick" value={data.favor2_stick || ''} onChange={handleChange} />
+                                    <DynamicField label="Profumi" field="favor2_scents" value={data.favor2_scents || ''} onChange={handleChange} />
                                 </div>
-                            </div>
+                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <DynamicField label="Nastro" field="pack2_ribbon" value={data.pack2_ribbon || ''} onChange={handleChange} />
+                                        <DynamicField label="Confetti" field="pack2_confetti" value={data.pack2_confetti || ''} onChange={handleChange} />
+                                        <DynamicField label="Grafica Pack" field="pack2_graphics" value={data.pack2_graphics || ''} onChange={handleChange} />
+                                    </div>
+                                </div>
+                            </CardContent>
                         </Card>
                     </section>
                 )}
@@ -291,20 +315,22 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                             <Gift className="h-5 w-5 text-amber-500" />
                             <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase underline decoration-amber-100 decoration-4 underline-offset-4">Terza Bomboniera</h2>
                         </div>
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden p-8 space-y-10 border-l-8 border-amber-400">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                <DynamicField label="Colori" field="favor3_colors" value={data.favor3_colors || ''} />
-                                <DynamicField label="Grafiche" field="favor3_graphics" value={data.favor3_graphics || ''} />
-                                <DynamicField label="Stick" field="favor3_stick" value={data.favor3_stick || ''} />
-                                <DynamicField label="Profumi" field="favor3_scents" value={data.favor3_scents || ''} />
-                            </div>
-                            <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <DynamicField label="Nastro" field="pack3_ribbon" value={data.pack3_ribbon || ''} />
-                                    <DynamicField label="Confetti" field="pack3_confetti" value={data.pack3_confetti || ''} />
-                                    <DynamicField label="Grafica Pack" field="pack3_graphics" value={data.pack3_graphics || ''} />
+                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-amber-400">
+                            <CardContent className="p-8 space-y-10">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                    <DynamicField label="Colori" field="favor3_colors" value={data.favor3_colors || ''} onChange={handleChange} />
+                                    <DynamicField label="Grafiche" field="favor3_graphics" value={data.favor3_graphics || ''} onChange={handleChange} />
+                                    <DynamicField label="Stick" field="favor3_stick" value={data.favor3_stick || ''} onChange={handleChange} />
+                                    <DynamicField label="Profumi" field="favor3_scents" value={data.favor3_scents || ''} onChange={handleChange} />
                                 </div>
-                            </div>
+                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <DynamicField label="Nastro" field="pack3_ribbon" value={data.pack3_ribbon || ''} onChange={handleChange} />
+                                        <DynamicField label="Confetti" field="pack3_confetti" value={data.pack3_confetti || ''} onChange={handleChange} />
+                                        <DynamicField label="Grafica Pack" field="pack3_graphics" value={data.pack3_graphics || ''} onChange={handleChange} />
+                                    </div>
+                                </div>
+                            </CardContent>
                         </Card>
                     </section>
                 )}
