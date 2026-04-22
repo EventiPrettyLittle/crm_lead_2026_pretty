@@ -229,8 +229,8 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             </DialogTrigger>
             <DialogContent 
                 className="sm:max-w-[700px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col"
+                onOpenAutoFocus={(e) => e.preventDefault()}
                 onPointerDownOutside={(e) => {
-                    // CRITICO: Impedisce a Radix di chiudere il dialogo o bloccare il click se si clicca sulla tendina dei suggerimenti Google
                     const target = e.target as HTMLElement;
                     if (target?.closest('.pac-container')) {
                         e.preventDefault();
@@ -303,31 +303,16 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                             (inputRef as any).current = e; 
                                         }} 
                                         autoComplete="off"
-                                        className="h-16 rounded-2xl pl-12 border-2 border-indigo-100 bg-white font-bold text-slate-900 shadow-xl focus:border-indigo-600 transition-all placeholder:text-slate-300 ring-offset-transparent focus-visible:ring-0 focus-visible:ring-offset-0" 
-                                        placeholder="Inizia a scrivere il nome della Villa..." 
+                                        className="h-16 rounded-2xl pl-12 border-2 border-indigo-100 bg-white font-bold text-slate-900 shadow-xl focus:border-indigo-600 transition-all placeholder:text-slate-300" 
+                                        placeholder="Cerca Villa o Indirizzo..." 
                                     />
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-indigo-500" />
                                 </div></FormControl></FormItem>
                             )} />
                             <div className="grid grid-cols-3 gap-3 pt-2">
-                                <FormField control={form.control} name="eventCity" render={({ field }) => (
-                                    <FormItem className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center">
-                                        <p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Città</p>
-                                        <FormControl><input {...field} className="text-[11px] font-black text-slate-800 bg-transparent w-full text-center outline-none border-b border-transparent focus:border-indigo-400" placeholder="Inserisci..." /></FormControl>
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="eventProvince" render={({ field }) => (
-                                    <FormItem className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center">
-                                        <p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Prov</p>
-                                        <FormControl><input {...field} className="text-[11px] font-black text-slate-800 bg-transparent w-full text-center outline-none border-b border-transparent focus:border-indigo-400" placeholder="RM..." /></FormControl>
-                                    </FormItem>
-                                )} />
-                                <FormField control={form.control} name="eventRegion" render={({ field }) => (
-                                    <FormItem className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-center">
-                                        <p className="text-[8px] font-bold text-indigo-500 uppercase mb-1">Regione</p>
-                                        <FormControl><input {...field} className="text-[11px] font-black text-slate-800 bg-transparent w-full text-center outline-none border-b border-transparent focus:border-indigo-400" placeholder="Lazio..." /></FormControl>
-                                    </FormItem>
-                                )} />
+                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Città</p><p className="text-[11px] font-black text-slate-800">{watchCity || '-'}</p></div>
+                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Prov</p><p className="text-[11px] font-black text-slate-800">{watchProvince || '-'}</p></div>
+                                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-center"><p className="text-[8px] font-bold text-indigo-500 uppercase mb-1">Regione</p><p className="text-[11px] font-black text-slate-800">{watchRegion || '-'}</p></div>
                             </div>
                         </div>
 
