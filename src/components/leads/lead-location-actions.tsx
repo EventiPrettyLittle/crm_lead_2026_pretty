@@ -25,7 +25,7 @@ export function LeadLocationActions({ lead }: LeadLocationActionsProps) {
   const province = lead.eventProvince || "Provincia";
   const region = lead.eventRegion || "Regione";
 
-  const locationEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+  const locationEmbedUrl = `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
 
   return (
     <div className="bg-white rounded-[3rem] border border-slate-200/50 shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
