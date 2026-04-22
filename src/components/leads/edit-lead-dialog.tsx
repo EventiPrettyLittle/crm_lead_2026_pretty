@@ -69,12 +69,12 @@ const formSchema = z.object({
   phoneRaw: z.string().optional().or(z.literal('')),
   eventType: z.string().optional().or(z.literal('')),
   eventDate: z.string().optional().or(z.literal('')),
-  eventLocation: z.string().optional().or(z.literal('')),
-  locationName: z.string().optional().or(z.literal('')),
-  eventCity: z.string().optional().or(z.literal('')),
-  eventProvince: z.string().optional().or(z.literal('')),
-  eventRegion: z.string().optional().or(z.literal('')),
-  additionalServices: z.array(z.string()).default([]),
+  eventLocation: z.string().optional().nullable(),
+  locationName: z.string().optional().nullable(),
+  eventCity: z.string().optional().nullable(),
+  eventProvince: z.string().optional().nullable(),
+  eventRegion: z.string().optional().nullable(),
+  additionalServices: z.array(z.string()).nonempty().or(z.array(z.string())),
 })
 
 interface EditLeadDialogProps {
