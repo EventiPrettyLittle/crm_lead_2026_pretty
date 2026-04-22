@@ -120,7 +120,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             }
 
             try {
-                autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+                autoCompleteRef.current = new (window as any).google.maps.places.Autocomplete(inputRef.current, {
                     types: ['establishment', 'geocode'],
                     componentRestrictions: { country: "it" },
                     fields: ["address_components", "formatted_address", "geometry", "name"]
