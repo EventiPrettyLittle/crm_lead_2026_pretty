@@ -262,7 +262,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         <ListChecks className="h-5 w-5 text-indigo-600" />
                         <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase">Prodotti da Preventivo #{acceptedQuote.number || '---'}</h2>
                     </div>
-                    {quoteItems.length > 0 ? (
+                    {quoteItems && quoteItems.length > 0 ? (
                         <Card className="rounded-[2.5rem] border-none shadow-sm bg-indigo-50/50 overflow-hidden">
                             <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {quoteItems.map((item: any, idx: number) => (
@@ -273,15 +273,22 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         </div>
                                         <div className="flex-1 overflow-hidden">
                                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Descrizione Prodotto</p>
-                                            <p className="text-xs font-black text-slate-900 truncate uppercase italic">{item.name}</p>
+                                            <p className="text-xs font-black text-slate-900 truncate uppercase italic leading-tight">
+                                                {item.description || item.name || 'Prodotto'}
+                                            </p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </Card>
                     ) : (
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-slate-50 p-6 text-center italic text-slate-400 font-bold">
-                            Nessun prodotto trovato nel preventivo accettato. Verifica il preventivo nella sezione Leads.
+                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-slate-100/50 p-10 text-center flex flex-col items-center justify-center gap-2">
+                             <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">
+                                <ListChecks className="h-5 w-5" />
+                             </div>
+                             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest italic">
+                                Caricamento prodotti in corso o nessun prodotto trovato nel preventivo #{acceptedQuote.number}...
+                             </p>
                         </Card>
                     )}
                 </section>
