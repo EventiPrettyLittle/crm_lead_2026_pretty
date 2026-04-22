@@ -77,22 +77,16 @@ export async function createManualLead(data: any) {
 
 export async function updateLeadDetails(id: string, data: any) {
     try {
+        const updateData: any = { ...data, updatedAt: new Date() };
+        
+        // Pulizia undefined per evitare sovrascrizioni involontarie
+        Object.keys(updateData).forEach(key => {
+            if (updateData[key] === undefined) delete updateData[key];
+        });
+
         await prisma.lead.update({
             where: { id },
-            data: {
-                firstName: data.firstName || null,
-                lastName: data.lastName || null,
-                email: data.email || null,
-                phoneRaw: data.phone || null,
-                eventLocation: data.eventLocation || null,
-                locationName: data.locationName || null,
-                eventCity: data.eventCity || null,
-                eventProvince: data.eventProvince || null, 
-                eventRegion: data.eventRegion || null,
-                referents: data.referents || null, // AGGIUNTO REFERENTI
-                notesInternal: data.notesInternal,
-                updatedAt: new Date(),
-            } as any
+            data: updateData
         });
         revalidatePath(`/leads/${id}`);
         revalidatePath('/leads');
