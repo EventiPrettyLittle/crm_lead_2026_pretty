@@ -11,13 +11,12 @@ declare global {
     google: any;
   }
 }
-import { Edit2, MapPin, CheckCircle2, User } from 'lucide-react'
+import { Edit2, MapPin, User, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -28,7 +27,6 @@ import {
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
@@ -117,18 +115,23 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
     useEffect(() => {
         if (!open) return;
+        
+        let attempts = 0;
         const initAutocomplete = () => {
-             if (inputRef.current && window.google) {
+             if (inputRef.current && window.google?.maps?.places) {
                 autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
                     types: ['geocode', 'establishment'],
                     componentRestrictions: { country: "it" },
                     fields: ["address_components", "formatted_address", "geometry", "name"]
                 });
+                
                 autoCompleteRef.current.addListener("place_changed", () => {
                     const place = autoCompleteRef.current.getPlace();
                     if (!place.geometry) return;
+                    
                     if (place.formatted_address) form.setValue('eventLocation', place.formatted_address);
                     if (place.name) form.setValue('locationName', place.name);
+                    
                     let city = '', province = '', region = '';
                     if (place.address_components) {
                         for (const component of place.address_components) {
@@ -142,9 +145,13 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                     form.setValue('eventProvince', province);
                     form.setValue('eventRegion', region);
                 });
+             } else if (attempts < 10) {
+                 attempts++;
+                 setTimeout(initAutocomplete, 500);
              }
         };
-        setTimeout(initAutocomplete, 500);
+        
+        initAutocomplete();
     }, [open, form]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -173,10 +180,9 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[650px] rounded-[3rem] border border-slate-200 shadow-2xl p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col">
-                {/* PREMUM HEADER */}
                 <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-900 p-8 text-white shrink-0 relative">
-                    <DialogTitle className="text-3xl font-black tracking-tight mb-1">Gestione Dati Lead</DialogTitle>
-                    <DialogDescription className="text-indigo-100 font-medium text-xs opacity-90">Perfeziona i dettagli dell'evento e aggiorna i contatti.</DialogDescription>
+                    <DialogTitle className="text-3xl font-black tracking-tight mb-1 uppercase tracking-tighter">Gestione Dati Lead</DialogTitle>
+                    <DialogDescription className="text-indigo-100 font-medium text-xs opacity-90 tracking-tight">Perfeziona i dettagli dell'evento e aggiorna i contatti.</DialogDescription>
                     <div className="absolute top-8 right-8 bg-white/10 rounded-full h-12 w-12 flex items-center justify-center backdrop-blur-md border border-white/20">
                         <User className="h-6 w-6 text-white" />
                     </div>
@@ -185,7 +191,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-10 pt-6 space-y-8 custom-scrollbar">
                         
-                        {/* SEZIONE 1: INFORMAZIONI CLIENTE */}
                         <div className="space-y-4">
                             <div className="flex items-center gap-3 mb-2">
                                 <div className="h-4 w-1 rounded-full bg-indigo-500" />
@@ -193,23 +198,22 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="firstName" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome</FormLabel><FormControl><Input className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Nome" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                                 <FormField control={form.control} name="lastName" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cognome</FormLabel><FormControl><Input className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Cognome" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="email" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Email</FormLabel><FormControl><Input className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Email" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                                 <FormField control={form.control} name="phone" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Telefono</FormLabel><FormControl><Input className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Telefono" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
                         </div>
 
-                        {/* SEZIONE 2: CONFIGURAZIONE EVENTO */}
                         <div className="space-y-4 border-t border-slate-50 pt-8">
                              <div className="flex items-center gap-3 mb-2">
                                 <div className="h-4 w-1 rounded-full bg-indigo-500" />
@@ -217,32 +221,31 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="eventType" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tipologia</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined}>
+                                    <FormItem><Select onValueChange={field.onChange} value={field.value || undefined}>
                                         <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Scegli..." /></SelectTrigger></FormControl>
                                         <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t} value={t} className="font-bold">{t}</SelectItem>)}</SelectContent>
                                     </Select></FormItem>
                                 )} />
                                 <FormField control={form.control} name="eventDate" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Data</FormLabel><FormControl><Input type="date" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input type="date" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="guestsCount" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Invitati</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined}>
-                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Range..." /></SelectTrigger></FormControl>
+                                    <FormItem><Select onValueChange={field.onChange} value={field.value || undefined}>
+                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Invitati..." /></SelectTrigger></FormControl>
                                         <SelectContent>{GUEST_RANGES.map(r => <SelectItem key={r} value={r} className="font-bold">{r}</SelectItem>)}</SelectContent>
                                     </Select></FormItem>
                                 )} />
                                 <FormField control={form.control} name="preferredContactTime" render={({ field }) => (
-                                    <FormItem><FormLabel className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Contatto</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined}>
-                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Fascia..." /></SelectTrigger></FormControl>
+                                    <FormItem><Select onValueChange={field.onChange} value={field.value || undefined}>
+                                        <FormControl><SelectTrigger className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold"><SelectValue placeholder="Contatto..." /></SelectTrigger></FormControl>
                                         <SelectContent>{CONTACT_TIMES.map(c => <SelectItem key={c} value={c} className="font-bold">{c}</SelectItem>)}</SelectContent>
                                     </Select></FormItem>
                                 )} />
                             </div>
                         </div>
 
-                        {/* SEZIONE 3: GEOLOCALIZZAZIONE */}
                         <div className="space-y-4 border-t border-slate-50 pt-8">
                              <div className="flex items-center gap-3 mb-2">
                                 <div className="h-4 w-1 rounded-full bg-indigo-500" />
@@ -250,7 +253,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                             </div>
                              <FormField control={form.control} name="eventLocation" render={({ field: { ref: fieldRef, ...fieldProps } }) => (
                                 <FormItem><FormControl><div className="relative">
-                                    <Input {...fieldProps} ref={(e) => { fieldRef(e); (inputRef as any).current = e; }} className="h-14 rounded-2xl pl-12 border-2 border-indigo-50 bg-white font-bold text-slate-900 shadow-sm focus:border-indigo-500 transition-all" placeholder="Cerca Location o Indirizzo..." />
+                                    <Input {...fieldProps} ref={(e) => { (inputRef as any).current = e; }} className="h-14 rounded-2xl pl-12 border-2 border-indigo-50 bg-white font-bold text-slate-900 shadow-sm focus:border-indigo-500 transition-all placeholder:text-slate-300" placeholder="Cerca Location o Indirizzo..." />
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500" />
                                 </div></FormControl></FormItem>
                             )} />
@@ -261,7 +264,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                             </div>
                         </div>
 
-                        {/* SEZIONE 4: EXTRA & SERVIZI */}
                         <div className="space-y-4 border-t border-slate-50 pt-8 pb-4">
                              <div className="flex items-center gap-3 mb-2">
                                 <div className="h-4 w-1 rounded-full bg-indigo-500" />
@@ -288,9 +290,9 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                                         className="h-6 w-6 rounded-lg border-2 border-slate-200 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
                                                     />
                                                 </FormControl>
-                                                <FormLabel className="text-sm font-black text-slate-700 leading-none cursor-pointer group-hover:text-indigo-600 transition-colors">
+                                                <label className="text-sm font-black text-slate-700 leading-none cursor-pointer group-hover:text-indigo-600 transition-colors">
                                                     {service.label}
-                                                </FormLabel>
+                                                </label>
                                             </FormItem>
                                         )}
                                     />
@@ -300,7 +302,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
                         <div className="pt-2">
                              <Button type="submit" disabled={loading} className="w-full h-16 rounded-[1.8rem] bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.15em] shadow-2xl shadow-indigo-200 transition-all active:scale-95">
-                                {loading ? 'Salvataggio...' : 'Salva Modifiche'}
+                                {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Salva Modifiche'}
                              </Button>
                         </div>
 
