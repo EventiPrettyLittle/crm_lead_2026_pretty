@@ -157,13 +157,29 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
         }
 
         const initGoogle = () => {
-            if (!inputRef.current || !window.google) return;
+            if (!window.google) {
+                toast.error("Google Maps non è caricato. Controlla la connessione o la chiave API.");
+                return;
+            }
+            
+            if (!window.google.maps.places) {
+                toast.error("Servizio 'Places' di Google non disponibile. Verifica la chiave API.");
+                return;
+            }
+
+            if (!inputRef.current) return;
 
             try {
                 const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
                     types: ['establishment', 'geocode'],
                     componentRestrictions: { country: "it" },
                     fields: ["address_components", "formatted_address", "geometry", "name"]
+                });
+
+                // Ascoltatore per gestire i casi in cui l'utente clicca ma Google dà errore
+                window.google.maps.event.addListener(autocomplete, 'error', (err: any) => {
+                    console.error("Errore Autocomplete:", err);
+                    toast.error("Errore Google Maps: " + (err.message || "Problema di comunicazione"));
                 });
 
                 autocomplete.addListener("place_changed", () => {
