@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export default async function DealDetailPage({ params }: { params: { id: string } }) {
-    const { id } = params;
+export default async function DealDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
 
     // Recuperiamo il lead per avere il nome
     const lead = await prisma.lead.findUnique({
