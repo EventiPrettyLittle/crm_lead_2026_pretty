@@ -310,9 +310,24 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                 </div></FormControl></FormItem>
                             )} />
                             <div className="grid grid-cols-3 gap-3 pt-2">
-                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Città</p><p className="text-[11px] font-black text-slate-800">{watchCity || '-'}</p></div>
-                                <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center"><p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Prov</p><p className="text-[11px] font-black text-slate-800">{watchProvince || '-'}</p></div>
-                                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-center"><p className="text-[8px] font-bold text-indigo-500 uppercase mb-1">Regione</p><p className="text-[11px] font-black text-slate-800">{watchRegion || '-'}</p></div>
+                                <FormField control={form.control} name="eventCity" render={({ field }) => (
+                                    <FormItem className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center">
+                                        <p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Città</p>
+                                        <FormControl><input {...field} className="text-[11px] font-black text-slate-800 bg-transparent w-full text-center outline-none border-b border-transparent focus:border-indigo-400" placeholder="Inserisci..." /></FormControl>
+                                    </FormItem>
+                                )} />
+                                <FormField control={form.control} name="eventProvince" render={({ field }) => (
+                                    <FormItem className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-center">
+                                        <p className="text-[8px] font-bold text-slate-400 uppercase mb-1">Prov</p>
+                                        <FormControl><input {...field} className="text-[11px] font-black text-slate-800 bg-transparent w-full text-center outline-none border-b border-transparent focus:border-indigo-400" placeholder="RM..." /></FormControl>
+                                    </FormItem>
+                                )} />
+                                <FormField control={form.control} name="eventRegion" render={({ field }) => (
+                                    <FormItem className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-center">
+                                        <p className="text-[8px] font-bold text-indigo-500 uppercase mb-1">Regione</p>
+                                        <FormControl><input {...field} className="text-[11px] font-black text-slate-800 bg-transparent w-full text-center outline-none border-b border-transparent focus:border-indigo-400" placeholder="Lazio..." /></FormControl>
+                                    </FormItem>
+                                )} />
                             </div>
                         </div>
 
