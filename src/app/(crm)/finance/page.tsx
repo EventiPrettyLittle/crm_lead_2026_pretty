@@ -20,10 +20,11 @@ export default async function FinancePage() {
     }, 0);
 
     const allPayments = quotes.flatMap((q: any) => q.payments || []);
-    const cashTotal = allPayments.filter((p: any) => p.method === 'CONTANTI').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
-    const bankTotal = allPayments.filter((p: any) => p.method === 'BONIFICO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
-    const cardTotal = allPayments.filter((p: any) => p.method === 'CARTA').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
-    const checkTotal = allPayments.filter((p: any) => p.method === 'ASSEGNO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const cashTotal = allPayments.filter((p: any) => p.method?.toUpperCase() === 'CONTANTI').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const bankTotal = allPayments.filter((p: any) => p.method?.toUpperCase() === 'BONIFICO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const cardTotal = allPayments.filter((p: any) => ['CARTA', 'POS', 'LINK'].includes(p.method?.toUpperCase())).reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const checkTotal = allPayments.filter((p: any) => p.method?.toUpperCase() === 'ASSEGNO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+
 
     const balance = totalToCollect - totalCollected;
 
