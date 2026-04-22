@@ -138,22 +138,36 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
     }, [open]);
 
     useEffect(() => {
-        let retryInterval: NodeJS.Timeout;
-        let autocomplete: any = null;
+        if (!open) return;
 
-        const setupAutocomplete = () => {
-            const input = document.getElementById('location-input') as HTMLInputElement;
-            if (!input || !window.google) return false;
+        // Forza stile ultra-prioritario per la tendina Google
+        const styleId = 'google-autocomplete-fix';
+        if (!document.getElementById(styleId)) {
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.innerHTML = `
+                .pac-container { 
+                    z-index: 1000000 !important; 
+                    pointer-events: auto !important;
+                    visibility: visible !important;
+                    display: block !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        const initGoogle = () => {
+            if (!inputRef.current || !window.google) return;
 
             try {
-                autocomplete = new window.google.maps.places.Autocomplete(input, {
+                const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
                     fields: ["formatted_address", "geometry", "name", "address_components"],
                     types: ["establishment", "geocode"],
                 });
 
                 autocomplete.addListener("place_changed", () => {
-                    const place = autocomplete!.getPlace();
-                    if (!place.geometry) return;
+                    const place = autocomplete.getPlace();
+                    if (!place || !place.geometry) return;
 
                     let city = '', province = '', region = '';
                     if (place.address_components) {
@@ -176,32 +190,14 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                 });
 
                 autoCompleteRef.current = autocomplete;
-                return true;
             } catch (err) {
                 console.error("Errore Autocomplete:", err);
-                return false;
             }
         };
 
-        if (open) {
-            const success = setupAutocomplete();
-            if (!success) {
-                let attempts = 0;
-                retryInterval = setInterval(() => {
-                    attempts++;
-                    if (setupAutocomplete() || attempts > 20) {
-                        clearInterval(retryInterval);
-                    }
-                }, 100);
-            }
-        }
-
-        return () => {
-            if (retryInterval) clearInterval(retryInterval);
-            if (autocomplete) {
-                window.google.maps.event.clearInstanceListeners(autocomplete);
-            }
-        };
+        // Piccolo timeout per lasciare che Radix finisca di montare l'input
+        const timer = setTimeout(initGoogle, 500);
+        return () => clearTimeout(timer);
     }, [open, form]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
