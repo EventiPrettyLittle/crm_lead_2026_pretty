@@ -239,6 +239,9 @@ export default async function LeadDetailPage(props: PageProps) {
                                     </div>
                                 </div>
                             </TabsContent>
+                            <TabsContent value="finance" className="pt-6 outline-none animate-in fade-in zoom-in-95 duration-500">
+                                <LeadFinanceTab lead={lead as any} />
+                            </TabsContent>
                         </Tabs>
                     </div>
 

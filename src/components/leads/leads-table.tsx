@@ -203,7 +203,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                                 </TableHead>
                                 <TableHead className="w-[100px] text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">Location</TableHead>
                                 <TableHead className="w-[100px] text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">Contatto</TableHead>
-                                <TableHead className="w-[160px] px-4 text-[9px] font-black uppercase tracking-widest text-slate-400 py-4 text-right">Azioni</TableHead>
+                                <TableHead className="w-[280px] px-4 text-[9px] font-black uppercase tracking-widest text-slate-400 py-4 text-right">Azioni</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

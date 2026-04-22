@@ -132,7 +132,7 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
     ]
 
     return (
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-nowrap">
             {actions.map((action) => (
                 <Button
                     key={action.id}
