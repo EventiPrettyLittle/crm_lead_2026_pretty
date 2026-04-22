@@ -19,7 +19,6 @@ import { DeleteLeadButton } from "@/components/leads/delete-lead-button"
 import { Button } from "@/components/ui/button"
 import { LeadInternalNotes } from "@/components/leads/lead-internal-notes"
 import { LeadFinanceTab } from "@/components/leads/lead-finance-tab"
-import { LeadReferentsPanel } from "@/components/leads/lead-referents-panel"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 
@@ -169,12 +168,6 @@ export default async function LeadDetailPage(props: PageProps) {
                                                 </div>
                                             </CardContent>
                                         </Card>
-
-                                        {/* PANNELLO REFERENTI - SEMPRE VISIBILE SOTTO I CONTATTI */}
-                                        <LeadReferentsPanel 
-                                            leadId={lead.id} 
-                                            initialReferents={(lead as any).referents} 
-                                        />
                                     </div>
 
                                     <Card className="rounded-[2.2rem] border-slate-200/60 shadow-sm overflow-hidden group hover:border-indigo-100 transition-all bg-white">
