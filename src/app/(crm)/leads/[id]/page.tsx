@@ -184,7 +184,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                 <Card className="rounded-2xl border-slate-200/60 shadow-sm p-6">
                                     <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-slate-100">
                                         {lead.activities.length === 0 && <p className="text-sm text-slate-400 text-center uppercase font-black py-10">Nessuna attività registrata.</p>}
-                                        {lead.activities.map((activity) => (
+                                        {lead.activities.map((activity: any) => (
                                             <div key={activity.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
                                                 <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-slate-100 group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-sm shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
                                                     <ArrowRight className="h-4 w-4" />
