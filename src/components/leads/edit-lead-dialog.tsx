@@ -45,7 +45,7 @@ const formSchema = z.object({
     firstName: z.string().min(2, 'Richiesto'),
     lastName: z.string().min(2, 'Richiesto'),
     email: z.string().email('Email non valida').optional().or(z.literal('')),
-    phone: z.string().optional(),
+    phoneRaw: z.string().optional(),
     eventType: z.string().optional(),
     eventDate: z.string().optional(),
     eventLocation: z.string().optional(),
@@ -93,7 +93,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             firstName: lead.firstName || '',
             lastName: lead.lastName || '',
             email: lead.email || '',
-            phone: lead.phoneRaw || '',
+            phoneRaw: lead.phoneRaw || '',
             eventType: lead.eventType || '',
             eventDate: lead.eventDate ? new Date(lead.eventDate).toISOString().split('T')[0] : '',
             eventLocation: lead.eventLocation || '',
@@ -226,7 +226,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                 <FormField control={form.control} name="email" render={({ field }) => (
                                     <FormItem><FormControl><Input placeholder="Email" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
-                                <FormField control={form.control} name="phone" render={({ field }) => (
+                                <FormField control={form.control} name="phoneRaw" render={({ field }) => (
                                     <FormItem><FormControl><Input placeholder="Telefono" className="h-12 rounded-2xl bg-slate-50/50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
