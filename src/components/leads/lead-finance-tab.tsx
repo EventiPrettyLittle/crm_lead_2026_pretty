@@ -40,13 +40,12 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
         acceptedQuotes.length === 1 ? acceptedQuotes[0].id : null
     );
 
-    const cashPaid = (lead.payments || [])
-        .filter((p: any) => p.method === 'CONTANTI')
-        .reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
-    
-    const digitalPaid = (lead.payments || [])
-        .filter((p: any) => ['CARTA', 'BONIFICO', 'ASSEGNO'].includes(p.method))
-        .reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const payments = lead.payments || [];
+    const cashTotal = payments.filter((p: any) => p.method === 'CONTANTI').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const bankTotal = payments.filter((p: any) => p.method === 'BONIFICO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const cardTotal = payments.filter((p: any) => p.method === 'CARTA').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+    const checkTotal = payments.filter((p: any) => p.method === 'ASSEGNO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+
 
     const totalBudget = acceptedQuotes.reduce((acc: number, q: any) => acc + Number(q.totalAmount || 0), 0);
     const totalPaid = (lead.payments || []).reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
@@ -155,15 +154,31 @@ export function LeadFinanceTab({ lead }: LeadFinanceTabProps) {
                             <div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Totale Incassato</p>
                                 <p className="text-2xl font-black text-emerald-600">€{totalPaid.toLocaleString('it-IT')}</p>
-                                <div className="flex gap-4 mt-1 border-t border-emerald-50 pt-1">
-                                    <div className="flex items-center gap-1">
-                                        <Banknote className="h-3 w-3 text-emerald-600/50" />
-                                        <span className="text-[9px] font-bold text-slate-500">Contanti: €{cashPaid.toLocaleString('it-IT')}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <CreditCard className="h-3 w-3 text-emerald-600/50" />
-                                        <span className="text-[9px] font-bold text-slate-500">Altro: €{digitalPaid.toLocaleString('it-IT')}</span>
-                                    </div>
+                                <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 border-t border-emerald-50 pt-2">
+                                    {bankTotal > 0 && (
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[8px] font-black text-slate-400 uppercase">Bonifico:</span>
+                                            <span className="text-[10px] font-bold text-slate-600">€{bankTotal.toLocaleString('it-IT')}</span>
+                                        </div>
+                                    )}
+                                    {cashTotal > 0 && (
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[8px] font-black text-slate-400 uppercase">Contanti:</span>
+                                            <span className="text-[10px] font-bold text-slate-600">€{cashTotal.toLocaleString('it-IT')}</span>
+                                        </div>
+                                    )}
+                                    {cardTotal > 0 && (
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[8px] font-black text-slate-400 uppercase">Carta:</span>
+                                            <span className="text-[10px] font-bold text-slate-600">€{cardTotal.toLocaleString('it-IT')}</span>
+                                        </div>
+                                    )}
+                                    {checkTotal > 0 && (
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[8px] font-black text-slate-400 uppercase">Assegno:</span>
+                                            <span className="text-[10px] font-bold text-slate-600">€{checkTotal.toLocaleString('it-IT')}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
