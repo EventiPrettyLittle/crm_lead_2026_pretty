@@ -135,6 +135,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             `;
             document.head.appendChild(style);
         }
+    }, [open]);
 
     useEffect(() => {
         let retryInterval: NodeJS.Timeout;
