@@ -213,7 +213,7 @@ export default async function LeadDetailPage(props: PageProps) {
                                         <QuoteBuilder leadId={lead.id} />
                                     </div>
                                     <div className="grid gap-4">
-                                        {lead.quotes.map((quote) => (
+                                        {lead.quotes.map((quote: any) => (
                                             <Card key={quote.id} className="rounded-2xl border-slate-200/60 shadow-sm transition-all hover:shadow-md">
                                                 <CardContent className="p-6">
                                                     <div className="flex justify-between items-start">
