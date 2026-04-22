@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { updateDeal } from "@/actions/deals";
 import { toast } from "sonner";
-import { Save, FileText, Gift, Package, Sparkles, Clock, MapPin } from "lucide-react";
+import { Save, FileText, Gift, Package, Sparkles, Clock, MapPin, Plus, Trash2 } from "lucide-react";
 
 interface DealSheetProps {
     leadId: string;
@@ -35,6 +35,67 @@ export function DealSheet({ leadId, initialData, leadName }: DealSheetProps) {
         } else {
             toast.error("Errore durante il salvataggio: " + res.error);
         }
+    };
+
+    // Helper per gestire campi che possono avere più valori (separati da virgola o newline)
+    const DynamicField = ({ label, field, value }: { label: string, field: string, value: string }) => {
+        const values = value ? value.split(',').map(v => v.trim()) : [''];
+
+        const updatePart = (index: number, newValue: string) => {
+            const newValues = [...values];
+            newValues[index] = newValue;
+            handleChange(field, newValues.join(', '));
+        };
+
+        const addRow = () => {
+            handleChange(field, [...values, ''].join(', '));
+        };
+
+        const removeRow = (index: number) => {
+            if (values.length <= 1) {
+                handleChange(field, '');
+                return;
+            }
+            const newValues = values.filter((_, i) => i !== index);
+            handleChange(field, newValues.join(', '));
+        };
+
+        return (
+            <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</Label>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={addRow}
+                        className="h-6 w-6 p-0 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                    >
+                        <Plus className="h-3 w-3 font-bold" />
+                    </Button>
+                </div>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                    {values.map((v, i) => (
+                        <div key={i} className="flex gap-2 group animate-in slide-in-from-left-2 duration-300">
+                            <Input 
+                                value={v} 
+                                onChange={(e) => updatePart(i, e.target.value)} 
+                                className="h-10 rounded-xl bg-slate-50 border-slate-100 font-bold focus:bg-white transition-all text-xs" 
+                            />
+                            {values.length > 1 && (
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => removeRow(i)}
+                                    className="h-10 w-10 p-0 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -101,24 +162,12 @@ export function DealSheet({ leadId, initialData, leadName }: DealSheetProps) {
                         </div>
                     </div>
                     <CardContent className="p-8 space-y-8">
-                        {/* Caratteristiche */}
+                        {/* Caratteristiche Dinamiche */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Colori</Label>
-                                <Input value={data.favor1_colors || ''} onChange={(e) => handleChange('favor1_colors', e.target.value)} className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Grafiche</Label>
-                                <Input value={data.favor1_graphics || ''} onChange={(e) => handleChange('favor1_graphics', e.target.value)} className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Stick</Label>
-                                <Input value={data.favor1_stick || ''} onChange={(e) => handleChange('favor1_stick', e.target.value)} className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Profumi</Label>
-                                <Input value={data.favor1_scents || ''} onChange={(e) => handleChange('favor1_scents', e.target.value)} className="h-12 rounded-xl bg-slate-50 border-slate-100 font-bold" />
-                            </div>
+                            <DynamicField label="Colori" field="favor1_colors" value={data.favor1_colors || ''} />
+                            <DynamicField label="Grafiche" field="favor1_graphics" value={data.favor1_graphics || ''} />
+                            <DynamicField label="Stick" field="favor1_stick" value={data.favor1_stick || ''} />
+                            <DynamicField label="Profumi" field="favor1_scents" value={data.favor1_scents || ''} />
                         </div>
 
                         {/* Packaging */}

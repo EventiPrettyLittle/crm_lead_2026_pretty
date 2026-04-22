@@ -78,9 +78,12 @@ export async function getDealById(leadId: string) {
  */
 export async function updateDeal(leadId: string, data: any) {
     try {
+        // Rimuoviamo campi che non devono essere passati nel blocco 'data' di update
+        const { id, leadId: lId, createdAt, updatedAt, ...cleanData } = data;
+
         const updated = await prisma.deal.update({
             where: { leadId },
-            data
+            data: cleanData
         });
         
         revalidatePath(`/deals/${leadId}`);
