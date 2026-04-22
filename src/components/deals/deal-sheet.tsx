@@ -113,6 +113,8 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
     const [showFavor2, setShowFavor2] = useState(!!(initialData.favor2_colors || initialData.pack2_ribbon));
     const [showFavor3, setShowFavor3] = useState(!!(initialData.favor3_colors || initialData.pack3_ribbon));
 
+    const quoteItems = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
+
     // Automazione Live Show basata sui prodotti del preventivo
     useEffect(() => {
         const items = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
