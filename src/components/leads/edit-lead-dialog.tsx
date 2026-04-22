@@ -10,10 +10,6 @@ import {
     Loader2, 
     MapPin, 
     User, 
-    Calendar, 
-    Type, 
-    MessageSquare,
-    CheckCircle2
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -22,7 +18,6 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
-    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
@@ -31,7 +26,6 @@ import {
     FormControl,
     FormField,
     FormItem,
-    FormLabel,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import {
@@ -65,7 +59,7 @@ const SERVICES = [
 const formSchema = z.object({
   firstName: z.string().min(2, 'Nome troppo corto'),
   lastName: z.string().min(2, 'Cognome troppo corto'),
-  email: z.string().email('Email non valida').optional().or(z.literal('')),
+  email: z.string().optional().or(z.literal('')),
   phoneRaw: z.string().optional().or(z.literal('')),
   eventType: z.string().optional().or(z.literal('')),
   eventDate: z.string().optional().or(z.literal('')),
@@ -74,7 +68,7 @@ const formSchema = z.object({
   eventCity: z.string().optional().or(z.literal('')),
   eventProvince: z.string().optional().or(z.literal('')),
   eventRegion: z.string().optional().or(z.literal('')),
-  additionalServices: z.array(z.string()).nonempty().or(z.array(z.string())),
+  additionalServices: z.array(z.string()).default([]),
 })
 
 interface EditLeadDialogProps {
@@ -204,19 +198,19 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Informazioni Cliente</h3>
                             </div>
                             <div className="grid grid-cols-2 gap-5">
-                                <FormField control={form.control} name="firstName" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Nome" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                <FormField control={form.control} name="firstName" render={({ field: { value, ...fieldProps } }) => (
+                                    <FormItem><FormControl><Input placeholder="Nome" {...fieldProps} value={value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" /></FormControl></FormItem>
                                 )} />
-                                <FormField control={form.control} name="lastName" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Cognome" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                <FormField control={form.control} name="lastName" render={({ field: { value, ...fieldProps } }) => (
+                                    <FormItem><FormControl><Input placeholder="Cognome" {...fieldProps} value={value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" /></FormControl></FormItem>
                                 )} />
                             </div>
                             <div className="grid grid-cols-2 gap-5">
-                                <FormField control={form.control} name="email" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Email" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                <FormField control={form.control} name="email" render={({ field: { value, ...fieldProps } }) => (
+                                    <FormItem><FormControl><Input placeholder="Email" {...fieldProps} value={value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" /></FormControl></FormItem>
                                 )} />
-                                <FormField control={form.control} name="phoneRaw" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Telefono" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                <FormField control={form.control} name="phoneRaw" render={({ field: { value, ...fieldProps } }) => (
+                                    <FormItem><FormControl><Input placeholder="Telefono" {...fieldProps} value={value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" /></FormControl></FormItem>
                                 )} />
                             </div>
                         </div>
@@ -233,8 +227,8 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                         <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t} value={t} className="font-bold">{t}</SelectItem>)}</SelectContent>
                                     </Select></FormItem>
                                 )} />
-                                <FormField control={form.control} name="eventDate" render={({ field }) => (
-                                    <FormItem><FormControl><Input type="date" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                <FormField control={form.control} name="eventDate" render={({ field: { value, ...fieldProps } }) => (
+                                    <FormItem><FormControl><Input type="date" {...fieldProps} value={value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" /></FormControl></FormItem>
                                 )} />
                             </div>
                         </div>
@@ -244,13 +238,13 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                 <div className="h-4 w-1 rounded-full bg-slate-400" />
                                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Geolocalizzazione</h3>
                             </div>
-                             <FormField control={form.control} name="eventLocation" render={({ field }) => (
+                             <FormField control={form.control} name="eventLocation" render={({ field: { value, ...fieldProps } }) => (
                                 <FormItem><FormControl><div className="relative">
                                     <Input 
-                                        {...field} 
-                                        value={field.value || ''}
+                                        {...fieldProps} 
+                                        value={value || ''}
                                         ref={(e) => { 
-                                            field.ref(e); 
+                                            fieldProps.ref(e); 
                                             (inputRef as any).current = e; 
                                         }} 
                                         className="h-16 rounded-2xl pl-12 border-2 border-slate-100 bg-white font-bold text-slate-950 shadow-xl focus:border-slate-800 transition-all placeholder:text-slate-300" 
