@@ -69,11 +69,11 @@ const formSchema = z.object({
   phoneRaw: z.string().optional().or(z.literal('')),
   eventType: z.string().optional().or(z.literal('')),
   eventDate: z.string().optional().or(z.literal('')),
-  eventLocation: z.string().optional().nullable(),
-  locationName: z.string().optional().nullable(),
-  eventCity: z.string().optional().nullable(),
-  eventProvince: z.string().optional().nullable(),
-  eventRegion: z.string().optional().nullable(),
+  eventLocation: z.string().optional().or(z.literal('')),
+  locationName: z.string().optional().or(z.literal('')),
+  eventCity: z.string().optional().or(z.literal('')),
+  eventProvince: z.string().optional().or(z.literal('')),
+  eventRegion: z.string().optional().or(z.literal('')),
   additionalServices: z.array(z.string()).nonempty().or(z.array(z.string())),
 })
 
@@ -205,18 +205,18 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="firstName" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Nome" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Nome" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                                 <FormField control={form.control} name="lastName" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Cognome" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Cognome" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
                             <div className="grid grid-cols-2 gap-5">
                                 <FormField control={form.control} name="email" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Email" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Email" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                                 <FormField control={form.control} name="phoneRaw" render={({ field }) => (
-                                    <FormItem><FormControl><Input placeholder="Telefono" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input placeholder="Telefono" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
                         </div>
@@ -234,7 +234,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                     </Select></FormItem>
                                 )} />
                                 <FormField control={form.control} name="eventDate" render={({ field }) => (
-                                    <FormItem><FormControl><Input type="date" className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
+                                    <FormItem><FormControl><Input type="date" value={field.value || ''} className="h-12 rounded-2xl bg-slate-50 border-slate-100 font-bold" {...field} /></FormControl></FormItem>
                                 )} />
                             </div>
                         </div>
@@ -248,6 +248,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                 <FormItem><FormControl><div className="relative">
                                     <Input 
                                         {...field} 
+                                        value={field.value || ''}
                                         ref={(e) => { 
                                             field.ref(e); 
                                             (inputRef as any).current = e; 
