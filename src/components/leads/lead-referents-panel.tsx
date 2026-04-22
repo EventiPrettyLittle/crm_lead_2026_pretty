@@ -53,9 +53,11 @@ export function LeadReferentsPanel({ leadId, initialReferents }: LeadReferentsPa
                 setReferents(updatedList)
                 toast.success('Referente aggiornato')
                 router.refresh()
+            } else {
+                toast.error('Errore Database: ' + (result as any).error)
             }
-        } catch (e) {
-            toast.error('Errore nel salvataggio')
+        } catch (e: any) {
+            toast.error('Errore Sistema: ' + e.message)
         } finally {
             setLoading(false)
         }
