@@ -138,45 +138,53 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
         const initAutocomplete = () => {
              if (inputRef.current && window.google?.maps?.places) {
-                autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-                    types: ['establishment', 'geocode'],
-                    componentRestrictions: { country: "it" },
-                    fields: ["address_components", "formatted_address", "geometry", "name"]
-                });
-                
-                autoCompleteRef.current.addListener("place_changed", () => {
-                    const place = autoCompleteRef.current.getPlace();
-                    if (!place || !place.geometry) return;
+                try {
+                    autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+                        types: ['establishment', 'geocode'],
+                        componentRestrictions: { country: "it" },
+                        fields: ["address_components", "formatted_address", "geometry", "name"]
+                    });
                     
-                    // RACCOLTA DATI
-                    let city = '', province = '', region = '';
-                    if (place.address_components) {
-                        for (const component of place.address_components) {
-                            const types = component.types;
-                            if (types.includes('locality')) city = component.long_name;
-                            if (types.includes('administrative_area_level_2')) province = component.short_name;
-                            if (types.includes('administrative_area_level_1')) region = component.long_name;
+                    autoCompleteRef.current.addListener("place_changed", () => {
+                        const place = autoCompleteRef.current.getPlace();
+                        if (!place || !place.geometry) {
+                            console.warn("Nessun dettaglio trovato per questa selezione.");
+                            return;
                         }
+                        
+                        // RACCOLTA DATI
+                        let city = '', province = '', region = '';
+                        if (place.address_components) {
+                            for (const component of place.address_components) {
+                                const types = component.types;
+                                if (types.includes('locality')) city = component.long_name;
+                                if (types.includes('administrative_area_level_2')) province = component.short_name;
+                                if (types.includes('administrative_area_level_1')) region = component.long_name;
+                            }
+                        }
+
+                        // AGGIORNAMENTO MODULO CON PRIORITÀ AL NOME
+                        const finalName = place.name || place.formatted_address || '';
+                        form.setValue('eventLocation', finalName, { shouldDirty: true });
+                        form.setValue('locationName', place.name || '', { shouldDirty: true });
+                        form.setValue('eventCity', city, { shouldDirty: true });
+                        form.setValue('eventProvince', province, { shouldDirty: true });
+                        form.setValue('eventRegion', region, { shouldDirty: true });
+                        
+                        toast.success('Location selezionata con successo!');
+                    });
+
+                    // Fix per Radix Dialog focus trap
+                    const pacContainer = document.querySelector('.pac-container');
+                    if (pacContainer) {
+                        pacContainer.addEventListener('mousedown', (e) => e.stopPropagation());
                     }
-
-                    // AGGIORNAMENTO MODULO CON PRIORITÀ AL NOME
-                    const finalName = place.name || place.formatted_address || '';
-                    form.setValue('eventLocation', finalName, { shouldDirty: true });
-                    form.setValue('locationName', place.name || '', { shouldDirty: true });
-                    form.setValue('eventCity', city, { shouldDirty: true });
-                    form.setValue('eventProvince', province, { shouldDirty: true });
-                    form.setValue('eventRegion', region, { shouldDirty: true });
-                    
-                    toast.success('Location selezionata: ' + finalName);
-                });
-
-                // Impedisce a Radix di bloccare l'interazione con la tendina Google
-                const pacContainer = document.querySelector('.pac-container');
-                if (pacContainer) {
-                    pacContainer.addEventListener('mousedown', (e) => e.stopPropagation());
+                } catch (err) {
+                    console.error("Errore inizializzazione Google Autocomplete:", err);
                 }
              } else {
-                 setTimeout(initAutocomplete, 300);
+                // Se Google non è pronto, riproviamo con insistenza
+                setTimeout(initAutocomplete, 500);
              }
         };
         
