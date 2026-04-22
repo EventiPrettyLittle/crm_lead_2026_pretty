@@ -137,55 +137,59 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
         }
 
         const initAutocomplete = () => {
-             if (inputRef.current && window.google?.maps?.places) {
-                try {
-                    autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-                        types: ['establishment', 'geocode'],
-                        componentRestrictions: { country: "it" },
-                        fields: ["address_components", "formatted_address", "geometry", "name"]
-                    });
-                    
-                    autoCompleteRef.current.addListener("place_changed", () => {
-                        const place = autoCompleteRef.current.getPlace();
-                        if (!place || !place.geometry) {
-                            console.warn("Nessun dettaglio trovato per questa selezione.");
-                            return;
-                        }
-                        
-                        // RACCOLTA DATI
-                        let city = '', province = '', region = '';
-                        if (place.address_components) {
-                            for (const component of place.address_components) {
-                                const types = component.types;
-                                if (types.includes('locality')) city = component.long_name;
-                                if (types.includes('administrative_area_level_2')) province = component.short_name;
-                                if (types.includes('administrative_area_level_1')) region = component.long_name;
-                            }
-                        }
+            if (!inputRef.current) return;
+            
+            // Se google non è ancora pronto o ci sono errori, lasciamo il campo libero per uso manuale
+            if (!window.google?.maps?.places) {
+                console.warn("Google Maps Places non disponibile. Uso modalità manuale.");
+                setTimeout(initAutocomplete, 1000);
+                return;
+            }
 
-                        // AGGIORNAMENTO MODULO CON PRIORITÀ AL NOME
-                        const finalName = place.name || place.formatted_address || '';
-                        form.setValue('eventLocation', finalName, { shouldDirty: true });
-                        form.setValue('locationName', place.name || '', { shouldDirty: true });
-                        form.setValue('eventCity', city, { shouldDirty: true });
-                        form.setValue('eventProvince', province, { shouldDirty: true });
-                        form.setValue('eventRegion', region, { shouldDirty: true });
-                        
-                        toast.success('Location selezionata con successo!');
-                    });
-
-                    // Fix per Radix Dialog focus trap
-                    const pacContainer = document.querySelector('.pac-container');
-                    if (pacContainer) {
-                        pacContainer.addEventListener('mousedown', (e) => e.stopPropagation());
-                    }
-                } catch (err) {
-                    console.error("Errore inizializzazione Google Autocomplete:", err);
+            try {
+                // Puliamo istanze precedenti se esistono
+                if (autoCompleteRef.current) {
+                    window.google.maps.event.clearInstanceListeners(autoCompleteRef.current);
                 }
-             } else {
-                // Se Google non è pronto, riproviamo con insistenza
-                setTimeout(initAutocomplete, 500);
-             }
+
+                autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+                    types: ['establishment', 'geocode'],
+                    componentRestrictions: { country: "it" },
+                    fields: ["address_components", "formatted_address", "geometry", "name"]
+                });
+                
+                autoCompleteRef.current.addListener("place_changed", () => {
+                    const place = autoCompleteRef.current.getPlace();
+                    if (!place || !place.geometry) return;
+                    
+                    let city = '', province = '', region = '';
+                    if (place.address_components) {
+                        for (const component of place.address_components) {
+                            const types = component.types;
+                            if (types.includes('locality')) city = component.long_name;
+                            if (types.includes('administrative_area_level_2')) province = component.short_name;
+                            if (types.includes('administrative_area_level_1')) region = component.long_name;
+                        }
+                    }
+
+                    const finalName = place.name || place.formatted_address || '';
+                    form.setValue('eventLocation', finalName, { shouldDirty: true });
+                    form.setValue('locationName', place.name || '', { shouldDirty: true });
+                    form.setValue('eventCity', city, { shouldDirty: true });
+                    form.setValue('eventProvince', province, { shouldDirty: true });
+                    form.setValue('eventRegion', region, { shouldDirty: true });
+                    
+                    toast.success('Dati aggiornati via Google!');
+                });
+
+                // Impedisce a Radix di bloccare l'interazione
+                const pacContainer = document.querySelector('.pac-container');
+                if (pacContainer) {
+                    pacContainer.addEventListener('mousedown', (e) => e.stopPropagation());
+                }
+            } catch (err) {
+                console.error("Errore inizializzazione Google:", err);
+            }
         };
         
         initAutocomplete();
