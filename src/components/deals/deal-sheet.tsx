@@ -206,8 +206,9 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation }: DealS
                         <Gift className="h-5 w-5 text-indigo-600" />
                         <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase underline decoration-indigo-200 decoration-4 underline-offset-4">Prima Bomboniera</h2>
                     </div>
-                    <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden p-8 space-y-10">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
+                        <CardContent className="p-8 space-y-10">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                             <DynamicField label="Colori" field="favor1_colors" value={data.favor1_colors || ''} />
                             <DynamicField label="Grafiche" field="favor1_graphics" value={data.favor1_graphics || ''} />
                             <DynamicField label="Stick" field="favor1_stick" value={data.favor1_stick || ''} />
