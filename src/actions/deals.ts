@@ -26,6 +26,28 @@ export async function getDeals() {
         }
     });
 
+    // AUTO-INIT LOGIC: Se un deal non ha la deliveryType, la inizializziamo in automatico nel database
+    let needsRefresh = false;
+    for (const quote of acceptedQuotes) {
+        const lead = quote.lead;
+        const deal = lead?.deal;
+        
+        if (deal && !deal.deliveryType) {
+            const hasLiveShow = (quote.items || []).some((item: any) => 
+                (item.description || item.name || "").toLowerCase().includes("live show")
+            );
+            const defaultType = hasLiveShow ? 'LIVE SHOW' : 'CONSEGNA';
+            
+            await prisma.deal.update({
+                where: { id: deal.id },
+                data: { deliveryType: defaultType }
+            });
+            // Aggiorniamo l'oggetto locale
+            deal.deliveryType = defaultType;
+            needsRefresh = true;
+        }
+    }
+
     // Calcolo dell'andamento (0-100%)
     const dealsWithProgress = acceptedQuotes.map(quote => {
         const lead = quote.lead;

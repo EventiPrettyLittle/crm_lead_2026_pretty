@@ -3,8 +3,21 @@ import { DealsList } from "@/components/deals/deals-list";
 
 export default async function DealsPage() {
     const deals = await getDeals();
-    const liveShowCount = deals.filter((d: any) => d.deal?.deliveryType === 'LIVE SHOW').length;
-    const consegnaCount = deals.filter((d: any) => d.deal?.deliveryType === 'CONSEGNA' || d.deal?.deliveryType === 'CONSEGNA IN LOCATION').length;
+    
+    const getInferredDeliveryType = (d: any) => {
+        if (d.deal?.deliveryType) return d.deal.deliveryType;
+        // Se non è salvato, leggiamo i prodotti del preventivo
+        const hasLiveShow = (d.items || []).some((item: any) => 
+            (item.description || item.name || "").toLowerCase().includes("live show")
+        );
+        return hasLiveShow ? 'LIVE SHOW' : 'CONSEGNA';
+    };
+
+    const liveShowCount = deals.filter((d: any) => getInferredDeliveryType(d) === 'LIVE SHOW').length;
+    const consegnaCount = deals.filter((d: any) => {
+        const type = getInferredDeliveryType(d);
+        return type === 'CONSEGNA' || type === 'CONSEGNA IN LOCATION';
+    }).length;
 
     return (
         <div className="p-8 space-y-10 animate-in fade-in duration-700 bg-slate-50/50 min-h-screen">
