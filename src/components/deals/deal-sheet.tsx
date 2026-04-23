@@ -38,7 +38,7 @@ const DynamicField = ({
     placeholder?: string, 
     isAccent?: boolean 
 }) => {
-    const values = value ? value.split(',') : [''];
+    const values = value ? value.split(',').map(s => s.trim()) : [''];
 
     const updatePart = (index: number, newValue: string) => {
         const newValues = [...values];
