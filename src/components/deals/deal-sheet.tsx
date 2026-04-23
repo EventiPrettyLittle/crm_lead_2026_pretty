@@ -389,9 +389,6 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                     className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto w-full focus-visible:ring-0"
                                     placeholder={`Titolo ${num}° Bomboniera...`}
                                 />
-                                <Button variant="ghost" size="sm" onClick={() => num === 2 ? setShowFavor2(false) : num === 3 ? setShowFavor3(false) : setShowFavor4(false)}>
-                                    <Trash2 className="h-3 w-3 text-slate-300" />
-                                </Button>
                             </div>
                             <Card className="rounded-[2rem] border-none shadow-sm bg-white p-6 space-y-6">
                                 <div className="grid grid-cols-4 gap-4">
