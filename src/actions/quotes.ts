@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma"
 import { serializePrisma } from "@/lib/serialize"
 import { getCurrentUser } from './auth'
 import { getCompanySettings } from './settings'
+import { getSystemSettings } from './settings-actions'
 import { getInitials } from '@/lib/utils'
 
 export async function getLeadsMini(search?: string) {
@@ -159,47 +160,33 @@ export async function createQuote(leadId: string) {
 
 export async function getQuote(id: string) {
     try {
-        // Fetch via standard Prisma for maximum reliability with relations
-        const quote = await prisma.quote.findUnique({
+        // 1. Prisma fetch (relazioni incluse)
+        let quote = await prisma.quote.findUnique({
             where: { id },
             include: {
                 lead: true,
-                items: {
-                    orderBy: { id: 'asc' }
-                }
+                items: { orderBy: { id: 'asc' } }
             }
-        });
+        }) as any;
 
+        // 2. Fallback Raw SQL se Prisma fallisce (raro, ma utile in migrazione)
         if (!quote) {
-            // Fallback to raw SQL if findUnique fails (e.g. if schema is extremely desynced)
             const quoteResults: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "Quote" WHERE id = $1`, id);
             if (quoteResults.length === 0) return null;
             
-            let rawQuote = mapRawToPrisma(quoteResults[0]);
+            quote = mapRawToPrisma(quoteResults[0]);
             const rawItems: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "QuoteItem" WHERE "quoteId" = $1 ORDER BY "id" ASC`, id);
-            rawQuote.items = rawItems.map(item => mapRawToPrisma(item));
-            const lead = await prisma.lead.findUnique({ where: { id: rawQuote.leadId } });
-            rawQuote.lead = lead;
+            quote.items = rawItems.map(item => mapRawToPrisma(item));
             
-            const [settings, { getSystemSettings }] = await Promise.all([
-                getCompanySettings(),
-                import('./settings-actions')
-            ]);
-            const systemSettings = await getSystemSettings();
-            
-            return serializePrisma({
-                ...rawQuote,
-                companySettings: settings,
-                systemSettings: systemSettings
-            });
+            const lead = await prisma.lead.findUnique({ where: { id: quote.leadId } });
+            quote.lead = lead;
         }
 
-        // Fetch extra metadata
-        const [settings, { getSystemSettings }] = await Promise.all([
+        // 3. Recupero settings in parallelo
+        const [settings, systemSettings] = await Promise.all([
             getCompanySettings(),
-            import('./settings-actions')
+            getSystemSettings()
         ]);
-        const systemSettings = await getSystemSettings();
         
         return serializePrisma({
             ...quote,

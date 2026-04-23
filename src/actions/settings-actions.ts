@@ -21,20 +21,22 @@ async function ensureTableExists() {
     }
 }
 
-/**
- * Recupera le impostazioni di sistema dal Database via SQL Raw
- */
 export async function getSystemSettings() {
     try {
-        await ensureTableExists();
-
         const results: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "SystemSettings" WHERE "id" = 'global' LIMIT 1`);
         let settings = results[0];
 
-        // Se non esistono, le creiamo
+        // Se non esistono, le creiamo (opzionale, ma utile per robustezza)
         if (!settings) {
-            await prisma.$executeRawUnsafe(`INSERT INTO "SystemSettings" (id, "logoUrl", "logoWidth") VALUES ('global', '', 150)`);
-            settings = { id: 'global', logoUrl: '', logoWidth: 150 };
+            try {
+                await prisma.$executeRawUnsafe(`INSERT INTO "SystemSettings" (id, "logoUrl", "logoWidth") VALUES ('global', '', 150)`);
+                settings = { id: 'global', logoUrl: '', logoWidth: 150 };
+            } catch (e) {
+                // Se fallisce l'insert potrebbe essere che la tabella non esiste, proviamo a crearla
+                await ensureTableExists();
+                await prisma.$executeRawUnsafe(`INSERT INTO "SystemSettings" (id, "logoUrl", "logoWidth") VALUES ('global', '', 150)`);
+                settings = { id: 'global', logoUrl: '', logoWidth: 150 };
+            }
         }
 
         return serializePrisma(settings);

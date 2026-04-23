@@ -545,9 +545,9 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                                         )}
                                     >
                                         {editingItemId ? (
-                                            <>Salva Modifiche <Save className="ml-2 h-5 w-5" /></>
+                                            <>{loading ? 'Salvataggio...' : 'Salva Modifiche'} <Save className={cn("ml-2 h-5 w-5", loading && "animate-pulse")} /></>
                                         ) : (
-                                            <>Aggiungi {quote?.status === 'ACCETTATO' ? 'Extra' : 'al Preventivo'} <Plus className="ml-2 h-5 w-5" /></>
+                                            <>{loading ? 'Salvataggio...' : `Aggiungi ${quote?.status === 'ACCETTATO' ? 'Extra' : 'al Preventivo'}`} <Plus className={cn("ml-2 h-5 w-5", loading && "animate-pulse")} /></>
                                         )}
                                     </Button>
                                 </div>
