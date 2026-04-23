@@ -63,14 +63,14 @@ export async function getDeals() {
         let progress = 0;
         
         if (deal) {
-            // Definiamo i campi chiave che determinano l'andamento
+            // Definiamo i campi chiave che determinano l'andamento reale
             const keyFields = [
                 deal.numGuests, deal.numFavors, deal.arrivalTime, deal.endTime,
-                deal.favor1_colors, deal.favor1_graphics, deal.favor1_scents,
-                deal.pack1_ribbon, deal.acc1_product
+                deal.favor1_title, deal.favor1_colors, deal.favor1_graphics, deal.favor1_scents,
+                deal.pack1_ribbon, deal.pack1_confetti, deal.pack1_graphics
             ];
             
-            const filledFields = keyFields.filter(f => f && f.trim() !== "").length;
+            const filledFields = keyFields.filter(f => f && f.toString().trim() !== "").length;
             progress = Math.round((filledFields / keyFields.length) * 100);
         }
 
