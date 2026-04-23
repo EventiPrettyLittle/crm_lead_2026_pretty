@@ -48,9 +48,13 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog"
 import { cn } from '@/lib/utils'
-import { getCalendarEvents } from '@/actions/calendar'
+import { getCalendarEvents, createCalendarEvent } from '@/actions/calendar'
+import { searchLeadsGlobal } from '@/actions/search-leads'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 type ViewType = 'month' | 'week' | 'day'
 
@@ -61,6 +65,23 @@ export default function PremiumCalendar() {
     const [loading, setLoading] = useState(true)
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
     const [selectedEvent, setSelectedEvent] = useState<any | null>(null)
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+    
+    // Form state per nuovo evento
+    const [formData, setFormData] = useState({
+        title: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        time: '10:00',
+        duration: '60',
+        location: '',
+        description: '',
+        leadId: ''
+    })
+    const [leadSearch, setLeadSearch] = useState('')
+    const [leadResults, setLeadResults] = useState<any[]>([])
+    const [selectedLead, setSelectedLead] = useState<any | null>(null)
+    const [isSearching, setIsSearching] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
 
     const loadEvents = async () => {
         setLoading(true)
@@ -81,6 +102,65 @@ export default function PremiumCalendar() {
     useEffect(() => {
         loadEvents()
     }, [])
+
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (leadSearch.length >= 2) {
+                setIsSearching(true)
+                const results = await searchLeadsGlobal(leadSearch)
+                setLeadResults(results as any[])
+                setIsSearching(false)
+            } else {
+                setLeadResults([])
+            }
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [leadSearch])
+
+    const handleCreateEvent = async () => {
+        if (!formData.title || !formData.date || !formData.leadId) {
+            toast.error("Titolo, data e lead sono obbligatori")
+            return
+        }
+
+        setIsSaving(true)
+        try {
+            const startDateTime = `${formData.date}T${formData.time}:00`
+            const startDate = new Date(startDateTime)
+            const endDate = new Date(startDate.getTime() + (parseInt(formData.duration) * 60000))
+            
+            const result = await createCalendarEvent({
+                title: formData.title,
+                description: formData.description,
+                startDateTime: startDate.toISOString(),
+                endDateTime: endDate.toISOString(),
+                location: formData.location,
+                leadId: formData.leadId
+            })
+
+            if (result.success) {
+                toast.success("Evento creato con successo")
+                setIsCreateModalOpen(false)
+                setFormData({
+                    title: '',
+                    date: format(new Date(), 'yyyy-MM-dd'),
+                    time: '10:00',
+                    duration: '60',
+                    location: '',
+                    description: '',
+                    leadId: ''
+                })
+                setSelectedLead(null)
+                loadEvents()
+            } else {
+                toast.error(result.error || "Errore creazione evento")
+            }
+        } catch (error) {
+            toast.error("Impossibile creare l'evento")
+        } finally {
+            setIsSaving(false)
+        }
+    }
 
     const next = () => {
         if (view === 'month') setCurrentDate(addMonths(currentDate, 1))
@@ -157,7 +237,10 @@ export default function PremiumCalendar() {
                         <RefreshCcw className={cn("w-5 h-5", loading && "animate-spin")} />
                     </Button>
                     
-                    <Button className="ml-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-10 px-6 font-black text-xs uppercase tracking-widest gap-2 shadow-lg shadow-indigo-100 transition-transform active:scale-95">
+                    <Button 
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="ml-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl h-10 px-6 font-black text-xs uppercase tracking-widest gap-2 shadow-lg shadow-indigo-100 transition-transform active:scale-95"
+                    >
                         <Plus className="w-4 h-4" />
                         Nuovo Evento
                     </Button>
@@ -485,6 +568,148 @@ export default function PremiumCalendar() {
                                     </Link>
                                 </Button>
                             )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create Event Modal */}
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogContent className="rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl max-w-2xl bg-white">
+                    <div className="p-8 space-y-6">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-black text-slate-900 uppercase tracking-tight">Nuovo Appuntamento</DialogTitle>
+                            <DialogDescription>Compila i dettagli per registrare l'impegno sul CRM e caricarlo su Google Calendar.</DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="col-span-2 space-y-2">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Associa Lead (Obbligatorio)</Label>
+                                {selectedLead ? (
+                                    <div className="flex items-center justify-between p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[10px] font-black">
+                                                {selectedLead.firstName[0]}{selectedLead.lastName[0]}
+                                            </div>
+                                            <span className="font-bold text-slate-700">{selectedLead.firstName} {selectedLead.lastName}</span>
+                                        </div>
+                                        <Button variant="ghost" size="sm" onClick={() => {setSelectedLead(null); setFormData({...formData, leadId: ''})}} className="text-slate-400 hover:text-red-500">
+                                            Cambia
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <Input 
+                                            placeholder="Cerca lead per nome, email o telefono..." 
+                                            className="pl-12 rounded-2xl border-slate-100 bg-slate-50 h-12 text-sm font-medium"
+                                            value={leadSearch}
+                                            onChange={(e) => setLeadSearch(e.target.value)}
+                                        />
+                                        {leadResults.length > 0 && (
+                                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 max-h-48 overflow-auto p-2">
+                                                {leadResults.map(l => (
+                                                    <div 
+                                                        key={l.id} 
+                                                        onClick={() => {
+                                                            setSelectedLead(l);
+                                                            setFormData({...formData, leadId: l.id});
+                                                            setLeadResults([]);
+                                                            setLeadSearch('');
+                                                        }}
+                                                        className="p-3 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors"
+                                                    >
+                                                        <p className="text-sm font-bold text-slate-700">{l.firstName} {l.lastName}</p>
+                                                        <p className="text-[10px] text-slate-400">{l.email || l.phoneRaw}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {isSearching && (
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                                <RefreshCcw className="w-4 h-4 animate-spin text-indigo-400" />
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="col-span-2 space-y-2">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Titolo Evento</Label>
+                                <Input 
+                                    className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-sm font-bold" 
+                                    placeholder="ES: Chiamata conoscitiva, Visita Showroom..." 
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data</Label>
+                                <Input 
+                                    type="date" 
+                                    className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-sm font-bold" 
+                                    value={formData.date}
+                                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ora</Label>
+                                    <Input 
+                                        type="time" 
+                                        className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-sm font-bold" 
+                                        value={formData.time}
+                                        onChange={(e) => setFormData({...formData, time: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Durata (min)</Label>
+                                    <Input 
+                                        type="number" 
+                                        className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-sm font-bold" 
+                                        value={formData.duration}
+                                        onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="col-span-2 space-y-2">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Luogo / Location</Label>
+                                <Input 
+                                    className="rounded-2xl border-slate-100 bg-slate-50 h-12 text-sm font-bold" 
+                                    placeholder="ES: Sede Napoli, Videochiamata Zoom..." 
+                                    value={formData.location}
+                                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                                />
+                            </div>
+
+                            <div className="col-span-2 space-y-2">
+                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Note Attività</Label>
+                                <Textarea 
+                                    className="rounded-2xl border-slate-100 bg-slate-50 min-h-[80px] p-4 text-sm font-medium" 
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pt-4">
+                            <Button 
+                                variant="ghost" 
+                                onClick={() => setIsCreateModalOpen(false)}
+                                className="flex-1 h-14 rounded-2xl font-black uppercase text-xs tracking-widest"
+                            >
+                                Annulla
+                            </Button>
+                            <Button 
+                                onClick={handleCreateEvent}
+                                disabled={isSaving}
+                                className="flex-[2] h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-indigo-100"
+                            >
+                                {isSaving ? <RefreshCcw className="w-4 h-4 animate-spin" /> : "Crea e Sincronizza"}
+                            </Button>
                         </div>
                     </div>
                 </DialogContent>
