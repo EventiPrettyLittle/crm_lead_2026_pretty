@@ -8,6 +8,7 @@ import { ReminderNotifier } from "@/components/layout/reminder-notifier"
 import { headers } from "next/headers"
 import { getCurrentUser } from "@/actions/auth"
 import { redirect } from "next/navigation"
+import { ShieldCheck } from "lucide-react"
 
 import { initDatabase } from "@/actions/db-init"
 
