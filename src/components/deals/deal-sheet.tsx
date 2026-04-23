@@ -46,16 +46,16 @@ const DynamicField = ({
     placeholder?: string, 
     isAccent?: boolean 
 }) => {
-    const values = value ? value.split(',').map(s => s) : [''];
+    const values = value ? value.split(',') : [''];
 
     const updatePart = (index: number, newValue: string) => {
         const newValues = [...values];
         newValues[index] = newValue;
-        onChange(field, newValues.join(', '));
+        onChange(field, newValues.join(','));
     };
 
     const addRow = () => {
-        onChange(field, [...values, ''].join(', '));
+        onChange(field, [...values, ''].join(','));
     };
 
     const removeRow = (index: number) => {
@@ -64,7 +64,7 @@ const DynamicField = ({
             return;
         }
         const newValues = values.filter((_, i) => i !== index);
-        onChange(field, newValues.join(', '));
+        onChange(field, newValues.join(','));
     };
 
     return (
