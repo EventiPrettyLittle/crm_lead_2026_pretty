@@ -397,6 +397,15 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                     <DynamicField label="Stick" field={`favor${num}_stick`} value={data[`favor${num}_stick`] || ''} onChange={handleChange} />
                                     <DynamicField label="Profumi" field={`favor${num}_scents`} value={data[`favor${num}_scents`] || ''} onChange={handleChange} />
                                 </div>
+
+                                {/* Campi Pack solo per 2 e 3 */}
+                                {(num === 2 || num === 3) && (
+                                    <div className="bg-slate-50/50 rounded-2xl p-4 grid grid-cols-3 gap-4 border border-slate-100 animate-in slide-in-from-bottom-2 duration-300">
+                                        <DynamicField label="Nastro" field={`pack${num}_ribbon`} value={data[`pack${num}_ribbon`] || ''} onChange={handleChange} />
+                                        <DynamicField label="Confetti" field={`pack${num}_confetti`} value={data[`pack${num}_confetti`] || ''} onChange={handleChange} />
+                                        <DynamicField label="Grafica Pack" field={`pack${num}_graphics`} value={data[`pack${num}_graphics`] || ''} onChange={handleChange} />
+                                    </div>
+                                )}
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2 px-1">
                                         <NotebookPen className="h-3 w-3 text-emerald-500" />
