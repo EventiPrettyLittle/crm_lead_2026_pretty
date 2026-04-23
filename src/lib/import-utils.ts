@@ -94,24 +94,39 @@ const getRowValue = (row: LeadImportRow, target: string) => {
 export const mapRowToLead = (row: LeadImportRow): ParsedLead => {
     const getVal = (target: string) => getRowValue(row, target);
     
-    // Hardcoded fallbacks for the user's specific sheet structure
-    const guests = getVal('Numero invitati') || getVal('invitati') || getVal('guests');
-    const contact = getVal('Quando preferisci essere contattato') || getVal('preferisci') || getVal('contatto');
+    // Mapping intelligenti con fallbacks
+    const guests = getVal('Numero invitati') || getVal('invitati') || getVal('guests') || getVal('quantità');
+    const contact = getVal('Quando preferisci essere contattato') || getVal('preferisci') || getVal('contatto') || getVal('orario');
+    const fName = getVal(COLUMN_MAPPING.firstName) || getVal('nome') || getVal('first name') || '';
+    const lName = getVal(COLUMN_MAPPING.lastName) || getVal('cognome') || getVal('last name') || '';
+    const email = getVal(COLUMN_MAPPING.email) || getVal('email') || getVal('mail') || '';
+    const phone = getVal(COLUMN_MAPPING.phoneRaw) || getVal('telefono') || getVal('cell') || getVal('phone') || '';
+    
+    // Generazione ID univoco robusto
+    // Se non c'è email, usiamo una combinazione di nome-cognome-telefono o un timestamp
+    let externalId = String(email || '').trim();
+    if (!externalId) {
+        externalId = `import-${String(fName).toLowerCase()}-${String(lName).toLowerCase()}-${String(phone).replace(/\s/g, '')}`;
+        // Fallback estremo se tutto è vuoto
+        if (externalId === 'import---') {
+            externalId = `id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
+    }
     
     return {
-        externalId: String(getVal(COLUMN_MAPPING.externalId) || ''),
-        leadCreatedAt: parseDate(getVal(COLUMN_MAPPING.leadCreatedAt)),
-        countryCode: String(getVal(COLUMN_MAPPING.countryCode) || ''),
-        eventType: String(getVal(COLUMN_MAPPING.eventType) || ''),
+        externalId,
+        leadCreatedAt: parseDate(getVal(COLUMN_MAPPING.leadCreatedAt) || getVal('data creazione') || getVal('created at')),
+        countryCode: String(getVal(COLUMN_MAPPING.countryCode) || getVal('paese') || ''),
+        eventType: String(getVal(COLUMN_MAPPING.eventType) || getVal('evento') || ''),
         guestsCount: String(guests || ''),
-        productInterest: String(getVal(COLUMN_MAPPING.productInterest) || ''),
-        eventDate: parseDate(getVal(COLUMN_MAPPING.eventDate)),
-        eventLocation: String(getVal(COLUMN_MAPPING.eventLocation) || ''),
-        firstName: String(getVal(COLUMN_MAPPING.firstName) || ''),
-        lastName: String(getVal(COLUMN_MAPPING.lastName) || ''),
-        phoneRaw: String(getVal(COLUMN_MAPPING.phoneRaw) || ''),
-        email: String(getVal(COLUMN_MAPPING.email) || ''),
-        preferredContactTime: String(contact || ''),
+        productInterest: String(getVal(COLUMN_MAPPING.productInterest) || getVal('prodotto') || ''),
+        eventDate: parseDate(getVal(COLUMN_MAPPING.eventDate) || getVal('data evento')),
+        eventLocation: String(getVal(COLUMN_MAPPING.eventLocation) || getVal('location') || ''),
+        firstName: String(fName).trim(),
+        lastName: String(lName).trim(),
+        phoneRaw: String(phone).trim(),
+        email: String(email).trim(),
+        preferredContactTime: String(contact || '').trim(),
     };
 };
 
@@ -119,17 +134,28 @@ export const parseLeadsFile = async (file: File): Promise<ParsedLead[]> => {
     const buffer = await file.arrayBuffer();
     let rows: LeadImportRow[] = [];
 
-    if (file.name.endsWith('.csv')) {
-        const text = new TextDecoder().decode(buffer);
-        const result = Papa.parse<LeadImportRow>(text, { header: true, skipEmptyLines: true });
-        rows = result.data;
-    } else {
-        // Excel
-        const wb = read(buffer);
-        const sheetName = wb.SheetNames[0];
-        const sheet = wb.Sheets[sheetName];
-        rows = utils.sheet_to_json(sheet);
-    }
+    try {
+        if (file.name.endsWith('.csv')) {
+            const text = new TextDecoder().decode(buffer);
+            const result = Papa.parse<LeadImportRow>(text, { 
+                header: true, 
+                skipEmptyLines: true,
+                transformHeader: (header) => header.trim() 
+            });
+            rows = result.data;
+        } else {
+            // Excel
+            const wb = read(buffer);
+            const sheetName = wb.SheetNames[0];
+            const sheet = wb.Sheets[sheetName];
+            rows = utils.sheet_to_json(sheet);
+        }
 
-    return rows.map(mapRowToLead).filter(l => l.externalId);
+        return rows
+            .map(mapRowToLead)
+            .filter(l => l.firstName || l.email || l.phoneRaw); // Filtriamo solo righe totalmente vuote
+    } catch (err) {
+        console.error("Error parsing file:", err);
+        throw new Error("Formato file non valido o danneggiato.");
+    }
 };

@@ -100,19 +100,19 @@ export function GoogleSheetsSync() {
                 )}
 
                 {error && (
-                    <Alert variant="destructive">
+                    <Alert variant="destructive" className="rounded-2xl border-rose-200 bg-rose-50/50">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Errore</AlertTitle>
-                        <AlertDescription className="space-y-3">
-                            <p>{error}</p>
-                            {error.includes("not connected") && (
+                        <AlertTitle className="font-black uppercase tracking-tight italic">Errore di Sincronizzazione</AlertTitle>
+                        <AlertDescription className="space-y-4">
+                            <p className="text-xs font-bold leading-relaxed">{error}</p>
+                            {(error.includes("not connected") || error.includes("non collegato")) && (
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => window.location.href = '/api/auth/google/login'}
-                                    className="bg-white text-destructive hover:bg-destructive/10"
+                                    className="w-full bg-white border-rose-200 text-rose-600 hover:bg-rose-100 font-black text-[10px] uppercase tracking-widest h-10 rounded-xl shadow-sm transition-all"
                                 >
-                                    Collega Account Google
+                                    Fai il Login con Google ora
                                 </Button>
                             )}
                         </AlertDescription>

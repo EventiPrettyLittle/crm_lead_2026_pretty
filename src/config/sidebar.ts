@@ -25,8 +25,19 @@ export const sidebarLinks = [
     },
     {
         title: "Leads",
-        href: "/leads",
         icon: Users,
+        subItems: [
+            {
+                title: "Tutti i Lead",
+                href: "/leads",
+                icon: Users,
+            },
+            {
+                title: "Importa Database",
+                href: "/leads/import",
+                icon: Database,
+            },
+        ]
     },
     {
         title: "Pipeline",

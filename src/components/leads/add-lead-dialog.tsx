@@ -132,7 +132,15 @@ export function AddLeadDialog() {
             <DialogContent className="sm:max-w-[620px] rounded-[2.5rem] border border-slate-200/50 shadow-2xl p-0 overflow-hidden bg-white flex flex-col max-h-[92vh]">
                 <div className="p-8 pb-5 border-b border-slate-50 shrink-0">
                     <DialogHeader>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <DialogTitle className="text-3xl font-black tracking-tight text-slate-900 uppercase leading-none">Aggiungi Nuovo Lead</DialogTitle>
+                        <Button asChild variant="outline" className="rounded-xl border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-600 font-black text-[10px] uppercase tracking-widest h-10 transition-all hover:scale-105">
+                            <Link href="/leads/import" className="flex items-center gap-2">
+                                <Database className="w-3 h-3" />
+                                Caricamento Massivo (Excel)
+                            </Link>
+                        </Button>
+                    </div>
                         <DialogDescription className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-2">
                              Inserimento manuale nella pipeline commerciale
                         </DialogDescription>

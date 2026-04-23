@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { useEffect } from "react";
 import { updateDeal } from "@/actions/deals";
 import { toast } from "sonner";
-import { Save, FileText, Gift, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, Eye } from "lucide-react";
+import { Save, FileText, Gift, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, Eye, NotebookPen } from "lucide-react";
 import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog";
 
 interface DealSheetProps {
@@ -183,7 +183,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8 pb-20 px-4">
+        <div className="max-w-6xl mx-auto space-y-24 pb-40 px-4">
             {/* Header & Main Stats */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-1">
@@ -361,7 +361,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
             )}
 
             {/* SEZIONI BOMBONIERE */}
-            <div className="space-y-20">
+            <div className="space-y-32">
                 {/* PRIMA BOMBONIERA */}
                 <section className="space-y-4">
                     <div className="flex items-center gap-3 px-4">
@@ -407,7 +407,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         placeholder="Inserisci qui annotazioni specifiche per la produzione della 1° Bomboniera..."
                                         value={data.favor1_notes || ''}
                                         onChange={(e) => handleChange('favor1_notes', e.target.value)}
-                                        className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px] text-slate-700 focus:bg-white transition-all shadow-inner"
+                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
                                     />
                                 </div>
                             </CardContent>
@@ -435,9 +435,6 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                     <DynamicField label="Colori" field="favor2_colors" value={data.favor2_colors || ''} onChange={handleChange} />
                                     <DynamicField label="Grafiche" field="favor2_graphics" value={data.favor2_graphics || ''} onChange={handleChange} />
                                     <DynamicField label="Stick" field="favor2_stick" value={data.favor2_stick || ''} onChange={handleChange} />
-                                    <DynamicField label="Profumi" field="favor2_scents" value={data.favor2_scents || ''} onChange={handleChange} />
-                                </div>
-                                    </div>
                                 </div>
 
                                 <div className="space-y-4 pt-4 border-t-2 border-slate-50">
@@ -449,7 +446,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         placeholder="Inserisci qui annotazioni specifiche per la produzione della 2° Bomboniera..."
                                         value={data.favor2_notes || ''}
                                         onChange={(e) => handleChange('favor2_notes', e.target.value)}
-                                        className="rounded-2xl bg-emerald-50/30 border-none font-bold p-6 min-h-[100px] text-slate-700 focus:bg-white transition-all shadow-inner"
+                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
                                     />
                                 </div>
                             </CardContent>
@@ -478,9 +475,6 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                     <DynamicField label="Colori" field="favor3_colors" value={data.favor3_colors || ''} onChange={handleChange} />
                                     <DynamicField label="Grafiche" field="favor3_graphics" value={data.favor3_graphics || ''} onChange={handleChange} />
                                     <DynamicField label="Stick" field="favor3_stick" value={data.favor3_stick || ''} onChange={handleChange} />
-                                    <DynamicField label="Profumi" field="favor3_scents" value={data.favor3_scents || ''} onChange={handleChange} />
-                                </div>
-                                    </div>
                                 </div>
 
                                 <div className="space-y-4 pt-4 border-t-2 border-slate-50">
@@ -492,7 +486,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         placeholder="Inserisci qui annotazioni specifiche per la produzione della 3° Bomboniera..."
                                         value={data.favor3_notes || ''}
                                         onChange={(e) => handleChange('favor3_notes', e.target.value)}
-                                        className="rounded-2xl bg-amber-50/30 border-none font-bold p-6 min-h-[100px] text-slate-700 focus:bg-white transition-all shadow-inner"
+                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
                                     />
                                 </div>
                             </CardContent>
@@ -527,9 +521,6 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <DynamicField label="Nastro" field="pack4_ribbon" value={data.pack4_ribbon || ''} onChange={handleChange} />
                                         <DynamicField label="Confetti" field="pack4_confetti" value={data.pack4_confetti || ''} onChange={handleChange} />
-                                        <DynamicField label="Grafica Pack" field="pack4_graphics" value={data.pack4_graphics || ''} onChange={handleChange} />
-                                    </div>
-                                </div>
                                     </div>
                                 </div>
 
@@ -542,7 +533,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         placeholder="Inserisci qui annotazioni specifiche per la produzione della 4° Bomboniera..."
                                         value={data.favor4_notes || ''}
                                         onChange={(e) => handleChange('favor4_notes', e.target.value)}
-                                        className="rounded-2xl bg-indigo-50/30 border-none font-bold p-6 min-h-[100px] text-slate-700 focus:bg-white transition-all shadow-inner"
+                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
                                     />
                                 </div>
                             </CardContent>
@@ -567,12 +558,12 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
                             <CardContent className="p-8">
                                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 1</Label>
-                                <Textarea 
-                                    placeholder="Annotazioni particolari per questo prodotto extra..."
-                                    value={data.extra1_notes || ''}
-                                    onChange={(e) => handleChange('extra1_notes', e.target.value)}
-                                    className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px]"
-                                />
+                                    <Textarea 
+                                        placeholder="Annotazioni particolari per questo prodotto extra..."
+                                        value={data.extra1_notes || ''}
+                                        onChange={(e) => handleChange('extra1_notes', e.target.value)}
+                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
+                                    />
                             </CardContent>
                         </Card>
                     </section>
@@ -596,12 +587,12 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
                             <CardContent className="p-8">
                                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 2</Label>
-                                <Textarea 
-                                    placeholder="Annotazioni particolari per questo prodotto extra..."
-                                    value={data.extra2_notes || ''}
-                                    onChange={(e) => handleChange('extra2_notes', e.target.value)}
-                                    className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px]"
-                                />
+                                    <Textarea 
+                                        placeholder="Annotazioni particolari per questo prodotto extra..."
+                                        value={data.extra2_notes || ''}
+                                        onChange={(e) => handleChange('extra2_notes', e.target.value)}
+                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
+                                    />
                             </CardContent>
                         </Card>
                     </section>
@@ -625,12 +616,12 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
                             <CardContent className="p-8">
                                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 3</Label>
-                                <Textarea 
-                                    placeholder="Annotazioni particolari per questo prodotto extra..."
-                                    value={data.extra3_notes || ''}
-                                    onChange={(e) => handleChange('extra3_notes', e.target.value)}
-                                    className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px]"
-                                />
+                                    <Textarea 
+                                        placeholder="Annotazioni particolari per questo prodotto extra..."
+                                        value={data.extra3_notes || ''}
+                                        onChange={(e) => handleChange('extra3_notes', e.target.value)}
+                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
+                                    />
                             </CardContent>
                         </Card>
                     </section>
@@ -654,12 +645,12 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
                             <CardContent className="p-8">
                                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 4</Label>
-                                <Textarea 
-                                    placeholder="Annotazioni particolari per questo prodotto extra..."
-                                    value={data.extra4_notes || ''}
-                                    onChange={(e) => handleChange('extra4_notes', e.target.value)}
-                                    className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px]"
-                                />
+                                    <Textarea 
+                                        placeholder="Annotazioni particolari per questo prodotto extra..."
+                                        value={data.extra4_notes || ''}
+                                        onChange={(e) => handleChange('extra4_notes', e.target.value)}
+                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
+                                    />
                             </CardContent>
                         </Card>
                     </section>
