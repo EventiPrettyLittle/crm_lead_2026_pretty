@@ -12,8 +12,15 @@ import { Switch } from "@/components/ui/switch";
 import { useEffect } from "react";
 import { updateDeal } from "@/actions/deals";
 import { toast } from "sonner";
-import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2, ArrowLeft } from "lucide-react";
+import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2, ArrowLeft, Eye } from "lucide-react";
 import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import Link from "next/link";
 
 interface DealSheetProps {
@@ -305,9 +312,36 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                         {quoteItems.map((item: any, idx: number) => (
                             <div key={idx} className="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 border border-slate-100">
-                                <div className="h-8 w-8 rounded-lg bg-indigo-600 flex flex-col items-center justify-center text-white shrink-0">
-                                    <span className="text-[6px] font-black leading-none opacity-60 uppercase">Qty</span>
-                                    <span className="text-sm font-black italic leading-none">{item.quantity}</span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <div className="h-8 w-8 rounded-lg bg-indigo-600 flex flex-col items-center justify-center text-white">
+                                        <span className="text-[6px] font-black leading-none opacity-60 uppercase">Qty</span>
+                                        <span className="text-sm font-black italic leading-none">{item.quantity}</span>
+                                    </div>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 text-slate-400">
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-2xl rounded-[2.5rem] p-10 border-none shadow-2xl bg-white/95 backdrop-blur-xl">
+                                            <DialogHeader className="space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-3 bg-indigo-600 rounded-2xl text-white">
+                                                        <Package className="h-6 w-6" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                         <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Dettaglio Prodotto</span>
+                                                         <DialogTitle className="text-3xl font-black text-slate-900 leading-tight uppercase italic">{item.description || item.name || 'Prodotto'}</DialogTitle>
+                                                    </div>
+                                                </div>
+                                                <div className="h-1 w-20 bg-indigo-600 rounded-full" />
+                                            </DialogHeader>
+                                            <div className="mt-8 p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
+                                                <span className="text-xs font-black uppercase text-slate-400 tracking-widest">Quantità in Preventivo</span>
+                                                <span className="text-6xl font-black italic text-indigo-600 tracking-tighter">{item.quantity} pezzi</span>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[9px] font-black text-slate-900 truncate uppercase italic leading-tight">

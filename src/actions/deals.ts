@@ -90,7 +90,7 @@ export async function getDeals() {
                     fields = [deal.favor4_title, deal.favor4_colors, deal.favor4_graphics, deal.favor4_stick, deal.favor4_scents];
                 } else if (target.startsWith('extra')) {
                     const num = target.replace('extra', '');
-                    fields = [deal[`extra${num}_title`], deal[`extra${num}_notes`]];
+                    fields = [(deal as any)[`extra${num}_title`], (deal as any)[`extra${num}_notes`]];
                 }
 
                 totalSectionFields += fields.length;
