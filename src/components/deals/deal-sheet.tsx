@@ -397,7 +397,6 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         <DynamicField label="Grafica Pack" field="pack1_graphics" value={data.pack1_graphics || ''} onChange={handleChange} />
                                     </div>
                                 </div>
-                            </div>
                         </CardContent>
                     </Card>
                 </section>
