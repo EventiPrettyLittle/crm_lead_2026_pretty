@@ -258,6 +258,22 @@ model Deal {
   acc3_colors      String?
   acc3_graphics    String?
 
+  // Extra 1
+  extra1_title     String?
+  extra1_notes     String?
+  
+  // Extra 2
+  extra2_title     String?
+  extra2_notes     String?
+
+  // Extra 3
+  extra3_title     String?
+  extra3_notes     String?
+
+  // Extra 4
+  extra4_title     String?
+  extra4_notes     String?
+
   // Assignment Mapping (JSON)
   productAssignments String? // [{"quoteItemId": "...", "target": "favor1", "quantity": 10}]
   

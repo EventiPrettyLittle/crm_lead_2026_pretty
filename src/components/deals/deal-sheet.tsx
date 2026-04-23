@@ -114,9 +114,18 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
     const [showFavor2, setShowFavor2] = useState(!!(initialData.favor2_colors || initialData.pack2_ribbon));
     const [showFavor3, setShowFavor3] = useState(!!(initialData.favor3_colors || initialData.pack3_ribbon));
     const [showFavor4, setShowFavor4] = useState(!!(initialData.favor4_colors || initialData.pack4_ribbon));
+    const [showExtra1, setShowExtra1] = useState(!!initialData.extra1_title);
+    const [showExtra2, setShowExtra2] = useState(!!initialData.extra2_title);
+    const [showExtra3, setShowExtra3] = useState(!!initialData.extra3_title);
+    const [showExtra4, setShowExtra4] = useState(!!initialData.extra4_title);
 
     const quoteItems = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
     const productAssignments = data.productAssignments ? JSON.parse(data.productAssignments) : [];
+
+    // Funzione per capire se una posizione è già presa da un ALTRO prodotto
+    const isTargetTaken = (target: string, currentItemId: string) => {
+        return productAssignments.some((a: any) => a.target === target && a.quoteItemId !== currentItemId);
+    };
 
     // Automazione Live Show/Consegna basata sui prodotti del preventivo
     useEffect(() => {
@@ -259,32 +268,38 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                     </div>
                 </Card>
 
-                <Card className="rounded-[2rem] border-none shadow-sm bg-indigo-50/50 p-6 flex flex-col justify-center items-center gap-3">
+                <Card className="rounded-[2rem] border-none shadow-sm bg-indigo-50/50 p-6 grid grid-cols-2 gap-x-8 gap-y-3">
                     <div className="flex items-center gap-3 w-full justify-between">
                          <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">2° Bomboniera</span>
                          <Switch checked={showFavor2} onCheckedChange={setShowFavor2} />
+                    </div>
+                    <div className="flex items-center gap-3 w-full justify-between">
+                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">Extra 1</span>
+                         <Switch checked={showExtra1} onCheckedChange={setShowExtra1} />
                     </div>
                     <div className="flex items-center gap-3 w-full justify-between">
                          <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">3° Bomboniera</span>
                          <Switch checked={showFavor3} onCheckedChange={setShowFavor3} />
                     </div>
                     <div className="flex items-center gap-3 w-full justify-between">
+                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">Extra 2</span>
+                         <Switch checked={showExtra2} onCheckedChange={setShowExtra2} />
+                    </div>
+                    <div className="flex items-center gap-3 w-full justify-between">
                          <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">4° Bomboniera</span>
                          <Switch checked={showFavor4} onCheckedChange={setShowFavor4} />
                     </div>
-                </Card>
-
-                <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-6 flex flex-col justify-center items-center text-center">
-                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1">Status Lavorazione</span>
-                    <select 
-                        value={data.status || 'IN_LAVORAZIONE'} 
-                        onChange={(e) => handleChange('status', e.target.value)}
-                        className="bg-transparent text-white font-black italic uppercase text-lg outline-none cursor-pointer hover:text-emerald-400 transition-colors"
-                    >
-                        <option value="IN_LAVORAZIONE" className="bg-slate-900 text-white">In Lavorazione</option>
-                        <option value="COMPLETATO" className="bg-slate-900 text-emerald-400">Completato</option>
-                        <option value="APPROVATO" className="bg-slate-900 text-indigo-400">Approvato</option>
-                    </select>
+                    <div className="flex items-center gap-3 w-full justify-between">
+                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">Extra 3</span>
+                         <Switch checked={showExtra3} onCheckedChange={setShowExtra3} />
+                    </div>
+                    <div className="flex items-center gap-3 w-full justify-between">
+                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest hidden md:block"></span>
+                    </div>
+                    <div className="flex items-center gap-3 w-full justify-between">
+                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">Extra 4</span>
+                         <Switch checked={showExtra4} onCheckedChange={setShowExtra4} />
+                    </div>
                 </Card>
             </div>
             
@@ -318,10 +333,14 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                                 onChange={(e) => handleAssignmentChange(item.id, e.target.value)}
                                             >
                                                 <option value="">NON ASSEGNATO</option>
-                                                <option value="favor1">1° Bomboniera</option>
-                                                <option value="favor2">2° Bomboniera</option>
-                                                <option value="favor3">3° Bomboniera</option>
-                                                <option value="favor4">4° Bomboniera</option>
+                                                {!isTargetTaken('favor1', item.id) && <option value="favor1">1° Bomboniera</option>}
+                                                {!isTargetTaken('favor2', item.id) && <option value="favor2">2° Bomboniera</option>}
+                                                {!isTargetTaken('favor3', item.id) && <option value="favor3">3° Bomboniera</option>}
+                                                {!isTargetTaken('favor4', item.id) && <option value="favor4">4° Bomboniera</option>}
+                                                {!isTargetTaken('extra1', item.id) && <option value="extra1">Extra 1</option>}
+                                                {!isTargetTaken('extra2', item.id) && <option value="extra2">Extra 2</option>}
+                                                {!isTargetTaken('extra3', item.id) && <option value="extra3">Extra 3</option>}
+                                                {!isTargetTaken('extra4', item.id) && <option value="extra4">Extra 4</option>}
                                             </select>
                                         </div>
                                     </div>
@@ -366,9 +385,8 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                 <DynamicField label="Profumi" field="favor1_scents" value={data.favor1_scents || ''} onChange={handleChange} />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                  {/* Packaging */}
-                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
+                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6 w-full">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Package className="h-4 w-4 text-indigo-600" />
                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Configurazione Packaging</span>
@@ -379,33 +397,10 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         <DynamicField label="Grafica Pack" field="pack1_graphics" value={data.pack1_graphics || ''} onChange={handleChange} />
                                     </div>
                                 </div>
-
-                                {/* Accessori 1 */}
-                                <div className="bg-white border-2 border-slate-50 rounded-[2rem] p-8 space-y-6">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Layers className="h-4 w-4 text-indigo-600" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Accessori & Opzioni 1</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <DynamicField label="Prodotto" field="acc1_product" value={data.acc1_product || ''} onChange={handleChange} isAccent />
-                                        <DynamicField label="Colori" field="acc1_colors" value={data.acc1_colors || ''} onChange={handleChange} />
-                                        <DynamicField label="Grafica" field="acc1_graphics" value={data.acc1_graphics || ''} onChange={handleChange} />
-                                    </div>
-                                </div>
                             </div>
-                            
-                            {/* Accessori 2 */}
-                            <div className="bg-white border-2 border-slate-50 rounded-[2rem] p-8 space-y-6">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Layers className="h-4 w-4 text-indigo-600" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Accessori & Opzioni 2</span>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                    <DynamicField label="Prodotto 2" field="acc2_product" value={data.acc2_product || ''} onChange={handleChange} isAccent />
-                                    <DynamicField label="Colori 2" field="acc2_colors" value={data.acc2_colors || ''} onChange={handleChange} />
-                                    <DynamicField label="Grafica 2" field="acc2_graphics" value={data.acc2_graphics || ''} onChange={handleChange} />
-                                </div>
-                            </div>
+                        </CardContent>
+                    </Card>
+                </section>
                         </CardContent>
                     </Card>
                 </section>
@@ -522,6 +517,121 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         <DynamicField label="Grafica 3" field="acc3_graphics" value={data.acc3_graphics || ''} onChange={handleChange} />
                                     </div>
                                 </div>
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
+                {/* EXTRA 1 (CONDIZIONALE) */}
+                {showExtra1 && (
+                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
+                        <div className="flex items-center gap-3 px-4">
+                            <Plus className="h-5 w-5 text-indigo-600" />
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Extra 1..."
+                                    value={data.extra1_title || ''}
+                                    onChange={(e) => handleChange('extra1_title', e.target.value)}
+                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
+                            </div>
+                        </div>
+                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
+                            <CardContent className="p-8">
+                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 1</Label>
+                                <Textarea 
+                                    placeholder="Annotazioni particolari per questo prodotto extra..."
+                                    value={data.extra1_notes || ''}
+                                    onChange={(e) => handleChange('extra1_notes', e.target.value)}
+                                    className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px]"
+                                />
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
+
+                {/* EXTRA 2 (CONDIZIONALE) */}
+                {showExtra2 && (
+                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
+                        <div className="flex items-center gap-3 px-4">
+                            <Plus className="h-5 w-5 text-indigo-600" />
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Extra 2..."
+                                    value={data.extra2_title || ''}
+                                    onChange={(e) => handleChange('extra2_title', e.target.value)}
+                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
+                            </div>
+                        </div>
+                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
+                            <CardContent className="p-8">
+                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 2</Label>
+                                <Textarea 
+                                    placeholder="Annotazioni particolari per questo prodotto extra..."
+                                    value={data.extra2_notes || ''}
+                                    onChange={(e) => handleChange('extra2_notes', e.target.value)}
+                                    className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px]"
+                                />
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
+
+                {/* EXTRA 3 (CONDIZIONALE) */}
+                {showExtra3 && (
+                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
+                        <div className="flex items-center gap-3 px-4">
+                            <Plus className="h-5 w-5 text-indigo-600" />
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Extra 3..."
+                                    value={data.extra3_title || ''}
+                                    onChange={(e) => handleChange('extra3_title', e.target.value)}
+                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
+                            </div>
+                        </div>
+                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
+                            <CardContent className="p-8">
+                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 3</Label>
+                                <Textarea 
+                                    placeholder="Annotazioni particolari per questo prodotto extra..."
+                                    value={data.extra3_notes || ''}
+                                    onChange={(e) => handleChange('extra3_notes', e.target.value)}
+                                    className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px]"
+                                />
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
+
+                {/* EXTRA 4 (CONDIZIONALE) */}
+                {showExtra4 && (
+                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
+                        <div className="flex items-center gap-3 px-4">
+                            <Plus className="h-5 w-5 text-indigo-600" />
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Extra 4..."
+                                    value={data.extra4_title || ''}
+                                    onChange={(e) => handleChange('extra4_title', e.target.value)}
+                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
+                            </div>
+                        </div>
+                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
+                            <CardContent className="p-8">
+                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 4</Label>
+                                <Textarea 
+                                    placeholder="Annotazioni particolari per questo prodotto extra..."
+                                    value={data.extra4_notes || ''}
+                                    onChange={(e) => handleChange('extra4_notes', e.target.value)}
+                                    className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px]"
+                                />
                             </CardContent>
                         </Card>
                     </section>
