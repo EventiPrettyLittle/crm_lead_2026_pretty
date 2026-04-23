@@ -7,11 +7,11 @@ export function ClientAuthGuard({ children }: { children: React.ReactNode }) {
     const [isVerified, setIsVerified] = useState<boolean | null>(null)
 
     useEffect(() => {
-        // Verifica se esiste il cookie di sessione sul client
-        const hasSession = document.cookie.includes('PLATINUM_AUTH_SESSION') || 
-                          document.cookie.includes('PLATINUM_G_SYNC');
+        // Verifica se esiste il segnale di presenza (PLATINUM_ACTIVE)
+        // Questo cookie è appositamente NON httpOnly così lo scudo può vederlo
+        const hasActiveSession = document.cookie.includes('PLATINUM_ACTIVE=true');
         
-        if (hasSession) {
+        if (hasActiveSession) {
             setIsVerified(true)
         } else {
             setIsVerified(false)

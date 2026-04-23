@@ -111,6 +111,15 @@ export async function GET(request: NextRequest) {
             maxAge: 60 * 60 * 24 * 30 
         });
 
+        // 4. Segnale di presenza per ClientAuthGuard
+        response.cookies.set('PLATINUM_ACTIVE', 'true', {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30 
+        });
+
         return response
     } catch (error) {
         console.error('Error exchanging code for tokens:', error)

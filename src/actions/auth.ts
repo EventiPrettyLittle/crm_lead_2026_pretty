@@ -102,6 +102,15 @@ export async function loginWithCredentials(formData: FormData) {
             maxAge: 60 * 60 * 24 * 30 
         });
 
+        // Segnale di presenza per il ClientAuthGuard (NON httpOnly così è leggibile dal JS)
+        cookieStore.set('PLATINUM_ACTIVE', 'true', {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30 
+        });
+
         return { success: true };
     } catch (error) {
         console.error("Login error:", error);
