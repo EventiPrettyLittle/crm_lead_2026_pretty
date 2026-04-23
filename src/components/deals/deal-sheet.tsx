@@ -163,7 +163,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
         
         // AUTO-UPDATE TITLE: Se assegniamo a una bomboniera, aggiorniamo il titolo della sezione
         const newData = { ...data, productAssignments: JSON.stringify(currentArr) };
-        if (target && target.startsWith('favor') && itemTitle) {
+        if (target && (target.startsWith('favor') || target.startsWith('extra')) && itemTitle) {
             newData[`${target}_title`] = itemTitle.toUpperCase();
         }
         
