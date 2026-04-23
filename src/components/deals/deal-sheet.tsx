@@ -401,9 +401,6 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         </CardContent>
                     </Card>
                 </section>
-                        </CardContent>
-                    </Card>
-                </section>
 
                 {/* SECONDA BOMBONIERA (CONDIZIONALE) */}
                 {showFavor2 && (
