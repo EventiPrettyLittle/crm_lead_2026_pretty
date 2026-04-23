@@ -4,6 +4,7 @@ import { getGoogleCalendarClient } from "@/lib/google-auth";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { createActivity } from "./lead-detail";
+import { getCurrentUser } from "./auth";
 
 async function getGoogleTokens(): Promise<any | null> {
     const cookieStore = await cookies();
@@ -208,25 +209,24 @@ export async function createCalendarEvent(eventData: {
     const duration = Math.round((end.getTime() - start.getTime()) / 60000);
 
     try {
-        const cookieStore = await cookies();
-        const session = cookieStore.get('PLATINUM_AUTH_SESSION');
+        const user = await getCurrentUser();
         
-        if (session) {
-            const sessionData = JSON.parse(session.value);
-            ownerId = sessionData.id || null;
-            const userEmail = sessionData.email?.toLowerCase().trim();
+        if (user) {
+            ownerId = user.id || null;
+            const userEmail = user.email?.toLowerCase().trim();
             
             if (!ownerId && userEmail) {
-                const users: any[] = await prisma.$queryRawUnsafe(
+                const dbUsers: any[] = await prisma.$queryRawUnsafe(
                     `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
                     userEmail
                 );
-                if (users.length > 0) ownerId = users[0].id;
+                if (dbUsers.length > 0) ownerId = dbUsers[0].id;
             }
         }
 
         if (!ownerId) {
-            return { success: false, error: 'Identità utente non verificata. Effettua il login.' };
+            console.error('[CALENDAR AUTH ERROR] No ownerId found for user:', user);
+            return { success: false, error: 'Sessione scaduta o identità non verificata. Per favore effettua Logout e Login.' };
         }
 
         // 1. SALVATAGGIO LOCALE (Obbligatorio)
