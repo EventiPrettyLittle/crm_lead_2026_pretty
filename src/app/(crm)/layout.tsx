@@ -20,11 +20,6 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
     console.error("Layout Auth Error:", e);
   }
 
-  // PROTEZIONE ROTTA: Se l'utente non è loggato, rimanda al login
-  if (!user) {
-    redirect('/login');
-  }
-
   return (
     <SidebarProvider>
       <AppSidebar />
