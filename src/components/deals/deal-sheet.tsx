@@ -187,19 +187,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                             {leadName}
                         </h1>
                         <div className="flex items-center gap-2">
-                            <QuotePreviewDialog
-                                lead={{
-                                    firstName: leadName.split(' ')[0],
-                                    lastName: leadName.split(' ')[1] || '',
-                                    phone: '',
-                                    eventLocation: leadLocation || '',
-                                    eventType: '',
-                                    eventDate: ''
-                                }}
-                                items={quoteItems}
-                                quoteNumber={acceptedQuote?.number || '---'}
-                                quoteDate={acceptedQuote?.createdAt ? new Date(acceptedQuote.createdAt).toLocaleDateString() : ''}
-                            />
+                            <QuotePreviewDialog quote={acceptedQuote} />
                             <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Vedi Prev.</span>
                         </div>
                     </div>
