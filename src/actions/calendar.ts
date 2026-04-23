@@ -209,24 +209,52 @@ export async function createCalendarEvent(eventData: {
     const duration = Math.round((end.getTime() - start.getTime()) / 60000);
 
     try {
-        const user = await getCurrentUser();
+        let user = await getCurrentUser();
         
+        // Fallback 1: Lettura diretta del cookie se getCurrentUser fallisce
+        if (!user) {
+            const cookieStore = await cookies();
+            const sessionCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
+            if (sessionCookie?.value) {
+                try {
+                    user = JSON.parse(sessionCookie.value);
+                } catch (e) {}
+            }
+        }
+
         if (user) {
             ownerId = user.id || null;
-            const userEmail = user.email?.toLowerCase().trim();
+            const userEmail = (user.email || user.user?.email || "").toLowerCase().trim();
             
             if (!ownerId && userEmail) {
+                // Prova 1: Query con LOWER (più flessibile)
                 const dbUsers: any[] = await prisma.$queryRawUnsafe(
                     `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
                     userEmail
                 );
-                if (dbUsers.length > 0) ownerId = dbUsers[0].id;
+                if (dbUsers.length > 0) {
+                    ownerId = dbUsers[0].id;
+                } else {
+                    // Prova 2: Query esatta (più sicura)
+                    const dbUsers2: any[] = await prisma.$queryRawUnsafe(
+                        `SELECT id FROM "User" WHERE email = $1 LIMIT 1`,
+                        userEmail
+                    );
+                    if (dbUsers2.length > 0) ownerId = dbUsers2[0].id;
+                }
             }
         }
 
         if (!ownerId) {
-            console.error('[CALENDAR AUTH ERROR] No ownerId found for user:', user);
-            return { success: false, error: 'Sessione scaduta o identità non verificata. Per favore effettua Logout e Login.' };
+            console.error('[CALENDAR AUTH ERROR] Identification failed.', { 
+                hasUser: !!user, 
+                email: user?.email, 
+                idInSession: user?.id 
+            });
+            return { 
+                success: false, 
+                error: `Identità non trovata (Email: ${user?.email || 'Nessuna'}). Assicurati che l'utente esista nel database o riprova il Login.` 
+            };
         }
 
         // 1. SALVATAGGIO LOCALE (Obbligatorio)
