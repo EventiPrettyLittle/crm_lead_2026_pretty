@@ -110,19 +110,18 @@ const DynamicField = ({
 export function DealSheet({ leadId, initialData, leadName, leadLocation, acceptedQuote }: DealSheetProps) {
     const [data, setData] = useState(initialData);
     const [saving, setSaving] = useState(false);
-    
-    // States per visibilità sezioni (inizializzate dai dati esistenti)
-    const [showFavor2, setShowFavor2] = useState(!!(initialData.favor2_title || initialData.favor2_colors));
-    const [showFavor3, setShowFavor3] = useState(!!(initialData.favor3_title || initialData.favor3_colors));
-    const [showFavor4, setShowFavor4] = useState(!!(initialData.favor4_title || initialData.favor4_colors));
-    
-    const [showExtra1, setShowExtra1] = useState(!!(initialData.extra1_title || initialData.extra1_notes));
-    const [showExtra2, setShowExtra2] = useState(!!(initialData.extra2_title || initialData.extra2_notes));
-    const [showExtra3, setShowExtra3] = useState(!!(initialData.extra3_title || initialData.extra3_notes));
-    const [showExtra4, setShowExtra4] = useState(!!(initialData.extra4_title || initialData.extra4_notes));
-
     const quoteItems = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
     const productAssignments = data.productAssignments ? JSON.parse(data.productAssignments) : [];
+
+    // Logica di visibilità DERIVATA e REATTIVA
+    const showFavor2 = productAssignments.some((a: any) => a.target === 'favor2');
+    const showFavor3 = productAssignments.some((a: any) => a.target === 'favor3');
+    const showFavor4 = productAssignments.some((a: any) => a.target === 'favor4');
+    
+    const showExtra1 = productAssignments.some((a: any) => a.target === 'extra1');
+    const showExtra2 = productAssignments.some((a: any) => a.target === 'extra2');
+    const showExtra3 = productAssignments.some((a: any) => a.target === 'extra3');
+    const showExtra4 = productAssignments.some((a: any) => a.target === 'extra4');
 
     const isTargetTaken = (target: string, currentItemId: string) => {
         return productAssignments.some((a: any) => a.target === target && a.quoteItemId !== currentItemId);
@@ -133,29 +132,24 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
     };
 
     const handleAssignmentChange = (quoteItemId: string, target: string) => {
-        const currentArr = data.productAssignments ? JSON.parse(data.productAssignments) : [];
-        const index = currentArr.findIndex((a: any) => a.quoteItemId === quoteItemId);
+        let currentArr = data.productAssignments ? JSON.parse(data.productAssignments) : [];
         
-        const item = quoteItems.find((i: any) => i.id === quoteItemId);
-        const itemTitle = item?.description || item?.name || '';
+        // 1. Rimuoviamo l'assegnazione precedente per questo specifico item (se esiste)
+        currentArr = currentArr.filter((a: any) => a.quoteItemId !== quoteItemId);
 
-        if (index >= 0) {
-            currentArr[index].target = target;
-        } else {
+        // 2. Aggiungiamo la nuova assegnazione (se non è l'opzione vuota)
+        if (target) {
             currentArr.push({ quoteItemId, target });
         }
         
+        const item = quoteItems.find((i: any) => i.id === quoteItemId);
+        const itemTitle = item?.description || item?.name || '';
+        
         const newData = { ...data, productAssignments: JSON.stringify(currentArr) };
+        
+        // Aggiorniamo il titolo della sezione di destinazione (se assegnata)
         if (target && itemTitle) {
             newData[`${target}_title`] = itemTitle.toUpperCase();
-            // Attiviamo automaticamente la sezione se assegniamo un prodotto
-            if (target === 'favor2') setShowFavor2(true);
-            if (target === 'favor3') setShowFavor3(true);
-            if (target === 'favor4') setShowFavor4(true);
-            if (target === 'extra1') setShowExtra1(true);
-            if (target === 'extra2') setShowExtra2(true);
-            if (target === 'extra3') setShowExtra3(true);
-            if (target === 'extra4') setShowExtra4(true);
         }
         
         setData(newData);
