@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma"
 import { serializePrisma } from "@/lib/serialize"
+import { unstable_cache } from 'next/cache'
 
 /**
  * Tenta di creare la tabella SystemSettings se non esiste via SQL grezzo
@@ -20,9 +21,6 @@ async function ensureTableExists() {
         // console.log("Table exists or error");
     }
 }
-
-import { serializePrisma } from "@/lib/serialize"
-import { unstable_cache } from 'next/cache'
 
 export const getSystemSettings = unstable_cache(
     async () => {
