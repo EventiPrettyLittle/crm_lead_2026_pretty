@@ -5,9 +5,10 @@ import { parseLeadsFile } from '@/lib/import-utils'
 import { importLeadsAction } from '@/actions/leads'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Upload, FileUp, CheckCircle, Loader2, Database, AlertCircle, Info, Sparkles, ArrowRight } from 'lucide-react'
+import { Upload, FileUp, CheckCircle, Loader2, Database, AlertCircle, Info, Sparkles, ArrowRight, Zap } from 'lucide-react'
 import { GoogleSheetsSync } from '@/components/leads/google-sheets-sync'
 import { cn } from "@/lib/utils"
+import Link from 'next/link'
 
 export function ImportManager() {
     const [file, setFile] = useState<File | null>(null)
