@@ -361,7 +361,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
             )}
 
             {/* SEZIONI BOMBONIERE */}
-            <div className="space-y-10">
+            <div className="space-y-20">
                 {/* PRIMA BOMBONIERA */}
                 <section className="space-y-4">
                     <div className="flex items-center gap-3 px-4">
@@ -397,9 +397,22 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         <DynamicField label="Grafica Pack" field="pack1_graphics" value={data.pack1_graphics || ''} onChange={handleChange} />
                                     </div>
                                 </div>
-                        </CardContent>
-                    </Card>
-                </section>
+                                
+                                <div className="space-y-4 pt-4 border-t-2 border-slate-50">
+                                    <div className="flex items-center gap-2">
+                                        <NotebookPen className="h-4 w-4 text-indigo-400" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Note di Lavorazione 1° Bomboniera</span>
+                                    </div>
+                                    <Textarea 
+                                        placeholder="Inserisci qui annotazioni specifiche per la produzione della 1° Bomboniera..."
+                                        value={data.favor1_notes || ''}
+                                        onChange={(e) => handleChange('favor1_notes', e.target.value)}
+                                        className="rounded-2xl bg-slate-50 border-none font-bold p-6 min-h-[100px] text-slate-700 focus:bg-white transition-all shadow-inner"
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </section>
 
                 {/* SECONDA BOMBONIERA (CONDIZIONALE) */}
                 {showFavor2 && (
@@ -424,12 +437,20 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                     <DynamicField label="Stick" field="favor2_stick" value={data.favor2_stick || ''} onChange={handleChange} />
                                     <DynamicField label="Profumi" field="favor2_scents" value={data.favor2_scents || ''} onChange={handleChange} />
                                 </div>
-                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <DynamicField label="Nastro" field="pack2_ribbon" value={data.pack2_ribbon || ''} onChange={handleChange} />
-                                        <DynamicField label="Confetti" field="pack2_confetti" value={data.pack2_confetti || ''} onChange={handleChange} />
-                                        <DynamicField label="Grafica Pack" field="pack2_graphics" value={data.pack2_graphics || ''} onChange={handleChange} />
                                     </div>
+                                </div>
+
+                                <div className="space-y-4 pt-4 border-t-2 border-slate-50">
+                                    <div className="flex items-center gap-2">
+                                        <NotebookPen className="h-4 w-4 text-emerald-400" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/60">Note di Lavorazione 2° Bomboniera</span>
+                                    </div>
+                                    <Textarea 
+                                        placeholder="Inserisci qui annotazioni specifiche per la produzione della 2° Bomboniera..."
+                                        value={data.favor2_notes || ''}
+                                        onChange={(e) => handleChange('favor2_notes', e.target.value)}
+                                        className="rounded-2xl bg-emerald-50/30 border-none font-bold p-6 min-h-[100px] text-slate-700 focus:bg-white transition-all shadow-inner"
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -459,12 +480,20 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                     <DynamicField label="Stick" field="favor3_stick" value={data.favor3_stick || ''} onChange={handleChange} />
                                     <DynamicField label="Profumi" field="favor3_scents" value={data.favor3_scents || ''} onChange={handleChange} />
                                 </div>
-                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <DynamicField label="Nastro" field="pack3_ribbon" value={data.pack3_ribbon || ''} onChange={handleChange} />
-                                        <DynamicField label="Confetti" field="pack3_confetti" value={data.pack3_confetti || ''} onChange={handleChange} />
-                                        <DynamicField label="Grafica Pack" field="pack3_graphics" value={data.pack3_graphics || ''} onChange={handleChange} />
                                     </div>
+                                </div>
+
+                                <div className="space-y-4 pt-4 border-t-2 border-slate-50">
+                                    <div className="flex items-center gap-2">
+                                        <NotebookPen className="h-4 w-4 text-amber-400" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-400/60">Note di Lavorazione 3° Bomboniera</span>
+                                    </div>
+                                    <Textarea 
+                                        placeholder="Inserisci qui annotazioni specifiche per la produzione della 3° Bomboniera..."
+                                        value={data.favor3_notes || ''}
+                                        onChange={(e) => handleChange('favor3_notes', e.target.value)}
+                                        className="rounded-2xl bg-amber-50/30 border-none font-bold p-6 min-h-[100px] text-slate-700 focus:bg-white transition-all shadow-inner"
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
@@ -501,17 +530,20 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                         <DynamicField label="Grafica Pack" field="pack4_graphics" value={data.pack4_graphics || ''} onChange={handleChange} />
                                     </div>
                                 </div>
-                                {/* Accessori 3 */}
-                                <div className="bg-white border-2 border-slate-50 rounded-[2rem] p-8 space-y-6">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Layers className="h-4 w-4 text-indigo-600" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Accessori & Opzioni 3</span>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <DynamicField label="Prodotto 3" field="acc3_product" value={data.acc3_product || ''} onChange={handleChange} isAccent />
-                                        <DynamicField label="Colori 3" field="acc3_colors" value={data.acc3_colors || ''} onChange={handleChange} />
-                                        <DynamicField label="Grafica 3" field="acc3_graphics" value={data.acc3_graphics || ''} onChange={handleChange} />
+                                </div>
+
+                                <div className="space-y-4 pt-4 border-t-2 border-slate-50">
+                                    <div className="flex items-center gap-2">
+                                        <NotebookPen className="h-4 w-4 text-indigo-400" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Note di Lavorazione 4° Bomboniera</span>
                                     </div>
+                                    <Textarea 
+                                        placeholder="Inserisci qui annotazioni specifiche per la produzione della 4° Bomboniera..."
+                                        value={data.favor4_notes || ''}
+                                        onChange={(e) => handleChange('favor4_notes', e.target.value)}
+                                        className="rounded-2xl bg-indigo-50/30 border-none font-bold p-6 min-h-[100px] text-slate-700 focus:bg-white transition-all shadow-inner"
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
