@@ -211,17 +211,14 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
             <Page size="A4" style={styles.page}>
                 <View style={styles.header}>
                     <View style={styles.logoSection}>
-                        {(quote.systemSettings?.logoUrl || true) ? (
-                            <Image 
-                                src={quote.systemSettings?.logoUrl || "/logo-pdf.png"} 
-                                style={{ width: quote.systemSettings?.logoWidth || 160, maxHeight: 60, objectFit: 'contain' }} 
-                            />
-                        ) : (
-                            <>
-                                <Text style={styles.logoText}>{companyName}</Text>
-                                <Text style={styles.companyTagline}>EVENTI & BRAND EXPERIENCE</Text>
-                            </>
-                        )}
+                        <Image 
+                            src={quote.systemSettings?.logoUrl || "/logo-pdf.png"} 
+                            style={{ 
+                                width: quote.systemSettings?.logoWidth || 160, 
+                                maxHeight: 60, 
+                                objectFit: 'contain' 
+                            }} 
+                        />
                     </View>
                     <View style={styles.quoteInfo}>
                         <Text style={styles.quoteTitle}>PREVENTIVO</Text>
