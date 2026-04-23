@@ -445,4 +445,3 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
         </div>
     );
 }
-\n// Build fix confirmed: Thu Apr 23 12:32:18 CEST 2026
