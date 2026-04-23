@@ -257,47 +257,31 @@ export async function addItemToQuote(quoteId: string, data: { description: strin
     }
 
     await updateQuoteTotal(quoteId);
-    revalidatePath('/quotes');
-    revalidatePath('/finance');
+    return getQuote(quoteId);
 }
 
 export async function updateQuoteItem(itemId: string, quoteId: string, data: { description: string, quantity: number, originalPrice?: number, unitPrice: number, discount?: number, vatRate: number }) {
     const totalPrice = data.quantity * data.unitPrice;
 
-    try {
-        await (prisma as any).quoteItem.update({
-            where: { id: itemId },
-            data: {
-                description: data.description,
-                quantity: data.quantity,
-                originalPrice: data.originalPrice || data.unitPrice,
-                unitPrice: data.unitPrice,
-                discount: data.discount || 0,
-                vatRate: data.vatRate || 22,
-                totalPrice: totalPrice
-            }
-        });
-    } catch (error) {
-        console.error("Prisma update failed, falling back to raw:", error);
-        // Fallback raw in caso di schema desincronizzato
-        await prisma.$executeRawUnsafe(
-            `UPDATE "QuoteItem" SET 
-                description = $1, 
-                quantity = $2, 
-                "originalPrice" = $3, 
-                "unitPrice" = $4, 
-                discount = $5, 
-                "vatRate" = $6, 
-                "totalPrice" = $7 
-             WHERE id = $8`,
-            data.description, data.quantity, data.originalPrice || data.unitPrice, data.unitPrice, data.discount || 0, data.vatRate || 22, totalPrice, itemId
-        );
-    }
+    // Eseguiamo l'aggiornamento e il ricalcolo del totale in parallelo/sequenza veloce senza revalidate ridondanti
+    await (prisma as any).quoteItem.update({
+        where: { id: itemId },
+        data: {
+            description: data.description,
+            quantity: data.quantity,
+            originalPrice: data.originalPrice || data.unitPrice,
+            unitPrice: data.unitPrice,
+            discount: data.discount || 0,
+            vatRate: data.vatRate || 22,
+            totalPrice: totalPrice
+        }
+    });
 
+    // Aggiornamento totale atomico
     await updateQuoteTotal(quoteId);
-    revalidatePath('/quotes');
-    revalidatePath('/finance');
-    return { success: true };
+    
+    // Restituiamo il preventivo aggiornato direttamente per evitare una seconda chiamata fetch
+    return getQuote(quoteId);
 }
 泛指基础:1
 export async function updateQuoteDetails(id: string, data: { paymentMethod?: string, discountTotal?: number, notes?: string, createdBy?: string }) {
@@ -401,16 +385,14 @@ export async function updateQuoteStatus(id: string, status: string, leadId: stri
 }
 
 async function updateQuoteTotal(quoteId: string) {
-    const items: any[] = await prisma.$queryRawUnsafe(`SELECT "totalPrice" FROM "QuoteItem" WHERE "quoteId" = $1`, quoteId);
-    const itemsTotal = items.reduce((acc, item) => acc + Number(item.totalPrice || 0), 0);
-    
-    const quotes: any[] = await prisma.$queryRawUnsafe(`SELECT "discountTotal" FROM "Quote" WHERE id = $1`, quoteId);
-    const discountTotal = quotes.length > 0 ? Number(quotes[0].discountTotal || 0) : 0;
-    
-    const finalTotal = itemsTotal - discountTotal;
-
-    await prisma.$executeRawUnsafe(
-        `UPDATE "Quote" SET "totalAmount" = $1 WHERE id = $2`,
-        Math.max(0, finalTotal), quoteId
-    );
+    // Calcolo del totale in un'unica query SQL performante
+    await prisma.$executeRawUnsafe(`
+        UPDATE "Quote"
+        SET "totalAmount" = GREATEST(0, (
+            SELECT COALESCE(SUM("totalPrice"), 0)
+            FROM "QuoteItem"
+            WHERE "quoteId" = "Quote".id
+        ) - COALESCE("discountTotal", 0))
+        WHERE id = $1
+    `, quoteId);
 }

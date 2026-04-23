@@ -156,14 +156,15 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
             };
 
             if (editingItemId) {
-                await updateQuoteItem(editingItemId, qId, itemData);
+                const updatedQuote = await updateQuoteItem(editingItemId, qId, itemData);
+                if (updatedQuote) setQuote(updatedQuote);
                 toast.success("Voce aggiornata");
             } else {
-                await addItemToQuote(qId, itemData);
+                const updatedQuote = await addItemToQuote(qId, itemData);
+                if (updatedQuote) setQuote(updatedQuote);
                 toast.success("Voce aggiunta");
             }
 
-            await fetchQuote(qId);
             setDesc("");
             setEditingItemId(null);
             setPriceStatesDefault();
