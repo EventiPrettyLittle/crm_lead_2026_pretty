@@ -215,24 +215,32 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                 <option value="CONSEGNA IN LOCATION">Consegna in Location</option>
                                 <option value="LIVE SHOW">Live Show</option>
                             </select>
-                            <span className="text-sm font-black text-slate-900 flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-indigo-600" />
-                                {leadLocation || 'Location non definita'}
-                            </span>
-                         </div>
+                            <div className="flex items-center gap-1.5 text-slate-900 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                                <MapPin className="h-3 w-3 text-indigo-500" />
+                                <span className="text-[11px] font-black uppercase tracking-tight">{leadLocation || 'Location non specificata'}</span>
+                            </div>
+                        </div>
                     </div>
                     <Button 
                         onClick={handleSave} 
                         disabled={loading}
-                        className="bg-slate-900 hover:bg-black text-white rounded-2xl h-14 px-10 font-bold gap-3 transition-all shadow-2xl hover:scale-105 active:scale-95"
+                        className="rounded-2xl h-14 px-10 bg-slate-900 border-b-4 border-black hover:bg-slate-800 text-white shadow-2xl transition-all hover:scale-[1.02] active:scale-95 group overflow-hidden relative"
                     >
-                        <Save className="h-5 w-5 text-emerald-400" />
-                        {loading ? "Salvataggio..." : "SALVA SCHEDA"}
+                        {loading ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                            <div className="flex items-center gap-4">
+                                <div className="p-1.5 bg-emerald-400 rounded-lg text-slate-900 shadow-sm group-hover:rotate-12 transition-transform">
+                                    <Save className="h-4 w-4" />
+                                </div>
+                                <span className="font-black text-xs uppercase tracking-[0.2em]">Salva Scheda</span>
+                            </div>
+                        )}
                     </Button>
                 </div>
             </div>
 
-            <Separator className="bg-slate-100" />
+            <Separator className="bg-slate-100 opacity-50" />
 
             {/* Configurazione Evento - COMPACT & EFFICIENT */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
