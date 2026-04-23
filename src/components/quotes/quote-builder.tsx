@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createQuote, addItemToQuote, getQuote, deleteQuoteItem, deleteQuote, sendQuoteByEmail, updateQuoteLead } from '@/actions/quotes'
+import { createQuote, addItemToQuote, getQuote, deleteQuoteItem, deleteQuote, sendQuoteByEmail, updateQuoteLead, updateQuoteItem } from '@/actions/quotes'
 import { LeadSelector } from './lead-selector'
 import { updateLeadQuickAction, updateLeadDetails } from '@/actions/lead-actions'
 import { getProducts } from '@/actions/products'
@@ -57,6 +57,7 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
     const [products, setProducts] = useState<any[]>([]);
     const [user, setUser] = useState<any>(null);
     const [pdfReady, setPdfReady] = useState(false);
+    const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
     const isAdmin = user?.role === 'SUPER_ADMIN' || user?.email === 'eventiprettylittle@gmail.com';
 
@@ -145,24 +146,46 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
         setLoading(true);
         setPdfReady(false);
         try {
-            await addItemToQuote(qId, { 
+            const itemData = { 
                 description: desc, 
                 quantity: qty, 
                 originalPrice: origPrice,
                 unitPrice: finalPrice, 
                 discount: discPercent,
                 vatRate: 22 
-            });
+            };
+
+            if (editingItemId) {
+                await updateQuoteItem(editingItemId, qId, itemData);
+                toast.success("Voce aggiornata");
+            } else {
+                await addItemToQuote(qId, itemData);
+                toast.success("Voce aggiunta");
+            }
+
             await fetchQuote(qId);
             setDesc("");
+            setEditingItemId(null);
             setPriceStatesDefault();
-            toast.success("Voce aggiunta");
         } catch (error: any) {
-            console.error("Errore aggiunta voce:", error);
-            toast.error(`Errore stampato: ${error?.message || "Impossibile salvare"}`);
+            console.error("Errore salvataggio voce:", error);
+            toast.error(`Errore: ${error?.message || "Impossibile salvare"}`);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleEditItem = (item: any) => {
+        setEditingItemId(item.id);
+        setDesc(item.description);
+        setQty(item.quantity);
+        setOrigPrice(Number(item.originalPrice));
+        setFinalPrice(Number(item.unitPrice));
+        // Lo sconto si ricalcolerà tramite lo useEffect
+        
+        // Scroll to form
+        const form = document.getElementById('new-item-form');
+        if (form) form.scrollIntoView({ behavior: 'smooth' });
     };
 
     const setPriceStatesDefault = () => {
@@ -426,19 +449,40 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                                             <span className="text-[10px] font-black text-indigo-400 uppercase bg-indigo-50/50 px-2 py-0.5 rounded-lg border border-indigo-100/50">Scontato: €{Number(item.unitPrice).toFixed(2)}</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-2">
                                         <p className="font-black text-indigo-600 text-xl">€{Number(item.totalPrice).toFixed(2)}</p>
-                                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-rose-500 hover:bg-rose-50 transition-all" onClick={() => handleDeleteItem(item.id)}>
-                                            <Trash2 className="h-5 w-5" />
-                                        </Button>
+                                        <div className="flex items-center gap-1">
+                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all" onClick={() => handleEditItem(item)}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-rose-500 hover:bg-rose-50 transition-all" onClick={() => handleDeleteItem(item.id)}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="space-y-4 p-7 rounded-[3rem] bg-white border border-slate-100 mt-6 shadow-xl shadow-slate-200/20 relative border-l-4 border-l-indigo-500">
+                        <div id="new-item-form" className={cn(
+                            "space-y-4 p-7 rounded-[3rem] bg-white border mt-6 shadow-xl shadow-slate-200/20 relative transition-all duration-300",
+                            editingItemId ? "border-amber-400 border-l-8 border-l-amber-500 bg-amber-50/10" : "border-slate-100 border-l-4 border-l-indigo-500"
+                        )}>
                             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-50">
-                                <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nuova Voce</Label>
+                                <div className="flex items-center gap-2">
+                                    <Label className={cn("text-[10px] font-black uppercase tracking-widest ml-1", editingItemId ? "text-amber-600" : "text-slate-400")}>
+                                        {editingItemId ? "Modifica Voce Selezionata" : "Nuova Voce"}
+                                    </Label>
+                                    {editingItemId && (
+                                        <Button variant="ghost" size="sm" onClick={() => {
+                                            setEditingItemId(null);
+                                            setDesc("");
+                                            setPriceStatesDefault();
+                                        }} className="h-6 px-2 text-[8px] font-black uppercase bg-amber-100 text-amber-600 hover:bg-amber-200 rounded-lg">
+                                            Annulla Modifica
+                                        </Button>
+                                    )}
+                                </div>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" size="sm" className="rounded-full bg-slate-50 border-slate-200 text-slate-600 font-black text-[10px] h-9 px-5 hover:bg-indigo-600 hover:text-white transition-all">
@@ -491,8 +535,19 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                                     </div>
                                 </div>
                                 <div className="col-span-12 md:col-span-5 flex items-end">
-                                    <Button onClick={handleAddItem} disabled={loading || !desc} className="w-full h-14 rounded-[1.5rem] bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100 font-black text-[11px] uppercase tracking-widest transition-all hover:scale-[1.02]">
-                                        Aggiungi {quote?.status === 'ACCETTATO' ? 'Extra' : 'al Preventivo'} <Plus className="ml-2 h-5 w-5" />
+                                    <Button 
+                                        onClick={handleAddItem} 
+                                        disabled={loading || !desc} 
+                                        className={cn(
+                                            "w-full h-14 rounded-[1.5rem] shadow-lg font-black text-[11px] uppercase tracking-widest transition-all hover:scale-[1.02]",
+                                            editingItemId ? "bg-amber-500 hover:bg-amber-600 shadow-amber-100" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100"
+                                        )}
+                                    >
+                                        {editingItemId ? (
+                                            <>Salva Modifiche <Save className="ml-2 h-5 w-5" /></>
+                                        ) : (
+                                            <>Aggiungi {quote?.status === 'ACCETTATO' ? 'Extra' : 'al Preventivo'} <Plus className="ml-2 h-5 w-5" /></>
+                                        )}
                                     </Button>
                                 </div>
                             </div>
