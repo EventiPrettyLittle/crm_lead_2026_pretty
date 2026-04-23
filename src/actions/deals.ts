@@ -26,25 +26,33 @@ export async function getDeals() {
         }
     });
 
-    // AUTO-INIT LOGIC: Se un deal non ha la deliveryType, la inizializziamo in automatico nel database
-    let needsRefresh = false;
+    // AUTO-INIT LOGIC: Se un deal non esiste o non ha la deliveryType, inizializziamo tutto nel database
     for (const quote of acceptedQuotes) {
         const lead = quote.lead;
-        const deal = lead?.deal;
+        let deal = lead?.deal;
         
-        if (deal && !deal.deliveryType) {
-            const hasLiveShow = (quote.items || []).some((item: any) => 
-                (item.description || item.name || "").toLowerCase().includes("live show")
-            );
-            const defaultType = hasLiveShow ? 'LIVE SHOW' : 'CONSEGNA';
-            
+        const hasLiveShow = (quote.items || []).some((item: any) => 
+            (item.description || item.name || "").toLowerCase().includes("live show")
+        );
+        const defaultType = hasLiveShow ? 'LIVE SHOW' : 'CONSEGNA';
+
+        if (!deal) {
+            // CREAZIONE AUTOMATICA: Il record Deal non esiste proprio
+            const newDeal = await prisma.deal.create({
+                data: { 
+                    leadId: quote.leadId,
+                    deliveryType: defaultType
+                }
+            });
+            // Aggiorniamo l'oggetto in memoria per il calcolo successivo
+            quote.lead.deal = newDeal;
+        } else if (!deal.deliveryType) {
+            // AGGIORNAMENTO AUTOMATICO: Esiste ma è vuoto
             await prisma.deal.update({
                 where: { id: deal.id },
                 data: { deliveryType: defaultType }
             });
-            // Aggiorniamo l'oggetto locale
             deal.deliveryType = defaultType;
-            needsRefresh = true;
         }
     }
 
