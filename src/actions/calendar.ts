@@ -212,13 +212,27 @@ export async function createCalendarEvent(eventData: {
         const cookieStore = await cookies();
         const allCookies = cookieStore.getAll().map(c => c.name);
         const sessionCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
+        const syncCookie = cookieStore.get('PLATINUM_G_SYNC');
         
         let user: any = null;
         if (sessionCookie?.value) {
             try {
                 user = JSON.parse(sessionCookie.value);
+            } catch (e) {}
+        }
+
+        // Fallback 2: Identificazione tramite Google Sync se la sessione principale è persa
+        if (!user && syncCookie?.value) {
+            try {
+                const tokens = JSON.parse(syncCookie.value);
+                const { getUserInfo } = await import("@/lib/google-auth");
+                const gUser = await getUserInfo(tokens);
+                if (gUser?.email) {
+                    user = { email: gUser.email, name: gUser.name || 'User via Google' };
+                    console.log("[CALENDAR] User identified via Google Sync fallback:", user.email);
+                }
             } catch (e) {
-                console.error("[CALENDAR] JSON Parse error for session cookie");
+                console.error("[CALENDAR] Google Sync fallback failed:", e);
             }
         }
 
