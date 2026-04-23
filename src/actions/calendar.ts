@@ -209,16 +209,16 @@ export async function createCalendarEvent(eventData: {
     const duration = Math.round((end.getTime() - start.getTime()) / 60000);
 
     try {
-        let user = await getCurrentUser();
+        const cookieStore = await cookies();
+        const allCookies = cookieStore.getAll().map(c => c.name);
+        const sessionCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
         
-        // Fallback 1: Lettura diretta del cookie se getCurrentUser fallisce
-        if (!user) {
-            const cookieStore = await cookies();
-            const sessionCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
-            if (sessionCookie?.value) {
-                try {
-                    user = JSON.parse(sessionCookie.value);
-                } catch (e) {}
+        let user: any = null;
+        if (sessionCookie?.value) {
+            try {
+                user = JSON.parse(sessionCookie.value);
+            } catch (e) {
+                console.error("[CALENDAR] JSON Parse error for session cookie");
             }
         }
 
@@ -227,7 +227,6 @@ export async function createCalendarEvent(eventData: {
             const userEmail = (user.email || user.user?.email || "").toLowerCase().trim();
             
             if (!ownerId && userEmail) {
-                // Prova 1: Query con LOWER (più flessibile)
                 const dbUsers: any[] = await prisma.$queryRawUnsafe(
                     `SELECT id FROM "User" WHERE LOWER(email) = $1 LIMIT 1`,
                     userEmail
@@ -235,7 +234,6 @@ export async function createCalendarEvent(eventData: {
                 if (dbUsers.length > 0) {
                     ownerId = dbUsers[0].id;
                 } else {
-                    // Prova 2: Query esatta (più sicura)
                     const dbUsers2: any[] = await prisma.$queryRawUnsafe(
                         `SELECT id FROM "User" WHERE email = $1 LIMIT 1`,
                         userEmail
@@ -246,14 +244,14 @@ export async function createCalendarEvent(eventData: {
         }
 
         if (!ownerId) {
-            console.error('[CALENDAR AUTH ERROR] Identification failed.', { 
-                hasUser: !!user, 
-                email: user?.email, 
-                idInSession: user?.id 
+            console.error('[CALENDAR AUTH ERROR]', { 
+                cookiesFound: allCookies,
+                hasSessionCookie: !!sessionCookie,
+                email: user?.email 
             });
             return { 
                 success: false, 
-                error: `Identità non trovata (Email: ${user?.email || 'Nessuna'}). Assicurati che l'utente esista nel database o riprova il Login.` 
+                error: `Identità non trovata (Cookie presenti: ${allCookies.join(', ')} | Email: ${user?.email || 'Nessuna'}).` 
             };
         }
 
