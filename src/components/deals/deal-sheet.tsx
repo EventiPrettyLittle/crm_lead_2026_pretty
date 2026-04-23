@@ -223,7 +223,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         ) : (
                             <div className="flex items-center gap-3">
                                 <Save className="h-4 w-4 text-emerald-400" />
-                                <span className="font-black text-[10px] uppercase tracking-[0.2em]">SALVA SCHEDA PRODUZIONE</span>
+                                <span className="font-black text-[10px] uppercase tracking-[0.2em]">Salva Scheda</span>
                             </div>
                         )}
                     </Button>
@@ -294,6 +294,46 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                     </div>
                 </Card>
             </div>
+
+            {/* RIEPILOGO PREVENTIVO - SPOSTATA IN ALTO SUBITO SOTTO LE STATS */}
+            {acceptedQuote && (
+                <section className="space-y-4 py-2 border-y border-slate-100 bg-slate-50/20 px-2 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                        <ListChecks className="h-4 w-4 text-indigo-600" />
+                        <h2 className="text-sm font-black italic text-slate-900 tracking-tighter uppercase">Assegnazione Prodotti Preventivo</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {quoteItems.map((item: any, idx: number) => (
+                            <div key={idx} className="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 border border-slate-100">
+                                <div className="h-8 w-8 rounded-lg bg-indigo-600 flex flex-col items-center justify-center text-white shrink-0">
+                                    <span className="text-[6px] font-black leading-none opacity-60 uppercase">Qty</span>
+                                    <span className="text-sm font-black italic leading-none">{item.quantity}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[9px] font-black text-slate-900 truncate uppercase italic leading-tight">
+                                        {item.description || item.name || 'Prodotto'}
+                                    </p>
+                                </div>
+                                <select 
+                                    className="text-[8px] font-black uppercase tracking-tighter bg-indigo-50 text-indigo-600 rounded-lg px-1 py-1 outline-none border-none cursor-pointer"
+                                    value={productAssignments.find((a: any) => a.quoteItemId === item.id)?.target || ''}
+                                    onChange={(e) => handleAssignmentChange(item.id, e.target.value)}
+                                >
+                                    <option value="">ASSEGNA A...</option>
+                                    {!isTargetTaken('favor1', item.id) && <option value="favor1">1° Bomb.</option>}
+                                    {!isTargetTaken('favor2', item.id) && <option value="favor2">2° Bomb.</option>}
+                                    {!isTargetTaken('favor3', item.id) && <option value="favor3">3° Bomb.</option>}
+                                    {!isTargetTaken('favor4', item.id) && <option value="favor4">4° Bomb.</option>}
+                                    {!isTargetTaken('extra1', item.id) && <option value="extra1">Extra 1</option>}
+                                    {!isTargetTaken('extra2', item.id) && <option value="extra2">Extra 2</option>}
+                                    {!isTargetTaken('extra3', item.id) && <option value="extra3">Extra 3</option>}
+                                    {!isTargetTaken('extra4', item.id) && <option value="extra4">Extra 4</option>}
+                                </select>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {/* SEZIONI PRODUZIONE - SERRATE */}
             <div className="space-y-6">
@@ -405,48 +445,6 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                     })}
                 </div>
             </div>
-
-            {/* RIEPILOGO PREVENTIVO - ANCORATO IN FONDO */}
-            {acceptedQuote && (
-                <section className="space-y-4 pt-10 border-t border-slate-100">
-                    <div className="flex items-center gap-3">
-                        <ListChecks className="h-5 w-5 text-indigo-600" />
-                        <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase">Prodotti in Preventivo</h2>
-                    </div>
-                    <Card className="rounded-[2rem] border-none shadow-sm bg-slate-50/50 p-4">
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {quoteItems.map((item: any, idx: number) => (
-                                <div key={idx} className="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 border border-slate-100">
-                                    <div className="h-10 w-10 rounded-lg bg-indigo-600 flex flex-col items-center justify-center text-white shrink-0">
-                                        <span className="text-[7px] font-black leading-none opacity-60">QTY</span>
-                                        <span className="text-lg font-black italic leading-none">{item.quantity}</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] font-black text-slate-900 truncate uppercase italic leading-tight">
-                                            {item.description || item.name || 'Prodotto'}
-                                        </p>
-                                    </div>
-                                    <select 
-                                        className="text-[8px] font-black uppercase tracking-tighter bg-indigo-50 text-indigo-600 rounded-lg px-1 py-1 outline-none border-none cursor-pointer"
-                                        value={productAssignments.find((a: any) => a.quoteItemId === item.id)?.target || ''}
-                                        onChange={(e) => handleAssignmentChange(item.id, e.target.value)}
-                                    >
-                                        <option value="">ASSEGNA A...</option>
-                                        <option value="favor1">1° Bomb.</option>
-                                        <option value="favor2">2° Bomb.</option>
-                                        <option value="favor3">3° Bomb.</option>
-                                        <option value="favor4">4° Bomb.</option>
-                                        <option value="extra1">Extra 1</option>
-                                        <option value="extra2">Extra 2</option>
-                                        <option value="extra3">Extra 3</option>
-                                        <option value="extra4">Extra 4</option>
-                                    </select>
-                                </div>
-                            ))}
-                         </div>
-                    </Card>
-                </section>
-            )}
         </div>
     );
 }
