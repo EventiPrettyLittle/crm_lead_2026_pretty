@@ -17,14 +17,40 @@ export async function getCurrentUser() {
     try {
         const cookieStore = await cookies();
         const userCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
+        const syncCookie = cookieStore.get('PLATINUM_G_SYNC');
         
-        if (!userCookie || !userCookie.value) return null;
-        
-        let session;
-        try {
-            session = JSON.parse(userCookie.value);
-        } catch (e) {
-            return null;
+        let session = null;
+
+        if (userCookie?.value) {
+            try {
+                session = JSON.parse(userCookie.value);
+            } catch (e) {}
+        }
+
+        // --- FALLBACK AGGRESSIVO ---
+        // Se non abbiamo sessione, proviamo a ricostruirla tramite il token di Google
+        if (!session && syncCookie?.value) {
+            try {
+                const tokens = JSON.parse(syncCookie.value);
+                const { getUserInfo } = await import("@/lib/google-auth");
+                const gUser = await getUserInfo(tokens);
+                
+                if (gUser?.email) {
+                    const dbUser = await prisma.user.findUnique({
+                        where: { email: gUser.email.toLowerCase().trim() }
+                    });
+                    if (dbUser) {
+                        session = {
+                            id: dbUser.id,
+                            name: dbUser.name,
+                            email: dbUser.email,
+                            role: dbUser.role
+                        };
+                        // Ripristiniamo il cookie di sessione principale in background? 
+                        // Non possiamo farlo facilmente in una funzione di GET (headers are immutable)
+                    }
+                }
+            } catch (e) {}
         }
 
         if (!session || !session.email) return null;
@@ -32,8 +58,7 @@ export async function getCurrentUser() {
         const SUPER_ADMINS = [
             'eventiprettylittle@gmail.com',
             'lucavitale88@gmail.com',
-            'maria.vitale@prettylittle.it',
-            'lucavitale88@gmail.com'
+            'maria.vitale@prettylittle.it'
         ];
         
         const isSuperAdmin = SUPER_ADMINS.some(e => e.toLowerCase() === session.email.toLowerCase());
