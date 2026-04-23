@@ -89,9 +89,13 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                 ? `[${appointmentType.toUpperCase()}] ${appointmentTitle ? appointmentTitle + ' - ' : ''}${notes}` 
                 : notes;
 
-            const reminderDateTime = (actionType === 'no-answer' && reminderDate)
-                ? new Date(`${reminderDate}T${reminderHour}`)
-                : undefined;
+            // Se è un appuntamento, il follow-up è la data dell'appuntamento stesso.
+            // Se è un no-answer o contattato e c'è una data di reminder, usiamo quella.
+            const reminderDateTime = (actionType === 'appointment' && combinedDateTime)
+                ? new Date(combinedDateTime)
+                : (reminderDate)
+                    ? new Date(`${reminderDate}T${reminderHour}`)
+                    : undefined;
 
             await updateLeadQuickAction(lead.id, actionType as any, {
                 notes: finalNotes,
@@ -202,24 +206,44 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                                 <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Scrivi qui eventuali dettagli..." className="rounded-[1.5rem] border-slate-100 min-h-[110px] bg-slate-50/50 p-5 focus:ring-indigo-500/20" />
                             </div>
 
-                            {actionType === 'no-answer' && (
-                                <div className="bg-amber-50/40 rounded-[2.5rem] p-7 space-y-4 border border-amber-100/50 relative overflow-hidden">
-                                     <div className="absolute top-0 right-0 w-24 h-24 bg-amber-100/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+                            {(actionType === 'no-answer' || actionType === 'contacted') && (
+                                <div className={cn(
+                                    "rounded-[2.5rem] p-7 space-y-4 border relative overflow-hidden",
+                                    actionType === 'no-answer' ? "bg-amber-50/40 border-amber-100/50" : "bg-emerald-50/40 border-emerald-100/50"
+                                )}>
+                                     <div className={cn(
+                                         "absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl",
+                                         actionType === 'no-answer' ? "bg-amber-100/20" : "bg-emerald-100/20"
+                                     )} />
                                      <div className="flex items-center gap-3 mb-2">
-                                         <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700">
+                                         <div className={cn(
+                                             "h-8 w-8 rounded-lg flex items-center justify-center",
+                                             actionType === 'no-answer' ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+                                         )}>
                                              <Clock className="h-4 w-4" />
                                          </div>
-                                         <h4 className="text-[10px] font-black uppercase tracking-[0.15em] text-amber-900 italic">Promemoria Interno (Richiamo)</h4>
+                                         <h4 className={cn(
+                                             "text-[10px] font-black uppercase tracking-[0.15em] italic",
+                                             actionType === 'no-answer' ? "text-amber-900" : "text-emerald-900"
+                                         )}>
+                                             Programma Ricontatto (Follow-up)
+                                         </h4>
                                      </div>
                                      <div className="flex gap-4">
-                                         <div className="flex-1 bg-white rounded-2xl p-4 shadow-sm border border-amber-100">
+                                         <div className={cn(
+                                             "flex-1 bg-white rounded-2xl p-4 shadow-sm border",
+                                             actionType === 'no-answer' ? "border-amber-100" : "border-emerald-100"
+                                         )}>
                                              <Input type="date" value={reminderDate} onChange={(e) => setReminderDate(e.target.value)} className="bg-transparent border-none p-0 h-auto font-black text-slate-700 text-sm focus-visible:ring-0" />
                                          </div>
-                                         <div className="w-32 bg-white rounded-2xl p-4 shadow-sm border border-amber-100">
+                                         <div className={cn(
+                                             "w-32 bg-white rounded-2xl p-4 shadow-sm border",
+                                             actionType === 'no-answer' ? "border-amber-100" : "border-emerald-100"
+                                         )}>
                                              <Input type="time" value={reminderHour} onChange={(e) => setReminderHour(e.target.value)} className="bg-transparent border-none p-0 h-auto font-black text-slate-700 text-sm focus-visible:ring-0" />
                                          </div>
                                      </div>
-                                     <p className="text-[8px] font-bold text-rose-500 uppercase italic tracking-tighter px-1">Questa è una notifica interna, non verrà mandata al cliente.</p>
+                                     <p className="text-[8px] font-bold text-slate-400 uppercase italic tracking-tighter px-1">Seleziona quando vuoi richiamare questo lead.</p>
                                 </div>
                             )}
 
