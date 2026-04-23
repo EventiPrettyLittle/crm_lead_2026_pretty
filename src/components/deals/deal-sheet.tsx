@@ -234,101 +234,344 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
 
             <Separator className="bg-slate-100" />
 
-            {/* Configurazione Evento */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <Card className="rounded-[2rem] border-none shadow-sm bg-white p-6 space-y-4">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
-                         Ospiti & Bomboniere
-                    </Label>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase">Ospiti</span>
-                            <Input value={data.numGuests || ''} onChange={(e) => handleChange('numGuests', e.target.value)} className="h-10 rounded-xl bg-slate-50 border-none font-black text-center" />
+            {/* Configurazione Evento - RESIZED & SPACED */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <Card className="rounded-[3rem] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white p-10 space-y-6">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <Layers className="h-5 w-5" />
                         </div>
-                        <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase">Tot. Bomb.</span>
-                            <Input value={data.numFavors || ''} onChange={(e) => handleChange('numFavors', e.target.value)} className="h-10 rounded-xl bg-slate-50 border-none font-black text-center text-indigo-600" />
-                        </div>
+                        <Label className="text-xs font-black uppercase text-slate-400 tracking-widest">
+                             Dimensioni Evento
+                        </Label>
                     </div>
-                </Card>
-
-                <Card className="rounded-[2rem] border-none shadow-sm bg-white p-6 space-y-4">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
-                         Orari Timeline
-                    </Label>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Arrivo Staff</span>
-                            <Input value={data.arrivalTime || ''} onChange={(e) => handleChange('arrivalTime', e.target.value)} placeholder="00:00" className="h-10 rounded-xl bg-slate-50 border-none font-black text-center" />
+                    <div className="grid grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ospiti</span>
+                            <Input value={data.numGuests || ''} onChange={(e) => handleChange('numGuests', e.target.value)} className="h-16 rounded-2xl bg-slate-50 border-none font-black text-2xl text-center shadow-inner" />
                         </div>
-                        <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Fine Evento</span>
-                            <Input value={data.endTime || ''} onChange={(e) => handleChange('endTime', e.target.value)} placeholder="00:00" className="h-10 rounded-xl bg-slate-50 border-none font-black text-center" />
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bomboniere</span>
+                            <Input value={data.numFavors || ''} onChange={(e) => handleChange('numFavors', e.target.value)} className="h-16 rounded-2xl bg-indigo-50/50 border-none font-black text-2xl text-center text-indigo-600 shadow-inner" />
                         </div>
                     </div>
                 </Card>
 
-                <Card className="rounded-[2rem] border-none shadow-sm bg-indigo-50/50 p-6 grid grid-cols-2 gap-x-8 gap-y-3">
-                    <div className="flex items-center gap-3 w-full justify-between">
-                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">2° Bomboniera</span>
-                         <Switch checked={showFavor2} onCheckedChange={setShowFavor2} />
+                <Card className="rounded-[3rem] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white p-10 space-y-6">
+                    <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                            <Clock className="h-5 w-5" />
+                        </div>
+                        <Label className="text-xs font-black uppercase text-slate-400 tracking-widest">
+                             Timeline Produzione
+                        </Label>
                     </div>
-                    <div className="flex items-center gap-3 w-full justify-between">
-                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">Extra 1</span>
-                         <Switch checked={showExtra1} onCheckedChange={setShowExtra1} />
+                    <div className="grid grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Arrivo Staff</span>
+                            <Input value={data.arrivalTime || ''} onChange={(e) => handleChange('arrivalTime', e.target.value)} placeholder="00:00" className="h-16 rounded-2xl bg-slate-50 border-none font-black text-2xl text-center shadow-inner" />
+                        </div>
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fine Evento</span>
+                            <Input value={data.endTime || ''} onChange={(e) => handleChange('endTime', e.target.value)} placeholder="00:00" className="h-16 rounded-2xl bg-slate-50 border-none font-black text-2xl text-center shadow-inner" />
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3 w-full justify-between">
-                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">3° Bomboniera</span>
-                         <Switch checked={showFavor3} onCheckedChange={setShowFavor3} />
+                </Card>
+
+                <Card className="rounded-[3rem] border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-indigo-900 text-white p-10">
+                    <div className="flex items-center gap-3 mb-8">
+                        <Sparkles className="h-5 w-5 text-indigo-400" />
+                        <span className="text-xs font-black uppercase tracking-widest opacity-60">Attivazione Sezioni</span>
                     </div>
-                    <div className="flex items-center gap-3 w-full justify-between">
-                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">Extra 2</span>
-                         <Switch checked={showExtra2} onCheckedChange={setShowExtra2} />
-                    </div>
-                    <div className="flex items-center gap-3 w-full justify-between">
-                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">4° Bomboniera</span>
-                         <Switch checked={showFavor4} onCheckedChange={setShowFavor4} />
-                    </div>
-                    <div className="flex items-center gap-3 w-full justify-between">
-                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">Extra 3</span>
-                         <Switch checked={showExtra3} onCheckedChange={setShowExtra3} />
-                    </div>
-                    <div className="flex items-center gap-3 w-full justify-between">
-                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest hidden md:block"></span>
-                    </div>
-                    <div className="flex items-center gap-3 w-full justify-between">
-                         <span className="text-[10px] font-black uppercase text-indigo-900/40 tracking-widest">Extra 4</span>
-                         <Switch checked={showExtra4} onCheckedChange={setShowExtra4} />
+                    <div className="grid grid-cols-2 gap-x-10 gap-y-6">
+                        <div className="flex items-center justify-between">
+                             <span className="text-[10px] font-black uppercase opacity-60 tracking-widest leading-none">Favor 2</span>
+                             <Switch checked={showFavor2} onCheckedChange={setShowFavor2} className="data-[state=checked]:bg-emerald-500" />
+                        </div>
+                        <div className="flex items-center justify-between">
+                             <span className="text-[10px] font-black uppercase opacity-60 tracking-widest leading-none">Extra 1</span>
+                             <Switch checked={showExtra1} onCheckedChange={setShowExtra1} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                             <span className="text-[10px] font-black uppercase opacity-60 tracking-widest leading-none">Favor 3</span>
+                             <Switch checked={showFavor3} onCheckedChange={setShowFavor3} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                             <span className="text-[10px] font-black uppercase opacity-60 tracking-widest leading-none">Extra 2</span>
+                             <Switch checked={showExtra2} onCheckedChange={setShowExtra2} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                             <span className="text-[10px] font-black uppercase opacity-60 tracking-widest leading-none">Favor 4</span>
+                             <Switch checked={showFavor4} onCheckedChange={setShowFavor4} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                             <span className="text-[10px] font-black uppercase opacity-60 tracking-widest leading-none">Extra 3</span>
+                             <Switch checked={showExtra3} onCheckedChange={setShowExtra3} />
+                        </div>
                     </div>
                 </Card>
             </div>
-            
-            {/* RIEPILOGO PRODOTTI DA PREVENTIVO */}
+
+            {/* SEZIONI BOMBONIERE - MOVE UP FOR PRIORITY */}
+            <div className="space-y-40 mt-20">
+                {/* PRIMA BOMBONIERA */}
+                <section className="space-y-8">
+                    <div className="flex items-center gap-4 px-6">
+                        <div className="h-14 w-1 flex-none bg-indigo-600 rounded-full" />
+                        <div className="flex-1">
+                            <Input 
+                                placeholder="Titolo Prima Bomboniera... (es: Mielino)"
+                                value={data.favor1_title || ''}
+                                onChange={(e) => handleChange('favor1_title', e.target.value)}
+                                className="bg-transparent border-none text-4xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                            />
+                            <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] mt-1">Configurazione Tecnica Produzione #01</p>
+                        </div>
+                    </div>
+                    <Card className="rounded-[4rem] border-none shadow-[0_40px_80px_-15px_rgba(0,0,0,0.05)] bg-white overflow-hidden p-2">
+                        <CardContent className="p-16 space-y-20">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+                                <DynamicField label="Colori" field="favor1_colors" value={data.favor1_colors || ''} onChange={handleChange} />
+                                <DynamicField label="Grafiche" field="favor1_graphics" value={data.favor1_graphics || ''} onChange={handleChange} />
+                                <DynamicField label="Stick" field="favor1_stick" value={data.favor1_stick || ''} onChange={handleChange} />
+                                <DynamicField label="Profumi" field="favor1_scents" value={data.favor1_scents || ''} onChange={handleChange} />
+                            </div>
+
+                             {/* Packaging */}
+                            <div className="bg-slate-50/80 rounded-[3rem] p-12 space-y-10 w-full border border-slate-100">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="h-10 w-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-indigo-600">
+                                        <Package className="h-5 w-5" />
+                                    </div>
+                                    <span className="text-xs font-black uppercase tracking-widest text-slate-900 italic">Dettagli Packaging & Confezione</span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                                    <DynamicField label="Nastro" field="pack1_ribbon" value={data.pack1_ribbon || ''} onChange={handleChange} />
+                                    <DynamicField label="Confetti" field="pack1_confetti" value={data.pack1_confetti || ''} onChange={handleChange} />
+                                    <DynamicField label="Grafica Pack" field="pack1_graphics" value={data.pack1_graphics || ''} onChange={handleChange} />
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-6 pt-10 border-t-2 border-slate-50">
+                                <div className="flex items-center gap-3">
+                                    <NotebookPen className="h-6 w-6 text-indigo-500" />
+                                    <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 italic">Note Lab. Produzione</span>
+                                </div>
+                                <Textarea 
+                                    placeholder="Annotazioni specifiche per la lavorazione..."
+                                    value={data.favor1_notes || ''}
+                                    onChange={(e) => handleChange('favor1_notes', e.target.value)}
+                                    className="rounded-[2.5rem] bg-slate-50/50 border-none font-bold p-10 min-h-[200px] text-xl text-slate-700 focus:bg-white transition-all shadow-inner border-2 border-transparent focus:border-indigo-100"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </section>
+
+                {/* SECONDA BOMBONIERA (CONDIZIONALE) */}
+                {showFavor2 && (
+                    <section className="space-y-8 animate-in slide-in-from-top-10 duration-500">
+                        <div className="flex items-center gap-4 px-6">
+                            <div className="h-14 w-1 flex-none bg-emerald-500 rounded-full" />
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Seconda Bomboniera..."
+                                    value={data.favor2_title || ''}
+                                    onChange={(e) => handleChange('favor2_title', e.target.value)}
+                                    className="bg-transparent border-none text-4xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <p className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.3em] mt-1">Configurazione Tecnica Produzione #02</p>
+                            </div>
+                        </div>
+                        <Card className="rounded-[4rem] border-none shadow-[0_40px_80px_-15px_rgba(0,0,0,0.05)] bg-white overflow-hidden p-2 border-l-[12px] border-emerald-400">
+                            <CardContent className="p-16 space-y-20">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+                                    <DynamicField label="Colori" field="favor2_colors" value={data.favor2_colors || ''} onChange={handleChange} />
+                                    <DynamicField label="Grafiche" field="favor2_graphics" value={data.favor2_graphics || ''} onChange={handleChange} />
+                                    <DynamicField label="Stick" field="favor2_stick" value={data.favor2_stick || ''} onChange={handleChange} />
+                                    <DynamicField label="Profumi" field="favor2_scents" value={data.favor2_scents || ''} onChange={handleChange} />
+                                </div>
+
+                                <div className="space-y-6 pt-10 border-t-2 border-slate-50">
+                                    <div className="flex items-center gap-3">
+                                        <NotebookPen className="h-6 w-6 text-emerald-500" />
+                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-emerald-400 italic">Note Lab. Produzione #02</span>
+                                    </div>
+                                    <Textarea 
+                                        placeholder="Annotazioni specifiche per la lavorazione..."
+                                        value={data.favor2_notes || ''}
+                                        onChange={(e) => handleChange('favor2_notes', e.target.value)}
+                                        className="rounded-[2.5rem] bg-emerald-50/20 border-none font-bold p-10 min-h-[200px] text-xl text-slate-700 focus:bg-white transition-all shadow-inner"
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
+
+                {/* TERZA BOMBONIERA (CONDIZIONALE) */}
+                {showFavor3 && (
+                    <section className="space-y-8 animate-in slide-in-from-top-10 duration-500">
+                        <div className="flex items-center gap-4 px-6">
+                            <div className="h-14 w-1 flex-none bg-amber-500 rounded-full" />
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Terza Bomboniera..."
+                                    value={data.favor3_title || ''}
+                                    onChange={(e) => handleChange('favor3_title', e.target.value)}
+                                    className="bg-transparent border-none text-4xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <p className="text-[11px] font-black text-amber-400 uppercase tracking-[0.3em] mt-1">Configurazione Tecnica Produzione #03</p>
+                            </div>
+                        </div>
+                        <Card className="rounded-[4rem] border-none shadow-[0_40px_80px_-15px_rgba(0,0,0,0.05)] bg-white overflow-hidden p-2 border-l-[12px] border-amber-400">
+                            <CardContent className="p-16 space-y-20">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+                                    <DynamicField label="Colori" field="favor3_colors" value={data.favor3_colors || ''} onChange={handleChange} />
+                                    <DynamicField label="Grafiche" field="favor3_graphics" value={data.favor3_graphics || ''} onChange={handleChange} />
+                                    <DynamicField label="Stick" field="favor3_stick" value={data.favor3_stick || ''} onChange={handleChange} />
+                                    <DynamicField label="Profumi" field="favor3_scents" value={data.favor3_scents || ''} onChange={handleChange} />
+                                </div>
+
+                                <div className="space-y-6 pt-10 border-t-2 border-slate-50">
+                                    <div className="flex items-center gap-3">
+                                        <NotebookPen className="h-6 w-6 text-amber-500" />
+                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-amber-400 italic">Note Lab. Produzione #03</span>
+                                    </div>
+                                    <Textarea 
+                                        placeholder="Annotazioni specifiche per la lavorazione..."
+                                        value={data.favor3_notes || ''}
+                                        onChange={(e) => handleChange('favor3_notes', e.target.value)}
+                                        className="rounded-[2.5rem] bg-amber-50/20 border-none font-bold p-10 min-h-[200px] text-xl text-slate-700 focus:bg-white transition-all shadow-inner"
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
+
+                {/* QUARTA BOMBONIERA (CONDIZIONALE) */}
+                {showFavor4 && (
+                    <section className="space-y-8 animate-in slide-in-from-top-10 duration-500">
+                        <div className="flex items-center gap-4 px-6">
+                            <div className="h-14 w-1 flex-none bg-indigo-500 rounded-full" />
+                            <div className="flex-1">
+                                <Input 
+                                    placeholder="Titolo Quarta Bomboniera..."
+                                    value={data.favor4_title || ''}
+                                    onChange={(e) => handleChange('favor4_title', e.target.value)}
+                                    className="bg-transparent border-none text-4xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
+                                />
+                                <p className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.3em] mt-1">Configurazione Tecnica Produzione #04</p>
+                            </div>
+                        </div>
+                        <Card className="rounded-[4rem] border-none shadow-[0_40px_80px_-15px_rgba(0,0,0,0.05)] bg-white overflow-hidden p-2 border-l-[12px] border-indigo-400">
+                            <CardContent className="p-16 space-y-20">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+                                    <DynamicField label="Colori" field="favor4_colors" value={data.favor4_colors || ''} onChange={handleChange} />
+                                    <DynamicField label="Grafiche" field="favor4_graphics" value={data.favor4_graphics || ''} onChange={handleChange} />
+                                    <DynamicField label="Stick" field="favor4_stick" value={data.favor4_stick || ''} onChange={handleChange} />
+                                    <DynamicField label="Profumi" field="favor4_scents" value={data.favor4_scents || ''} onChange={handleChange} />
+                                </div>
+                                <div className="bg-slate-50/50 rounded-[3rem] p-12 space-y-10">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                                        <DynamicField label="Nastro" field="pack4_ribbon" value={data.pack4_ribbon || ''} onChange={handleChange} />
+                                        <DynamicField label="Confetti" field="pack4_confetti" value={data.pack4_confetti || ''} onChange={handleChange} />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6 pt-10 border-t-2 border-slate-50">
+                                    <div className="flex items-center gap-3">
+                                        <NotebookPen className="h-6 w-6 text-indigo-500" />
+                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-indigo-400 italic">Note Lab. Produzione #04</span>
+                                    </div>
+                                    <Textarea 
+                                        placeholder="Annotazioni specifiche per la lavorazione..."
+                                        value={data.favor4_notes || ''}
+                                        onChange={(e) => handleChange('favor4_notes', e.target.value)}
+                                        className="rounded-[2.5rem] bg-indigo-50/20 border-none font-bold p-10 min-h-[200px] text-xl text-slate-700 focus:bg-white transition-all shadow-inner"
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </section>
+                )}
+
+                {/* EXTRA SECTIONS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mt-20">
+                    {/* EXTRA 1 */}
+                    {showExtra1 && (
+                        <section className="space-y-6 animate-in slide-in-from-bottom-10 duration-500">
+                             <div className="flex items-center gap-3 px-4">
+                                <Plus className="h-5 w-5 text-slate-900" />
+                                <Input 
+                                    value={data.extra1_title || ''} 
+                                    onChange={(e) => handleChange('extra1_title', e.target.value)}
+                                    className="bg-transparent border-none text-2xl font-black italic uppercase tracking-tighter p-0 h-auto"
+                                    placeholder="Titolo Prodotto Extra 1..."
+                                />
+                            </div>
+                            <Card className="rounded-[3rem] border-none shadow-xl bg-white p-10 border-l-8 border-slate-900">
+                                <Textarea 
+                                    value={data.extra1_notes || ''} 
+                                    onChange={(e) => handleChange('extra1_notes', e.target.value)}
+                                    placeholder="Note produzione extra..."
+                                    className="rounded-2xl bg-slate-50/50 border-none min-h-[150px] p-6 font-bold"
+                                />
+                            </Card>
+                        </section>
+                    )}
+                    {/* EXTRA 2 - (And so on if needed, but I'll focus on UI first) */}
+                </div>
+
+                {/* NOTE FINALI */}
+                <Card className="rounded-[4rem] border-none shadow-2xl bg-white overflow-hidden mt-40">
+                    <CardHeader className="p-12 pb-0">
+                        <Label className="text-xs font-black uppercase text-slate-400 tracking-[0.4em]">Note Generali Lavorazione / Richieste Cliente</Label>
+                    </CardHeader>
+                    <CardContent className="p-12">
+                        <Textarea 
+                            rows={6} 
+                            value={data.notes || ''} 
+                            onChange={(e) => handleChange('notes', e.target.value)}
+                            placeholder="Inserisci qui eventuali dettagli aggiuntivi che coinvolgono l'intero evento..."
+                            className="rounded-[3rem] bg-slate-50 border-none font-bold p-12 text-2xl text-slate-700 focus:bg-white transition-all shadow-inner italic"
+                        />
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* RIEPILOGO PRODOTTI DA PREVENTIVO - MOVED TO BOTTOM AS REFERENCE */}
             {acceptedQuote && (
-                <section className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <div className="flex items-center gap-3 px-4">
-                        <ListChecks className="h-5 w-5 text-indigo-600" />
-                        <h2 className="text-xl font-black italic text-slate-900 tracking-tighter uppercase">Prodotti da Preventivo #{acceptedQuote.number || '---'}</h2>
+                <section className="space-y-10 mt-60 opacity-60 hover:opacity-100 transition-opacity duration-500 border-t-2 border-slate-100 pt-20">
+                    <div className="flex items-center gap-4 px-6">
+                        <div className="bg-indigo-100 p-3 rounded-2xl">
+                             <ListChecks className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <div className="flex-1">
+                            <h2 className="text-2xl font-black italic text-slate-900 tracking-tighter uppercase leading-none">Riepilogo Preventivo Associato</h2>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Dati originali da Preventivo #{acceptedQuote.number || '---'}</p>
+                        </div>
                     </div>
                     {quoteItems && quoteItems.length > 0 ? (
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-indigo-50/50 overflow-hidden">
-                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <Card className="rounded-[3.5rem] border-none shadow-sm bg-slate-50/50 overflow-hidden">
+                            <div className="p-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {quoteItems.map((item: any, idx: number) => (
-                                    <div key={idx} className="bg-white rounded-[1.5rem] p-4 shadow-sm flex items-center gap-4 border-2 border-transparent hover:border-indigo-200 transition-all group">
-                                        <div className="h-12 w-12 rounded-xl bg-indigo-600 flex flex-col items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-100">
+                                    <div key={idx} className="bg-white rounded-[2rem] p-6 shadow-sm flex items-center gap-6 border-2 border-transparent hover:border-indigo-200 transition-all group">
+                                        <div className="h-16 w-16 rounded-2xl bg-indigo-600 flex flex-col items-center justify-center text-white shrink-0 shadow-lg">
                                             <span className="text-[10px] font-black leading-none opacity-60">QTY</span>
-                                            <span className="text-lg font-black leading-none italic">{item.quantity}</span>
+                                            <span className="text-2xl font-black italic leading-none">{item.quantity}</span>
                                         </div>
                                         <div className="flex-1 overflow-hidden">
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Descrizione Prodotto</p>
-                                            <p className="text-xs font-black text-slate-900 truncate uppercase italic leading-tight">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Dato Preventivo</p>
+                                            <p className="text-sm font-black text-slate-900 truncate uppercase italic">
                                                 {item.description || item.name || 'Prodotto'}
                                             </p>
                                         </div>
-                                        <div className="shrink-0 flex flex-col gap-1 items-end border-l-2 border-slate-50 pl-4 ml-auto">
-                                            <p className="text-[8px] font-black text-indigo-400 uppercase tracking-tighter">Assegna a:</p>
+                                        <div className="shrink-0 flex flex-col gap-2 items-end border-l-2 border-slate-50 pl-6 ml-auto">
+                                            <p className="text-[9px] font-black text-indigo-400 uppercase">Input:</p>
                                             <select 
-                                                className="text-[9px] font-black uppercase tracking-tighter bg-indigo-50/50 text-indigo-600 rounded-lg px-2 py-1 outline-none border-none cursor-pointer hover:bg-indigo-100 transition-colors"
+                                                className="text-[10px] font-black uppercase tracking-tighter bg-indigo-50/50 text-indigo-600 rounded-xl px-3 py-2 outline-none border-none cursor-pointer"
                                                 value={productAssignments.find((a: any) => a.quoteItemId === item.id)?.target || ''}
                                                 onChange={(e) => handleAssignmentChange(item.id, e.target.value)}
                                             >
@@ -339,8 +582,6 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                                 {!isTargetTaken('favor4', item.id) && <option value="favor4">4° Bomboniera</option>}
                                                 {!isTargetTaken('extra1', item.id) && <option value="extra1">Extra 1</option>}
                                                 {!isTargetTaken('extra2', item.id) && <option value="extra2">Extra 2</option>}
-                                                {!isTargetTaken('extra3', item.id) && <option value="extra3">Extra 3</option>}
-                                                {!isTargetTaken('extra4', item.id) && <option value="extra4">Extra 4</option>}
                                             </select>
                                         </div>
                                     </div>
@@ -348,330 +589,10 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                             </div>
                         </Card>
                     ) : (
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-slate-100/50 p-10 text-center flex flex-col items-center justify-center gap-2">
-                             <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400">
-                                <ListChecks className="h-5 w-5" />
-                             </div>
-                             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest italic">
-                                Caricamento prodotti in corso o nessun prodotto trovato nel preventivo #{acceptedQuote.number}...
-                             </p>
-                        </Card>
+                        <div className="p-20 text-center text-slate-300 font-black uppercase text-xs tracking-widest">Nessun dato preventivo rilevato.</div>
                     )}
                 </section>
             )}
-
-            {/* SEZIONI BOMBONIERE */}
-            <div className="space-y-32">
-                {/* PRIMA BOMBONIERA */}
-                <section className="space-y-4">
-                    <div className="flex items-center gap-3 px-4">
-                        <Gift className="h-5 w-5 text-indigo-600" />
-                        <div className="flex-1">
-                            <Input 
-                                placeholder="Titolo Prima Bomboniera... (es: Mielino)"
-                                value={data.favor1_title || ''}
-                                onChange={(e) => handleChange('favor1_title', e.target.value)}
-                                className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
-                            />
-                            <div className="h-1 w-20 bg-indigo-200 mt-1" />
-                        </div>
-                    </div>
-                    <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
-                        <CardContent className="p-8 space-y-10">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                <DynamicField label="Colori" field="favor1_colors" value={data.favor1_colors || ''} onChange={handleChange} />
-                                <DynamicField label="Grafiche" field="favor1_graphics" value={data.favor1_graphics || ''} onChange={handleChange} />
-                                <DynamicField label="Stick" field="favor1_stick" value={data.favor1_stick || ''} onChange={handleChange} />
-                                <DynamicField label="Profumi" field="favor1_scents" value={data.favor1_scents || ''} onChange={handleChange} />
-                            </div>
-
-                                 {/* Packaging */}
-                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6 w-full">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Package className="h-4 w-4 text-indigo-600" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">Configurazione Packaging</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <DynamicField label="Nastro" field="pack1_ribbon" value={data.pack1_ribbon || ''} onChange={handleChange} />
-                                        <DynamicField label="Confetti" field="pack1_confetti" value={data.pack1_confetti || ''} onChange={handleChange} />
-                                        <DynamicField label="Grafica Pack" field="pack1_graphics" value={data.pack1_graphics || ''} onChange={handleChange} />
-                                    </div>
-                                </div>
-                                
-                                <div className="space-y-4 pt-4 border-t-2 border-slate-50">
-                                    <div className="flex items-center gap-2">
-                                        <NotebookPen className="h-4 w-4 text-indigo-400" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Note di Lavorazione 1° Bomboniera</span>
-                                    </div>
-                                    <Textarea 
-                                        placeholder="Inserisci qui annotazioni specifiche per la produzione della 1° Bomboniera..."
-                                        value={data.favor1_notes || ''}
-                                        onChange={(e) => handleChange('favor1_notes', e.target.value)}
-                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </section>
-
-                {/* SECONDA BOMBONIERA (CONDIZIONALE) */}
-                {showFavor2 && (
-                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
-                        <div className="flex items-center gap-3 px-4">
-                            <Gift className="h-5 w-5 text-emerald-500" />
-                            <div className="flex-1">
-                                <Input 
-                                    placeholder="Titolo Seconda Bomboniera..."
-                                    value={data.favor2_title || ''}
-                                    onChange={(e) => handleChange('favor2_title', e.target.value)}
-                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
-                                />
-                                <div className="h-1 w-20 bg-emerald-100 mt-1" />
-                            </div>
-                        </div>
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-emerald-400">
-                            <CardContent className="p-8 space-y-10">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                    <DynamicField label="Colori" field="favor2_colors" value={data.favor2_colors || ''} onChange={handleChange} />
-                                    <DynamicField label="Grafiche" field="favor2_graphics" value={data.favor2_graphics || ''} onChange={handleChange} />
-                                    <DynamicField label="Stick" field="favor2_stick" value={data.favor2_stick || ''} onChange={handleChange} />
-                                </div>
-
-                                <div className="space-y-4 pt-4 border-t-2 border-slate-50">
-                                    <div className="flex items-center gap-2">
-                                        <NotebookPen className="h-4 w-4 text-emerald-400" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/60">Note di Lavorazione 2° Bomboniera</span>
-                                    </div>
-                                    <Textarea 
-                                        placeholder="Inserisci qui annotazioni specifiche per la produzione della 2° Bomboniera..."
-                                        value={data.favor2_notes || ''}
-                                        onChange={(e) => handleChange('favor2_notes', e.target.value)}
-                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </section>
-                )}
-
-                {/* TERZA BOMBONIERA (CONDIZIONALE) */}
-                {showFavor3 && (
-                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
-                        <div className="flex items-center gap-3 px-4">
-                            <Gift className="h-5 w-5 text-amber-500" />
-                            <div className="flex-1">
-                                <Input 
-                                    placeholder="Titolo Terza Bomboniera..."
-                                    value={data.favor3_title || ''}
-                                    onChange={(e) => handleChange('favor3_title', e.target.value)}
-                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
-                                />
-                                <div className="h-1 w-20 bg-amber-100 mt-1" />
-                            </div>
-                        </div>
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-amber-400">
-                            <CardContent className="p-8 space-y-10">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                    <DynamicField label="Colori" field="favor3_colors" value={data.favor3_colors || ''} onChange={handleChange} />
-                                    <DynamicField label="Grafiche" field="favor3_graphics" value={data.favor3_graphics || ''} onChange={handleChange} />
-                                    <DynamicField label="Stick" field="favor3_stick" value={data.favor3_stick || ''} onChange={handleChange} />
-                                </div>
-
-                                <div className="space-y-4 pt-4 border-t-2 border-slate-50">
-                                    <div className="flex items-center gap-2">
-                                        <NotebookPen className="h-4 w-4 text-amber-400" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-400/60">Note di Lavorazione 3° Bomboniera</span>
-                                    </div>
-                                    <Textarea 
-                                        placeholder="Inserisci qui annotazioni specifiche per la produzione della 3° Bomboniera..."
-                                        value={data.favor3_notes || ''}
-                                        onChange={(e) => handleChange('favor3_notes', e.target.value)}
-                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </section>
-                )}
-
-                {/* QUARTA BOMBONIERA (CONDIZIONALE) */}
-                {showFavor4 && (
-                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
-                        <div className="flex items-center gap-3 px-4">
-                            <Gift className="h-5 w-5 text-indigo-500" />
-                            <div className="flex-1">
-                                <Input 
-                                    placeholder="Titolo Quarta Bomboniera..."
-                                    value={data.favor4_title || ''}
-                                    onChange={(e) => handleChange('favor4_title', e.target.value)}
-                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
-                                />
-                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
-                            </div>
-                        </div>
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-indigo-400">
-                            <CardContent className="p-8 space-y-10">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                                    <DynamicField label="Colori" field="favor4_colors" value={data.favor4_colors || ''} onChange={handleChange} />
-                                    <DynamicField label="Grafiche" field="favor4_graphics" value={data.favor4_graphics || ''} onChange={handleChange} />
-                                    <DynamicField label="Stick" field="favor4_stick" value={data.favor4_stick || ''} onChange={handleChange} />
-                                    <DynamicField label="Profumi" field="favor4_scents" value={data.favor4_scents || ''} onChange={handleChange} />
-                                </div>
-                                <div className="bg-slate-50/50 rounded-[2rem] p-8 space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <DynamicField label="Nastro" field="pack4_ribbon" value={data.pack4_ribbon || ''} onChange={handleChange} />
-                                        <DynamicField label="Confetti" field="pack4_confetti" value={data.pack4_confetti || ''} onChange={handleChange} />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4 pt-4 border-t-2 border-slate-50">
-                                    <div className="flex items-center gap-2">
-                                        <NotebookPen className="h-4 w-4 text-indigo-400" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400/60">Note di Lavorazione 4° Bomboniera</span>
-                                    </div>
-                                    <Textarea 
-                                        placeholder="Inserisci qui annotazioni specifiche per la produzione della 4° Bomboniera..."
-                                        value={data.favor4_notes || ''}
-                                        onChange={(e) => handleChange('favor4_notes', e.target.value)}
-                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </section>
-                )}
-                {/* EXTRA 1 (CONDIZIONALE) */}
-                {showExtra1 && (
-                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
-                        <div className="flex items-center gap-3 px-4">
-                            <Plus className="h-5 w-5 text-indigo-600" />
-                            <div className="flex-1">
-                                <Input 
-                                    placeholder="Titolo Extra 1..."
-                                    value={data.extra1_title || ''}
-                                    onChange={(e) => handleChange('extra1_title', e.target.value)}
-                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
-                                />
-                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
-                            </div>
-                        </div>
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
-                            <CardContent className="p-8">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 1</Label>
-                                    <Textarea 
-                                        placeholder="Annotazioni particolari per questo prodotto extra..."
-                                        value={data.extra1_notes || ''}
-                                        onChange={(e) => handleChange('extra1_notes', e.target.value)}
-                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
-                                    />
-                            </CardContent>
-                        </Card>
-                    </section>
-                )}
-
-                {/* EXTRA 2 (CONDIZIONALE) */}
-                {showExtra2 && (
-                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
-                        <div className="flex items-center gap-3 px-4">
-                            <Plus className="h-5 w-5 text-indigo-600" />
-                            <div className="flex-1">
-                                <Input 
-                                    placeholder="Titolo Extra 2..."
-                                    value={data.extra2_title || ''}
-                                    onChange={(e) => handleChange('extra2_title', e.target.value)}
-                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
-                                />
-                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
-                            </div>
-                        </div>
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
-                            <CardContent className="p-8">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 2</Label>
-                                    <Textarea 
-                                        placeholder="Annotazioni particolari per questo prodotto extra..."
-                                        value={data.extra2_notes || ''}
-                                        onChange={(e) => handleChange('extra2_notes', e.target.value)}
-                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
-                                    />
-                            </CardContent>
-                        </Card>
-                    </section>
-                )}
-
-                {/* EXTRA 3 (CONDIZIONALE) */}
-                {showExtra3 && (
-                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
-                        <div className="flex items-center gap-3 px-4">
-                            <Plus className="h-5 w-5 text-indigo-600" />
-                            <div className="flex-1">
-                                <Input 
-                                    placeholder="Titolo Extra 3..."
-                                    value={data.extra3_title || ''}
-                                    onChange={(e) => handleChange('extra3_title', e.target.value)}
-                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
-                                />
-                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
-                            </div>
-                        </div>
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
-                            <CardContent className="p-8">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 3</Label>
-                                    <Textarea 
-                                        placeholder="Annotazioni particolari per questo prodotto extra..."
-                                        value={data.extra3_notes || ''}
-                                        onChange={(e) => handleChange('extra3_notes', e.target.value)}
-                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
-                                    />
-                            </CardContent>
-                        </Card>
-                    </section>
-                )}
-
-                {/* EXTRA 4 (CONDIZIONALE) */}
-                {showExtra4 && (
-                    <section className="space-y-4 animate-in slide-in-from-top-10 duration-500">
-                        <div className="flex items-center gap-3 px-4">
-                            <Plus className="h-5 w-5 text-indigo-600" />
-                            <div className="flex-1">
-                                <Input 
-                                    placeholder="Titolo Extra 4..."
-                                    value={data.extra4_title || ''}
-                                    onChange={(e) => handleChange('extra4_title', e.target.value)}
-                                    className="bg-transparent border-none text-xl font-black italic text-slate-900 tracking-tighter uppercase p-0 h-auto focus-visible:ring-0"
-                                />
-                                <div className="h-1 w-20 bg-indigo-100 mt-1" />
-                            </div>
-                        </div>
-                        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden border-l-8 border-slate-900">
-                            <CardContent className="p-8">
-                                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-4 block">Note Extra 4</Label>
-                                    <Textarea 
-                                        placeholder="Annotazioni particolari per questo prodotto extra..."
-                                        value={data.extra4_notes || ''}
-                                        onChange={(e) => handleChange('extra4_notes', e.target.value)}
-                                        className="rounded-3xl bg-white border-2 border-slate-100 font-bold p-8 min-h-[150px] text-slate-700 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition-all shadow-sm text-lg"
-                                    />
-                            </CardContent>
-                        </Card>
-                    </section>
-                )}
-
-                {/* NOTE FINALI */}
-                <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
-                    <CardHeader className="p-8 pb-0">
-                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Note di Produzione / Richieste Particolari</Label>
-                    </CardHeader>
-                    <CardContent className="p-8">
-                        <Textarea 
-                            rows={5} 
-                            value={data.notes || ''} 
-                            onChange={(e) => handleChange('notes', e.target.value)}
-                            placeholder="Inserisci qui eventuali dettagli aggiuntivi..."
-                            className="rounded-2xl bg-slate-50 border-slate-100 font-bold p-6 text-slate-700 focus:bg-white transition-all shadow-inner"
-                        />
-                    </CardContent>
-                </Card>
-            </div>
         </div>
     );
 }
