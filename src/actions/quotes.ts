@@ -269,8 +269,7 @@ export async function updateQuoteItem(itemId: string, quoteId: string, data: { d
     
     // Restituiamo il preventivo aggiornato direttamente per evitare una seconda chiamata fetch
     return getQuote(quoteId);
-}
-泛指基础:1
+
 export async function updateQuoteDetails(id: string, data: { paymentMethod?: string, discountTotal?: number, notes?: string, createdBy?: string }) {
     // Aggiornamento tramite Raw SQL per includere createdBy
     if (data.createdBy) {

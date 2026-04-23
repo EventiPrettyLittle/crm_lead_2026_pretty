@@ -21,30 +21,35 @@ async function ensureTableExists() {
     }
 }
 
-export async function getSystemSettings() {
-    try {
-        const results: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "SystemSettings" WHERE "id" = 'global' LIMIT 1`);
-        let settings = results[0];
+import { serializePrisma } from "@/lib/serialize"
+import { unstable_cache } from 'next/cache'
 
-        // Se non esistono, le creiamo (opzionale, ma utile per robustezza)
-        if (!settings) {
-            try {
-                await prisma.$executeRawUnsafe(`INSERT INTO "SystemSettings" (id, "logoUrl", "logoWidth") VALUES ('global', '', 150)`);
-                settings = { id: 'global', logoUrl: '', logoWidth: 150 };
-            } catch (e) {
-                // Se fallisce l'insert potrebbe essere che la tabella non esiste, proviamo a crearla
-                await ensureTableExists();
-                await prisma.$executeRawUnsafe(`INSERT INTO "SystemSettings" (id, "logoUrl", "logoWidth") VALUES ('global', '', 150)`);
-                settings = { id: 'global', logoUrl: '', logoWidth: 150 };
+export const getSystemSettings = unstable_cache(
+    async () => {
+        try {
+            const results: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "SystemSettings" WHERE "id" = 'global' LIMIT 1`);
+            let settings = results[0];
+
+            if (!settings) {
+                try {
+                    await prisma.$executeRawUnsafe(`INSERT INTO "SystemSettings" (id, "logoUrl", "logoWidth") VALUES ('global', '', 150)`);
+                    settings = { id: 'global', logoUrl: '', logoWidth: 150 };
+                } catch (e) {
+                    await ensureTableExists();
+                    await prisma.$executeRawUnsafe(`INSERT INTO "SystemSettings" (id, "logoUrl", "logoWidth") VALUES ('global', '', 150)`);
+                    settings = { id: 'global', logoUrl: '', logoWidth: 150 };
+                }
             }
-        }
 
-        return serializePrisma(settings);
-    } catch (error) {
-        console.error("Error fetching settings from DB:", error);
-        return { logoUrl: '', logoWidth: 150 };
-    }
-}
+            return serializePrisma(settings);
+        } catch (error) {
+            console.error("Error fetching settings from DB:", error);
+            return { logoUrl: '', logoWidth: 150 };
+        }
+    },
+    ['system-settings'],
+    { revalidate: 3600, tags: ['settings'] }
+);
 
 /**
  * Aggiorna le impostazioni di sistema nel Database via SQL Raw

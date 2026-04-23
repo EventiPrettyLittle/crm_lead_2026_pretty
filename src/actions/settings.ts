@@ -1,50 +1,51 @@
 'use server'
 
 import prisma from "@/lib/prisma"
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 
-export async function getCompanySettings() {
-    try {
-        const results: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "CompanySettings" LIMIT 1`);
-        if (results.length > 0) {
-            const res = results[0];
-            // Mappatura ultra-resiliente per ogni variante di case (lowercase vs camelCase)
+export const getCompanySettings = unstable_cache(
+    async () => {
+        try {
+            const results: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM "CompanySettings" LIMIT 1`);
+            if (results.length > 0) {
+                const res = results[0];
+                return {
+                    id: res.id,
+                    companyName: res.companyname || res.companyName || res.CompanyName || "PRETTYLITTLE.IT srls",
+                    address: res.address || res.Address || "Corso Umberto 220, 80023 Caivano (NA)",
+                    vatNumber: res.vatnumber || res.vatNumber || res.VatNumber || "10477641210",
+                    iban: res.iban || res.Iban || res.IBAN || "",
+                    phone: res.phone || res.Phone || "+39",
+                    email: res.email || res.Email || "eventi@prettylittle.it",
+                    referente: res.referente || res.Referente || "Luca Vitale",
+                };
+            }
+            
             return {
-                id: res.id,
-                companyName: res.companyname || res.companyName || res.CompanyName || "PRETTYLITTLE.IT srls",
-                address: res.address || res.Address || "Corso Umberto 220, 80023 Caivano (NA)",
-                vatNumber: res.vatnumber || res.vatNumber || res.VatNumber || "10477641210",
-                iban: res.iban || res.Iban || res.IBAN || "",
-                phone: res.phone || res.Phone || "+39",
-                email: res.email || res.Email || "eventi@prettylittle.it",
-                referente: res.referente || res.Referente || "Luca Vitale",
+                id: 'fallback',
+                companyName: "PRETTYLITTLE.IT srls",
+                address: "Corso Umberto 220, 80023 Caivano (NA)",
+                vatNumber: "10477641210",
+                iban: "",
+                phone: "+39",
+                email: "eventi@prettylittle.it",
+                referente: "Luca Vitale"
+            };
+        } catch (e) {
+            return {
+                id: 'error_fallback',
+                companyName: "PRETTYLITTLE.IT srls",
+                address: "Corso Umberto 220, 80023 Caivano (NA)",
+                vatNumber: "10477641210",
+                phone: "+39",
+                email: "eventi@prettylittle.it",
+                referente: "Luca Vitale"
             };
         }
-        
-        // PARACADUTE: Se il database è vuoto, restituiamo i dati certi di Pretty Little
-        return {
-            id: 'fallback',
-            companyName: "PRETTYLITTLE.IT srls",
-            address: "Corso Umberto 220, 80023 Caivano (NA)",
-            vatNumber: "10477641210",
-            iban: "",
-            phone: "+39",
-            email: "eventi@prettylittle.it",
-            referente: "Luca Vitale"
-        };
-    } catch (e) {
-        // Se la tabella non esiste, fallback
-        return {
-            id: 'error_fallback',
-            companyName: "PRETTYLITTLE.IT srls",
-            address: "Corso Umberto 220, 80023 Caivano (NA)",
-            vatNumber: "10477641210",
-            phone: "+39",
-            email: "eventi@prettylittle.it",
-            referente: "Luca Vitale"
-        };
-    }
-}
+    },
+    ['company-settings'],
+    { revalidate: 3600, tags: ['settings'] }
+);
 
 export async function updateCompanySettings(data: any) {
     await initSettingsTable();
