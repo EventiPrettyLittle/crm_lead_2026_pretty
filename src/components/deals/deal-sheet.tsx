@@ -12,8 +12,9 @@ import { Switch } from "@/components/ui/switch";
 import { useEffect } from "react";
 import { updateDeal } from "@/actions/deals";
 import { toast } from "sonner";
-import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2 } from "lucide-react";
+import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2, ArrowLeft } from "lucide-react";
 import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog";
+import Link from "next/link";
 
 interface DealSheetProps {
     leadId: string;
@@ -176,7 +177,12 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                          <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Scheda Tecnica Produzione</span>
                     </div>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" asChild className="p-2 h-auto rounded-full hover:bg-slate-100 text-slate-400 hover:text-indigo-600 transition-all">
+                            <Link href="/deals">
+                                <ArrowLeft className="h-6 w-6" />
+                            </Link>
+                        </Button>
                         <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase leading-none">
                             {leadName}
                         </h1>

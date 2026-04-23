@@ -22,15 +22,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
     const { acceptedQuote, ...initialDealData } = dealData;
 
     return (
-        <div className="p-8 bg-slate-50/50 min-h-screen">
-            <div className="max-w-5xl mx-auto mb-8">
-                <Button variant="ghost" asChild className="rounded-xl font-bold text-slate-400 hover:text-indigo-600 mb-6 font-black italic uppercase text-[10px] tracking-widest">
-                    <Link href="/deals">
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Torna ai Deal
-                    </Link>
-                </Button>
-            </div>
-            
+        <div className="p-2 md:p-4 bg-slate-50/50 min-h-screen">
             <DealSheet 
                 leadId={id} 
                 initialData={initialDealData} 
