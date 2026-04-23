@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { updateLeadQuickAction } from '@/actions/lead-actions'
 import { sendLeadWhatsAppAction } from "@/actions/whatsapp-actions"
+import { createCalendarEvent } from '@/actions/calendar'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { 
@@ -114,6 +115,26 @@ export function QuickActions({ lead, showLabels = false }: QuickActionsProps) {
                     toast.success("Messaggio WhatsApp inviato");
                 } catch (waErr) {
                     toast.error("Nota salvata, errore WhatsApp");
+                }
+            }
+
+            // CREAZIONE APPUNTAMENTO REALE NEL CALENDARIO (Locale + Google)
+            if (actionType === 'appointment' && combinedDateTime) {
+                try {
+                    const start = new Date(combinedDateTime);
+                    const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 ora default
+
+                    await createCalendarEvent({
+                        title: appointmentTitle || `Appuntameto - ${lead.firstName} ${lead.lastName}`,
+                        description: notes,
+                        startDateTime: start.toISOString(),
+                        endDateTime: end.toISOString(),
+                        leadId: lead.id
+                    });
+                    toast.success("Evento creato nel calendario");
+                } catch (calErr) {
+                    console.error("Calendar creation failed:", calErr);
+                    toast.error("Impossibile sincronizzare il calendario");
                 }
             }
             
