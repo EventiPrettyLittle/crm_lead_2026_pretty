@@ -223,7 +223,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         ) : (
                             <div className="flex items-center gap-3">
                                 <Save className="h-4 w-4 text-emerald-400" />
-                                <span className="font-black text-[10px] uppercase tracking-[0.2em]">Salva Scheda</span>
+                                <span className="font-black text-[10px] uppercase tracking-[0.2em]">SALVA SCHEDA PRODUZIONE</span>
                             </div>
                         )}
                     </Button>
