@@ -12,6 +12,8 @@ import { ShieldCheck } from "lucide-react"
 
 import { initDatabase } from "@/actions/db-init"
 
+import { ClientAuthGuard } from "@/components/layout/client-auth-guard"
+
 export default async function CRMLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
   let user = null;
@@ -21,32 +23,10 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
     console.error("Layout Auth Error:", e);
   }
 
+  // Se il server non trova l'utente, passiamo al ClientAuthGuard per una doppia verifica
+  // Questo evita di essere "buttati fuori" per errore durante i ricaricamenti veloci.
   if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl shadow-slate-200 p-12 text-center space-y-8 border border-slate-100">
-          <div className="h-24 w-24 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto text-rose-500 shadow-lg shadow-rose-100">
-            <ShieldCheck className="h-12 w-12" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 uppercase italic">Accesso Negato</h1>
-            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Identità non verificata o sessione scaduta</p>
-          </div>
-          <p className="text-slate-600 text-sm font-medium leading-relaxed">
-            Per accedere ai dati sensibili del CRM è necessario autenticarsi. Se avevi già effettuato l'accesso, la tua sessione potrebbe essere scaduta per sicurezza.
-          </p>
-          <a 
-            href="/login" 
-            className="block w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-indigo-100 transition-all hover:scale-[1.02] active:scale-95"
-          >
-            Vai al Login
-          </a>
-          <p className="text-[10px] text-slate-300 font-bold uppercase italic tracking-tighter">
-            Pretty Little CRM — Security Layer 2.0
-          </p>
-        </div>
-      </div>
-    );
+    return <ClientAuthGuard>{children}</ClientAuthGuard>;
   }
 
   return (
