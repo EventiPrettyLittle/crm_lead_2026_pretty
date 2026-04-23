@@ -277,18 +277,18 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                          <div className="flex flex-col gap-1">
                              <span className="text-[8px] font-black uppercase opacity-40">Bomb.</span>
                              <div className="flex flex-wrap gap-2">
-                                <span className={cn("text-[8px] font-black p-1 rounded border", showFavor2 ? "border-emerald-500 text-emerald-400" : "border-white/10 opacity-30")}>#2</span>
-                                <span className={cn("text-[8px] font-black p-1 rounded border", showFavor3 ? "border-emerald-500 text-emerald-400" : "border-white/10 opacity-30")}>#3</span>
-                                <span className={cn("text-[8px] font-black p-1 rounded border", showFavor4 ? "border-emerald-500 text-emerald-400" : "border-white/10 opacity-30")}>#4</span>
+                                <span className={cn("text-[12px] px-2 py-1 font-black rounded-lg border transition-all", showFavor2 ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]" : "border-white/10 opacity-30 text-white")}>#2</span>
+                                <span className={cn("text-[12px] px-2 py-1 font-black rounded-lg border transition-all", showFavor3 ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]" : "border-white/10 opacity-30 text-white")}>#3</span>
+                                <span className={cn("text-[12px] px-2 py-1 font-black rounded-lg border transition-all", showFavor4 ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]" : "border-white/10 opacity-30 text-white")}>#4</span>
                              </div>
                          </div>
                          <div className="flex flex-col gap-1">
-                             <span className="text-[8px] font-black uppercase opacity-40">Extra</span>
+                             <span className="text-[10px] font-black uppercase opacity-40">Extra</span>
                              <div className="flex flex-wrap gap-2">
-                                <span className={cn("text-[8px] font-black p-1 rounded border", showExtra1 ? "border-indigo-400 text-indigo-300" : "border-white/10 opacity-30")}>E1</span>
-                                <span className={cn("text-[8px] font-black p-1 rounded border", showExtra2 ? "border-indigo-400 text-indigo-300" : "border-white/10 opacity-30")}>E2</span>
-                                <span className={cn("text-[8px] font-black p-1 rounded border", showExtra3 ? "border-indigo-400 text-indigo-300" : "border-white/10 opacity-30")}>E3</span>
-                                <span className={cn("text-[8px] font-black p-1 rounded border", showExtra4 ? "border-indigo-400 text-indigo-300" : "border-white/10 opacity-30")}>E4</span>
+                                <span className={cn("text-[12px] px-2 py-1 font-black rounded-lg border transition-all", showExtra1 ? "border-indigo-400 bg-indigo-400/10 text-indigo-300 shadow-[0_0_15px_rgba(129,140,248,0.2)]" : "border-white/10 opacity-30 text-white")}>E1</span>
+                                <span className={cn("text-[12px] px-2 py-1 font-black rounded-lg border transition-all", showExtra2 ? "border-indigo-400 bg-indigo-400/10 text-indigo-300 shadow-[0_0_15px_rgba(129,140,248,0.2)]" : "border-white/10 opacity-30 text-white")}>E2</span>
+                                <span className={cn("text-[12px] px-2 py-1 font-black rounded-lg border transition-all", showExtra3 ? "border-indigo-400 bg-indigo-400/10 text-indigo-300 shadow-[0_0_15px_rgba(129,140,248,0.2)]" : "border-white/10 opacity-30 text-white")}>E3</span>
+                                <span className={cn("text-[12px] px-2 py-1 font-black rounded-lg border transition-all", showExtra4 ? "border-indigo-400 bg-indigo-400/10 text-indigo-300 shadow-[0_0_15px_rgba(129,140,248,0.2)]" : "border-white/10 opacity-30 text-white")}>E4</span>
                              </div>
                          </div>
                     </div>
