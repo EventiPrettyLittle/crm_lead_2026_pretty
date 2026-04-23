@@ -462,4 +462,3 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
         </div>
     );
 }
-\n// Build trigger: Thu Apr 23 12:12:35 CEST 2026
