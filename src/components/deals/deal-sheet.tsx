@@ -169,7 +169,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto p-4 space-y-4 pb-20">
+        <div className="max-w-full mx-auto p-4 space-y-4 pb-20">
             {/* Header COMPATTO */}
             <div className="flex flex-col md:flex-row items-end justify-between gap-4 mb-2">
                 <div className="flex flex-col gap-1">
