@@ -718,6 +718,4 @@ export default function PremiumCalendar() {
     )
 }
 
-function Label({ className, children }: { className?: string, children: React.ReactNode }) {
-    return <span className={cn("block text-xs font-medium text-slate-700", className)}>{children}</span>
 }
