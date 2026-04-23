@@ -264,25 +264,42 @@ export async function addItemToQuote(quoteId: string, data: { description: strin
 export async function updateQuoteItem(itemId: string, quoteId: string, data: { description: string, quantity: number, originalPrice?: number, unitPrice: number, discount?: number, vatRate: number }) {
     const totalPrice = data.quantity * data.unitPrice;
 
-    await prisma.$executeRawUnsafe(
-        `UPDATE "QuoteItem" SET 
-            description = $1, 
-            quantity = $2, 
-            "originalPrice" = $3, 
-            "unitPrice" = $4, 
-            discount = $5, 
-            "vatRate" = $6, 
-            "totalPrice" = $7 
-         WHERE id = $8`,
-        data.description, data.quantity, data.originalPrice || data.unitPrice, data.unitPrice, data.discount || 0, data.vatRate, totalPrice, itemId
-    );
+    try {
+        await (prisma as any).quoteItem.update({
+            where: { id: itemId },
+            data: {
+                description: data.description,
+                quantity: data.quantity,
+                originalPrice: data.originalPrice || data.unitPrice,
+                unitPrice: data.unitPrice,
+                discount: data.discount || 0,
+                vatRate: data.vatRate || 22,
+                totalPrice: totalPrice
+            }
+        });
+    } catch (error) {
+        console.error("Prisma update failed, falling back to raw:", error);
+        // Fallback raw in caso di schema desincronizzato
+        await prisma.$executeRawUnsafe(
+            `UPDATE "QuoteItem" SET 
+                description = $1, 
+                quantity = $2, 
+                "originalPrice" = $3, 
+                "unitPrice" = $4, 
+                discount = $5, 
+                "vatRate" = $6, 
+                "totalPrice" = $7 
+             WHERE id = $8`,
+            data.description, data.quantity, data.originalPrice || data.unitPrice, data.unitPrice, data.discount || 0, data.vatRate || 22, totalPrice, itemId
+        );
+    }
 
     await updateQuoteTotal(quoteId);
     revalidatePath('/quotes');
     revalidatePath('/finance');
     return { success: true };
 }
-
+泛指基础:1
 export async function updateQuoteDetails(id: string, data: { paymentMethod?: string, discountTotal?: number, notes?: string, createdBy?: string }) {
     // Aggiornamento tramite Raw SQL per includere createdBy
     if (data.createdBy) {
