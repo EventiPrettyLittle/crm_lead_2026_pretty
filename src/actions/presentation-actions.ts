@@ -34,8 +34,10 @@ export async function getFiles(parentId: string | null = null) {
         // per gli elementi di tipo FILE-IMAGE nella lista principale.
         // Lo recupereremo on-demand per la preview.
         const items: any[] = await (parentId 
-            ? prisma.$queryRawUnsafe(`SELECT id, name, type, kind, "parentId", "createdAt" FROM "PresentationItem" WHERE "parentId" = $1 ORDER BY "type" DESC, "name" ASC`, parentId)
-            : prisma.$queryRawUnsafe(`SELECT id, name, type, kind, "parentId", "createdAt" FROM "PresentationItem" WHERE "parentId" IS NULL ORDER BY "type" DESC, "name" ASC`));
+            ? prisma.$queryRawUnsafe(`SELECT id, name, "type", "kind", "parentId", "createdAt" FROM "PresentationItem" WHERE "parentId" = $1 ORDER BY "type" DESC, "name" ASC`, parentId)
+            : prisma.$queryRawUnsafe(`SELECT id, name, "type", "kind", "parentId", "createdAt" FROM "PresentationItem" WHERE "parentId" IS NULL ORDER BY "type" DESC, "name" ASC`));
+        
+        console.log(`[PRESENTATION] Found ${items.length} items for parentId: ${parentId}`);
         
         // Se è un VIDEO o PDF, l'URL è un link leggero, quindi lo recuperiamo comunque
         // per permettere di distinguerli o usarli subito.
