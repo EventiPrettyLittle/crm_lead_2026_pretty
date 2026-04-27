@@ -67,9 +67,12 @@ export async function loginWithCredentials(formData: FormData) {
         };
 
         const cookieStore = await cookies();
+        const allCookies = cookieStore.getAll();
+        console.log(`[AUTH] Checking session. Cookies found: ${allCookies.length}`);
+
         const cookieOptions: any = {
             httpOnly: true,
-            secure: true, // Forziamo secure su true in produzione/app.
+            secure: process.env.NODE_ENV === 'production', 
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 

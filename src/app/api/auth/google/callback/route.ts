@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
 
         const cookieOptions: any = {
             httpOnly: true,
-            secure: true, // Forziamo secure su true in produzione/app.
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
