@@ -82,10 +82,17 @@ export async function GET(request: NextRequest) {
         }
 
         const redirectUrl = isCalendarConnect ? '/calendar' : '/';
-        const response = NextResponse.redirect(new URL(redirectUrl, request.url))
+        const response = NextResponse.redirect(new URL(redirectUrl, request.url));
 
-        // 2. CREIAMO LA SESSIONE ULTRA-LEGGERA (Solo identità fissa)
-        // Usiamo l'email del dbUser se possibile
+        const cookieOptions: any = {
+            httpOnly: true,
+            secure: true, // Forziamo secure su true in produzione/app.
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30 
+        };
+
+        // 2. CREIAMO LA SESSIONE ULTRA-LEGGERA
         const sessionData = {
             id: dbUser?.id || userInfo.id || currentSession?.id,
             name: dbUser?.name || userInfo.name || currentSession?.name || 'User',
@@ -94,21 +101,12 @@ export async function GET(request: NextRequest) {
             role: dbUser?.role || currentSession?.role || 'USER'
         };
 
-        response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify(sessionData), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 30 
-        });
+        response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify(sessionData), cookieOptions);
 
-        // 3. Segnale di presenza per ClientAuthGuard (LEGGERO)
+        // 3. Segnale di presenza per ClientAuthGuard (NON httpOnly)
         response.cookies.set('PLATINUM_ACTIVE', 'true', {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 30 
+            ...cookieOptions,
+            httpOnly: false
         });
 
         return response

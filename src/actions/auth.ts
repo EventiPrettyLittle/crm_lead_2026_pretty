@@ -67,21 +67,20 @@ export async function loginWithCredentials(formData: FormData) {
         };
 
         const cookieStore = await cookies();
-        cookieStore.set('PLATINUM_AUTH_SESSION', JSON.stringify(userData), {
+        const cookieOptions: any = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: true, // Forziamo secure su true in produzione/app.
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24 * 30 
-        });
+        };
+
+        cookieStore.set('PLATINUM_AUTH_SESSION', JSON.stringify(userData), cookieOptions);
 
         // Segnale di presenza per il ClientAuthGuard (NON httpOnly così è leggibile dal JS)
         cookieStore.set('PLATINUM_ACTIVE', 'true', {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 30 
+            ...cookieOptions,
+            httpOnly: false
         });
 
         return { success: true };
