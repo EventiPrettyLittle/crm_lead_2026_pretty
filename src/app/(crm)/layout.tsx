@@ -23,13 +23,7 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
     console.error("Layout Auth Error:", e);
   }
 
-  // Se il server non trova l'utente, passiamo al ClientAuthGuard per una doppia verifica
-  // Questo evita di essere "buttati fuori" per errore durante i ricaricamenti veloci.
-  if (!user) {
-    return <ClientAuthGuard>{children}</ClientAuthGuard>;
-  }
-
-  return (
+  const layoutContent = (
     <SidebarProvider>
       <AppSidebar />
       <main className="w-full bg-[#f8fafc] relative min-h-screen">
@@ -62,5 +56,12 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
       </main>
       <ReminderNotifier />
     </SidebarProvider>
-  )
+  );
+
+  // Se il server non trova l'utente, carichiamo comunque la struttura ma protetta dal ClientAuthGuard
+  if (!user) {
+    return <ClientAuthGuard>{layoutContent}</ClientAuthGuard>;
+  }
+
+  return layoutContent;
 }
