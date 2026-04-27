@@ -85,13 +85,13 @@ export async function GET(request: NextRequest) {
         const response = NextResponse.redirect(new URL(redirectUrl, request.url))
 
         // 2. CREIAMO LA SESSIONE ULTRA-LEGGERA (Solo identità fissa)
+        // Usiamo l'email del dbUser se possibile
         const sessionData = {
             id: dbUser?.id || userInfo.id || currentSession?.id,
             name: dbUser?.name || userInfo.name || currentSession?.name || 'User',
-            email: currentSession?.email || userInfo.email,
+            email: dbUser?.email || userInfo.email || currentSession?.email,
             picture: userInfo.picture || currentSession?.picture,
             role: dbUser?.role || currentSession?.role || 'USER'
-            // TOKEN RIMOSSI DA QUI PER EVITARE PESO ECCESSIVO
         };
 
         response.cookies.set('PLATINUM_AUTH_SESSION', JSON.stringify(sessionData), {
@@ -102,16 +102,7 @@ export async function GET(request: NextRequest) {
             maxAge: 60 * 60 * 24 * 30 
         });
 
-        // 3. TOKEN IN UN COOKIE SEPARATO (Solo per backup)
-        response.cookies.set('PLATINUM_G_SYNC', JSON.stringify(tokens), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 30 
-        });
-
-        // 4. Segnale di presenza per ClientAuthGuard
+        // 3. Segnale di presenza per ClientAuthGuard (LEGGERO)
         response.cookies.set('PLATINUM_ACTIVE', 'true', {
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
