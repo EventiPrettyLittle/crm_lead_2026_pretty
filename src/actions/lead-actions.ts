@@ -3,6 +3,7 @@
 import { getCurrentUser } from "./auth"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from 'next/cache'
+import { sendSlackNotification } from "@/lib/slack"
 
 export async function updateLeadQuickAction(
     leadId: string,
@@ -74,6 +75,10 @@ export async function createManualLead(data: any) {
             id, data.firstName || null, data.lastName || null, data.email || null, data.phone || null, 'NUOVO'
         );
         revalidatePath('/leads');
+        
+        // Notifica Slack
+        await sendSlackNotification(`✍️ *Nuovo Lead Creato Manualmente*\n👤 *Nome:* ${data.firstName || ''} ${data.lastName || ''}\n📧 *Email:* ${data.email || 'N/A'}\n📞 *Tel:* ${data.phone || 'N/A'}`);
+
         return { success: true };
     } catch (error: any) { return { success: false, error: error.message }; }
 }

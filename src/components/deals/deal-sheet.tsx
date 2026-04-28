@@ -39,7 +39,7 @@ const DynamicField = ({
     value, 
     onChange, 
     placeholder = "", 
-    isAccent = false 
+    isAccent = false,
     showQty = true
 }: { 
     label: string, 

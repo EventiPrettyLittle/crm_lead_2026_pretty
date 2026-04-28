@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma"
 import { ParsedLead } from '@/lib/import-utils'
 import { revalidatePath, unstable_cache } from 'next/cache'
 import { serializePrisma } from "@/lib/serialize"
+import { sendSlackNotification } from '@/lib/slack'
 
 
 
@@ -63,6 +64,9 @@ export async function importLeadsAction(leads: ParsedLead[]): Promise<ImportResu
                         stage: 'NUOVO',
                     }
                 });
+                
+                // Notifica Slack per NUOVO lead
+                await sendSlackNotification(`🆕 *Nuovo Lead Ricevuto (Import)*\n👤 *Nome:* ${lead.firstName} ${lead.lastName}\n📧 *Email:* ${lead.email}\n📞 *Tel:* ${lead.phoneRaw}\n📅 *Evento:* ${lead.eventType || 'N/A'}`);
             }
             successCount++;
         } catch (error) {
