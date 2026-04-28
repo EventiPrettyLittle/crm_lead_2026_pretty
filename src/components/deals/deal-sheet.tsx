@@ -12,7 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { useEffect } from "react";
 import { updateDeal } from "@/actions/deals";
 import { toast } from "sonner";
-import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2, ArrowLeft, Eye, Printer } from "lucide-react";
+import { formatITDate } from "@/lib/utils";
+import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2, ArrowLeft, Eye, Printer, Calendar } from "lucide-react";
 import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog";
 import {
     Dialog,
@@ -29,6 +30,7 @@ interface DealSheetProps {
     leadName: string;
     leadLocation?: string;
     acceptedQuote?: any;
+    eventDate?: Date | null;
 }
 
 const DynamicField = ({ 
@@ -115,7 +117,7 @@ const DynamicField = ({
     );
 };
 
-export function DealSheet({ leadId, initialData, leadName, leadLocation, acceptedQuote }: DealSheetProps) {
+export function DealSheet({ leadId, initialData, leadName, leadLocation, acceptedQuote, eventDate }: DealSheetProps) {
     const [data, setData] = useState(initialData);
     const [saving, setSaving] = useState(false);
     const quoteItems = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
@@ -197,7 +199,18 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase leading-none">
                             {leadName}
                         </h1>
-                        <div className="flex items-center gap-2">
+                        <div className="hidden print:flex flex-col mt-2">
+                             <div className="flex items-center gap-2">
+                                <span className="text-lg font-black text-indigo-600 uppercase tracking-tighter italic">
+                                    {data.deliveryType || 'Consegna'}
+                                </span>
+                                <span className="text-slate-300">|</span>
+                                <span className="text-lg font-black text-slate-900 uppercase tracking-tighter italic">
+                                    {eventDate ? formatITDate(eventDate) : 'Data non impostata'}
+                                </span>
+                             </div>
+                        </div>
+                        <div className="flex items-center gap-2 print:hidden">
                             <QuotePreviewDialog quote={acceptedQuote} />
                             <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Vedi Prev.</span>
                         </div>

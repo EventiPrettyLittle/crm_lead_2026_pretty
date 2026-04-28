@@ -12,7 +12,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
     // Recuperiamo il lead per avere il nome
     const lead = await prisma.lead.findUnique({
         where: { id },
-        select: { firstName: true, lastName: true, locationName: true }
+        select: { firstName: true, lastName: true, locationName: true, eventDate: true }
     });
 
     if (!lead) return notFound();
@@ -29,6 +29,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
                 acceptedQuote={acceptedQuote}
                 leadName={`${lead.firstName} ${lead.lastName}`} 
                 leadLocation={lead.locationName || ''}
+                eventDate={lead.eventDate}
             />
         </div>
     );
