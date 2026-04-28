@@ -1,42 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-    const { pathname } = request.nextUrl;
-    
-    // Ignora le richieste preflight OPTIONS che non trasportano mai i cookie
-    // Ignora le richieste POST (Server Actions) perché i cookie potrebbero essere parzialmente mascherati all'Edge
-    if (request.method === 'OPTIONS' || request.method === 'POST') {
-        return NextResponse.next();
-    }
-
-    // Bypass esplicito per chiamate interne di Next.js (navigazione e refresh)
-    if (
-        request.headers.has('next-action') || 
-        request.headers.has('rsc') || 
-        request.headers.has('next-router-state-tree')
-    ) {
-        return NextResponse.next();
-    }
-
-    // Lista rotte pubbliche e assets
-    if (
-        pathname.startsWith('/login') || 
-        pathname.startsWith('/api') || 
-        pathname.startsWith('/_next') || 
-        pathname === '/favicon.ico' ||
-        pathname.includes('.') // Ignora file fisici (.txt, .js, .json, ecc) che non richiedono auth
-    ) {
-        return NextResponse.next();
-    }
-
-    const session = request.cookies.get('PLATINUM_AUTH_SESSION');
-    const active = request.cookies.get('PLATINUM_ACTIVE');
-
-    // Se entrambi i cookie di autenticazione e presenza sono mancanti, l'utente è davvero disconnesso
-    if (!session && !active) {
-        return NextResponse.redirect(new URL('/login', request.url));
-    }
-
+    // Il controllo di autenticazione all'Edge è stato disabilitato a favore
+    // del blocco vitale nel layout Node.js, poiché Vercel Edge spesso 
+    // maschera i cookie durante i fetch interni RSC causando finti logout.
     return NextResponse.next();
 }
 

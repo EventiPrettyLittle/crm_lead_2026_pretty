@@ -56,9 +56,10 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
       </main>
       <ReminderNotifier />
     </SidebarProvider>
-  );
+  // Protezione Node.js blindata e sicura contro i drop dei cookie di Vercel Edge
+  if (!user) {
+    redirect('/login');
+  }
 
-  // La protezione è ora delegata stabilmente al middleware Edge.
-  // Bypassiamo il fallback aggressivo lato client per evitare kickout durante i salvataggi
   return layoutContent;
 }
