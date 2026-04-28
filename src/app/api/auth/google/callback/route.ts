@@ -31,11 +31,6 @@ export async function GET(request: NextRequest) {
         // Sincronizziamo l'utente nel Database in modo nativo con Prisma
         let dbUser: any = null;
         try {
-            // FORZATURA: Assicuriamoci che la colonna esista fisicamente
-            try {
-                await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleTokens" TEXT;`);
-            } catch(sqle) {}
-            
             const targetEmail = (isCalendarConnect && currentSession?.email) 
                 ? currentSession.email.toLowerCase().trim() 
                 : userInfo.email.toLowerCase().trim();

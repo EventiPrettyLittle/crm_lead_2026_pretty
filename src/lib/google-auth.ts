@@ -94,11 +94,21 @@ export const getTokens = async (code: string) => {
 };
 
 export const getGoogleCalendarClient = (tokens: any) => {
-    oauth2Client.setCredentials(tokens);
-    return google.calendar({ version: 'v3', auth: oauth2Client });
+    const client = new google.auth.OAuth2(
+        getEnvVar('GOOGLE_CLIENT_ID'),
+        getEnvVar('GOOGLE_CLIENT_SECRET'),
+        getEnvVar('GOOGLE_REDIRECT_URI')
+    );
+    client.setCredentials(tokens);
+    return google.calendar({ version: 'v3', auth: client });
 };
 
 export const getGoogleSheetsClient = (tokens: any) => {
-    oauth2Client.setCredentials(tokens);
-    return google.sheets({ version: 'v4', auth: oauth2Client });
+    const client = new google.auth.OAuth2(
+        getEnvVar('GOOGLE_CLIENT_ID'),
+        getEnvVar('GOOGLE_CLIENT_SECRET'),
+        getEnvVar('GOOGLE_REDIRECT_URI')
+    );
+    client.setCredentials(tokens);
+    return google.sheets({ version: 'v4', auth: client });
 };

@@ -21,14 +21,12 @@ async function getGoogleTokens(): Promise<any | null> {
                 if (tokens && (tokens.access_token || tokens.refresh_token)) return tokens;
             }
 
-            // 2. Prova dal database con Prisma (Accesso dinamico per evitare blocchi TypeScript in build)
+            // 2. Prova dal database con Prisma
             const userEmail = sessionData.email?.toLowerCase().trim();
             if (userEmail) {
-                // Migrazione silente se necessario
-                try { await prisma.$executeRawUnsafe(`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "googleTokens" TEXT;`); } catch(e) {}
-                
-                const user = await (prisma.user as any).findUnique({
-                    where: { email: userEmail }
+                const user = await prisma.user.findUnique({
+                    where: { email: userEmail },
+                    select: { googleTokens: true }
                 });
                 
                 if (user && user.googleTokens) {
@@ -36,7 +34,7 @@ async function getGoogleTokens(): Promise<any | null> {
                 }
             }
         } catch (e) {
-            console.warn('[CALENDAR] Error reading tokens via Dynamic Prisma:', e);
+            console.warn('[CALENDAR] Error reading tokens:', e);
         }
     }
 
