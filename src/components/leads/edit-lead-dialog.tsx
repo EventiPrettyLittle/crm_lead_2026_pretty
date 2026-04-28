@@ -131,70 +131,79 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
         if (!open) return;
 
         const initAutocomplete = () => {
-             // Evita inizializzazioni multiple che bloccherebbero il campo di testo
-             if (autoCompleteRef.current) return;
+             try {
+                 if (autoCompleteRef.current) return;
 
-             if (inputRef.current && window.google && window.google.maps && window.google.maps.places) {
-                autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-                    types: ['geocode', 'establishment'],
-                    componentRestrictions: { country: "it" },
-                    fields: ["address_components", "formatted_address", "geometry", "name"]
-                });
-                
-                autoCompleteRef.current.addListener("place_changed", () => {
-                    const place = autoCompleteRef.current.getPlace();
+                 if (inputRef.current && window.google && window.google.maps && window.google.maps.places) {
+                    autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+                        types: ['geocode', 'establishment'],
+                        componentRestrictions: { country: "it" },
+                        fields: ["address_components", "formatted_address", "geometry", "name"]
+                    });
                     
-                    if (!place.geometry) {
-                        setStatusMessage("Seleziona un'opzione dall'elenco suggerito");
-                        return;
-                    }
-
-                    setStatusMessage(null);
-                    
-                    if (place.formatted_address) {
-                        form.setValue('eventLocation', place.formatted_address, { shouldDirty: true });
-                    } else if (place.name) {
-                        form.setValue('eventLocation', place.name, { shouldDirty: true });
-                    }
-
-                    if (place.name) {
-                        form.setValue('locationName', place.name, { shouldDirty: true });
-                    }
-
-                    let city = '';
-                    let province = '';
-                    let region = '';
-
-                    if (place.address_components) {
-                        for (const component of place.address_components) {
-                            const types = component.types;
-                            if (types.includes('locality')) {
-                                city = component.long_name;
-                            } else if (!city && types.includes('administrative_area_level_3')) {
-                                city = component.long_name;
-                            } else if (!city && types.includes('sublocality_level_1')) {
-                                city = component.long_name;
+                    autoCompleteRef.current.addListener("place_changed", () => {
+                        try {
+                            const place = autoCompleteRef.current.getPlace();
+                            
+                            if (!place.geometry) {
+                                setStatusMessage("Seleziona un'opzione dall'elenco suggerito");
+                                return;
                             }
-                            if (types.includes('administrative_area_level_2')) {
-                                province = component.short_name;
+
+                            setStatusMessage(null);
+                            
+                            if (place.formatted_address) {
+                                form.setValue('eventLocation', place.formatted_address, { shouldDirty: true });
+                            } else if (place.name) {
+                                form.setValue('eventLocation', place.name, { shouldDirty: true });
                             }
-                            if (types.includes('administrative_area_level_1')) {
-                                region = component.long_name;
+
+                            if (place.name) {
+                                form.setValue('locationName', place.name, { shouldDirty: true });
                             }
+
+                            let city = '';
+                            let province = '';
+                            let region = '';
+
+                            if (place.address_components) {
+                                for (const component of place.address_components) {
+                                    const types = component.types;
+                                    if (types.includes('locality')) {
+                                        city = component.long_name;
+                                    } else if (!city && types.includes('administrative_area_level_3')) {
+                                        city = component.long_name;
+                                    } else if (!city && types.includes('sublocality_level_1')) {
+                                        city = component.long_name;
+                                    }
+                                    if (types.includes('administrative_area_level_2')) {
+                                        province = component.short_name;
+                                    }
+                                    if (types.includes('administrative_area_level_1')) {
+                                        region = component.long_name;
+                                    }
+                                }
+                            }
+
+                            if (!city && place.formatted_address) {
+                                const parts = place.formatted_address.split(',');
+                                if (parts.length >= 2) {
+                                    city = parts[parts.length - 3]?.trim() || parts[parts.length - 2]?.trim() || '';
+                                }
+                            }
+
+                            form.setValue('eventCity', city, { shouldDirty: true, shouldValidate: true });
+                            form.setValue('eventProvince', province, { shouldDirty: true, shouldValidate: true });
+                            form.setValue('eventRegion', region, { shouldDirty: true, shouldValidate: true });
+                        } catch (err: any) {
+                            console.error("Errore on place_changed:", err);
+                            setStatusMessage(`Errore lettura luogo: ${err.message}`);
                         }
-                    }
-
-                    if (!city && place.formatted_address) {
-                        const parts = place.formatted_address.split(',');
-                        if (parts.length >= 2) {
-                            city = parts[parts.length - 3]?.trim() || parts[parts.length - 2]?.trim() || '';
-                        }
-                    }
-
-                    form.setValue('eventCity', city, { shouldDirty: true, shouldValidate: true });
-                    form.setValue('eventProvince', province, { shouldDirty: true, shouldValidate: true });
-                    form.setValue('eventRegion', region, { shouldDirty: true, shouldValidate: true });
-                });
+                    });
+                 }
+             } catch (err: any) {
+                 console.error("Errore Google Maps Init:", err);
+                 setStatusMessage(`Errore Google API: ${err.message}`);
              }
         };
 
@@ -207,6 +216,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                 script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
                 script.async = true;
                 script.onload = () => initAutocomplete();
+                script.onerror = () => setStatusMessage("Impossibile caricare le API di Google Maps. Riprova più tardi.");
                 document.head.appendChild(script);
             } else {
                 setTimeout(initAutocomplete, 500);
@@ -215,8 +225,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             setTimeout(initAutocomplete, 200); 
         }
 
-        // Aggiunta dinamica di stile per il contenitore dei suggerimenti Google
-        // In questo modo la tendina apparirà sempre sopra il modale e accetterà i click
         const styleId = 'pac-container-fix';
         if (!document.getElementById(styleId)) {
             const style = document.createElement('style');
@@ -238,9 +246,7 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
             document.head.appendChild(style);
         }
 
-        // Reset the autocomplete ref when dialog closes to allow re-initialization if needed
         return () => {
-            // Note: we don't totally destroy the script, but we reset the ref so it can be re-bound
             autoCompleteRef.current = null;
         }
     }, [open, form]);
@@ -460,7 +466,10 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                                                         autoComplete="off"
                                                         className="rounded-2xl border-2 border-slate-100 bg-slate-50/30 py-8 pl-14 pr-6 font-black text-slate-800 focus:ring-indigo-500 shadow-inner" 
                                                         placeholder="Cerca Ville, Location o Indirizzo..." 
-                                                        {...field}
+                                                        name={field.name}
+                                                        defaultValue={field.value || ''}
+                                                        onChange={field.onChange}
+                                                        onBlur={field.onBlur}
                                                         ref={(e) => {
                                                             field.ref(e);
                                                             (inputRef as any).current = e;
