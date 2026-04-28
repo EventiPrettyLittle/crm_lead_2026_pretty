@@ -4,7 +4,13 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     
     // Ignora le richieste preflight OPTIONS che non trasportano mai i cookie
-    if (request.method === 'OPTIONS') {
+    // Ignora le richieste POST (Server Actions) perché i cookie potrebbero essere parzialmente mascherati all'Edge
+    if (request.method === 'OPTIONS' || request.method === 'POST') {
+        return NextResponse.next();
+    }
+
+    // Bypass esplicito per le Next Actions
+    if (request.headers.has('next-action')) {
         return NextResponse.next();
     }
 
