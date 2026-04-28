@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { useEffect } from "react";
 import { updateDeal } from "@/actions/deals";
 import { toast } from "sonner";
-import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2, ArrowLeft, Eye } from "lucide-react";
+import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2, ArrowLeft, Eye, Printer } from "lucide-react";
 import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog";
 import {
     Dialog,
@@ -163,6 +163,10 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
         setData(newData);
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     const handleSave = async () => {
         setSaving(true);
         const res = await updateDeal(leadId, data);
@@ -200,7 +204,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                     </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-3 shrink-0">
+                <div className="flex flex-col items-end gap-3 shrink-0 print:hidden">
                     <div className="flex flex-col items-end">
                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Tipologia & Location</span>
                         <div className="flex items-center gap-2">
@@ -220,20 +224,36 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                             </div>
                         </div>
                     </div>
-                    <Button 
-                        onClick={handleSave} 
-                        disabled={saving}
-                        className="rounded-2xl h-12 px-10 bg-slate-900 border-b-4 border-black hover:bg-slate-800 text-white shadow-xl transition-all hover:scale-[1.02] active:scale-95 group overflow-hidden relative"
-                    >
-                        {saving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <div className="flex items-center gap-3">
-                                <Save className="h-4 w-4 text-emerald-400" />
-                                <span className="font-black text-[10px] uppercase tracking-[0.2em]">Salva Scheda</span>
-                            </div>
-                        )}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="outline"
+                            onClick={handlePrint}
+                            className="rounded-2xl h-12 px-6 border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm transition-all flex items-center gap-2"
+                        >
+                            <Printer className="h-4 w-4" />
+                            <span className="font-black text-[10px] uppercase tracking-widest">Stampa</span>
+                        </Button>
+                        <Button 
+                            onClick={handleSave} 
+                            disabled={saving}
+                            className="rounded-2xl h-12 px-10 bg-slate-900 border-b-4 border-black hover:bg-slate-800 text-white shadow-xl transition-all hover:scale-[1.02] active:scale-95 group overflow-hidden relative"
+                        >
+                            {saving ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <Save className="h-4 w-4 text-emerald-400" />
+                                    <span className="font-black text-[10px] uppercase tracking-[0.2em]">Salva Scheda</span>
+                                </div>
+                            )}
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Info Location per la STAMPA (visibile solo in stampa) */}
+                <div className="hidden print:flex flex-col items-end">
+                    <p className="text-xl font-black text-slate-900 uppercase italic tracking-tighter">{leadLocation}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Location dell'evento</p>
                 </div>
             </div>
 
@@ -485,6 +505,22 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                     })}
                 </div>
             </div>
+
+            {/* Stili CSS per la STAMPA */}
+            <style jsx global>{`
+                @media print {
+                    @page { margin: 1.5cm; }
+                    body { background: white !important; }
+                    header, footer, nav, aside, .print\\:hidden, .SidebarProvider, [role="navigation"] { display: none !important; }
+                    .Card, section { border: 1px solid #e2e8f0 !important; box-shadow: none !important; break-inside: avoid; margin-bottom: 20px; }
+                    input, textarea, select { border: none !important; background: transparent !important; padding: 0 !important; font-size: 11pt !important; height: auto !important; min-height: auto !important; }
+                    .custom-scrollbar, .overflow-y-auto { max-height: none !important; overflow: visible !important; }
+                    .bg-indigo-900 { background-color: #312e81 !important; color: white !important; -webkit-print-color-adjust: exact; }
+                    .bg-emerald-500 { background-color: #10b981 !important; color: white !important; -webkit-print-color-adjust: exact; }
+                    .bg-slate-50, .bg-slate-50\\/20 { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
+                    button, .Plus, .Trash2 { display: none !important; }
+                }
+            `}</style>
         </div>
     );
 }
