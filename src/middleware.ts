@@ -9,8 +9,12 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Bypass esplicito per le Next Actions
-    if (request.headers.has('next-action')) {
+    // Bypass esplicito per chiamate interne di Next.js (navigazione e refresh)
+    if (
+        request.headers.has('next-action') || 
+        request.headers.has('rsc') || 
+        request.headers.has('next-router-state-tree')
+    ) {
         return NextResponse.next();
     }
 
