@@ -207,6 +207,31 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
         }
     };
 
+    const AssignedProductInfo = ({ target }: { target: string }) => {
+        const assignment = productAssignments.find((a: any) => a.target === target);
+        if (!assignment) return null;
+        const item = quoteItems.find((i: any) => i.id === assignment.quoteItemId);
+        if (!item) return null;
+
+        return (
+            <div className="mb-4 p-3 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-500">
+                <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-sm">
+                        <Package className="h-4 w-4" />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-[8px] font-black uppercase text-indigo-500 tracking-widest leading-none mb-1">Voce Preventivo Assegnata</span>
+                        <span className="text-[11px] font-black text-slate-900 uppercase italic leading-none">{item.description || item.name}</span>
+                    </div>
+                </div>
+                <div className="flex flex-col items-end">
+                    <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Quantità</span>
+                    <span className="text-sm font-black italic text-indigo-600 leading-none">{item.quantity} pz.</span>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="max-w-full mx-auto p-4 space-y-4 pb-20">
             {/* Header COMPATTO */}
@@ -369,61 +394,80 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         <h2 className="text-sm font-black italic text-slate-900 tracking-tighter uppercase">Assegnazione Prodotti Preventivo</h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                        {quoteItems.map((item: any, idx: number) => (
-                            <div key={idx} className="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 border border-slate-100">
-                                <div className="flex items-center gap-2 shrink-0">
-                                    <div className="h-8 w-8 rounded-lg bg-indigo-600 flex flex-col items-center justify-center text-white">
-                                        <span className="text-[6px] font-black leading-none opacity-60 uppercase">Qty</span>
-                                        <span className="text-sm font-black italic leading-none">{item.quantity}</span>
-                                    </div>
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 text-slate-400">
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-2xl rounded-[2.5rem] p-10 border-none shadow-2xl bg-white/95 backdrop-blur-xl">
-                                            <DialogHeader className="space-y-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-3 bg-indigo-600 rounded-2xl text-white">
-                                                        <Package className="h-6 w-6" />
+                        {quoteItems.map((item: any, idx: number) => {
+                            const assignment = productAssignments.find((a: any) => a.quoteItemId === item.id);
+                            const targetLabels: Record<string, string> = {
+                                'favor1': '1° Bomb.',
+                                'favor2': '2° Bomb.',
+                                'favor3': '3° Bomb.',
+                                'favor4': '4° Bomb.',
+                                'extra1': 'Extra 1',
+                                'extra2': 'Extra 2',
+                                'extra3': 'Extra 3',
+                                'extra4': 'Extra 4',
+                            };
+
+                            return (
+                                <div key={idx} className="bg-white rounded-xl p-3 shadow-sm flex items-center gap-3 border border-slate-100">
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex flex-col items-center justify-center text-white">
+                                            <span className="text-[6px] font-black leading-none opacity-60 uppercase">Qty</span>
+                                            <span className="text-sm font-black italic leading-none">{item.quantity}</span>
+                                        </div>
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100 text-slate-400 print:hidden">
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-2xl rounded-[2.5rem] p-10 border-none shadow-2xl bg-white/95 backdrop-blur-xl">
+                                                <DialogHeader className="space-y-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-3 bg-indigo-600 rounded-2xl text-white">
+                                                            <Package className="h-6 w-6" />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Dettaglio Prodotto</span>
+                                                            <DialogTitle className="text-3xl font-black text-slate-900 leading-tight uppercase italic">{item.description || item.name || 'Prodotto'}</DialogTitle>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex flex-col">
-                                                         <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Dettaglio Prodotto</span>
-                                                         <DialogTitle className="text-3xl font-black text-slate-900 leading-tight uppercase italic">{item.description || item.name || 'Prodotto'}</DialogTitle>
-                                                    </div>
+                                                    <div className="h-1 w-20 bg-indigo-600 rounded-full" />
+                                                </DialogHeader>
+                                                <div className="mt-8 p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
+                                                    <span className="text-xs font-black uppercase text-slate-400 tracking-widest">Quantità in Preventivo</span>
+                                                    <span className="text-6xl font-black italic text-indigo-600 tracking-tighter">{item.quantity} pezzi</span>
                                                 </div>
-                                                <div className="h-1 w-20 bg-indigo-600 rounded-full" />
-                                            </DialogHeader>
-                                            <div className="mt-8 p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
-                                                <span className="text-xs font-black uppercase text-slate-400 tracking-widest">Quantità in Preventivo</span>
-                                                <span className="text-6xl font-black italic text-indigo-600 tracking-tighter">{item.quantity} pezzi</span>
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[9px] font-black text-slate-900 truncate uppercase italic leading-tight">
+                                            {item.description || item.name || 'Prodotto'}
+                                        </p>
+                                        {assignment && (
+                                            <p className="text-[8px] font-black text-indigo-500 uppercase mt-0.5 animate-in fade-in zoom-in-95">
+                                                Assegnato a: <span className="underline">{targetLabels[assignment.target]}</span>
+                                            </p>
+                                        )}
+                                    </div>
+                                    <select 
+                                        className="text-[8px] font-black uppercase tracking-tighter bg-indigo-50 text-indigo-600 rounded-lg px-1 py-1 outline-none border-none cursor-pointer print:hidden"
+                                        value={assignment?.target || ''}
+                                        onChange={(e) => handleAssignmentChange(item.id, e.target.value)}
+                                    >
+                                        <option value="">ASSEGNA A...</option>
+                                        {!isTargetTaken('favor1', item.id) && <option value="favor1">1° Bomb.</option>}
+                                        {!isTargetTaken('favor2', item.id) && <option value="favor2">2° Bomb.</option>}
+                                        {!isTargetTaken('favor3', item.id) && <option value="favor3">3° Bomb.</option>}
+                                        {!isTargetTaken('favor4', item.id) && <option value="favor4">4° Bomb.</option>}
+                                        {!isTargetTaken('extra1', item.id) && <option value="extra1">Extra 1</option>}
+                                        {!isTargetTaken('extra2', item.id) && <option value="extra2">Extra 2</option>}
+                                        {!isTargetTaken('extra3', item.id) && <option value="extra3">Extra 3</option>}
+                                        {!isTargetTaken('extra4', item.id) && <option value="extra4">Extra 4</option>}
+                                    </select>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[9px] font-black text-slate-900 truncate uppercase italic leading-tight">
-                                        {item.description || item.name || 'Prodotto'}
-                                    </p>
-                                </div>
-                                <select 
-                                    className="text-[8px] font-black uppercase tracking-tighter bg-indigo-50 text-indigo-600 rounded-lg px-1 py-1 outline-none border-none cursor-pointer"
-                                    value={productAssignments.find((a: any) => a.quoteItemId === item.id)?.target || ''}
-                                    onChange={(e) => handleAssignmentChange(item.id, e.target.value)}
-                                >
-                                    <option value="">ASSEGNA A...</option>
-                                    {!isTargetTaken('favor1', item.id) && <option value="favor1">1° Bomb.</option>}
-                                    {!isTargetTaken('favor2', item.id) && <option value="favor2">2° Bomb.</option>}
-                                    {!isTargetTaken('favor3', item.id) && <option value="favor3">3° Bomb.</option>}
-                                    {!isTargetTaken('favor4', item.id) && <option value="favor4">4° Bomb.</option>}
-                                    {!isTargetTaken('extra1', item.id) && <option value="extra1">Extra 1</option>}
-                                    {!isTargetTaken('extra2', item.id) && <option value="extra2">Extra 2</option>}
-                                    {!isTargetTaken('extra3', item.id) && <option value="extra3">Extra 3</option>}
-                                    {!isTargetTaken('extra4', item.id) && <option value="extra4">Extra 4</option>}
-                                </select>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
             )}
@@ -442,6 +486,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                         />
                     </div>
                     <Card className="rounded-[2rem] border-none shadow-sm bg-white p-6 space-y-6">
+                        <AssignedProductInfo target="favor1" />
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <DynamicField label="Colori" field="favor1_colors" value={data.favor1_colors || ''} onChange={handleChange} />
                             <DynamicField label="Grafiche" field="favor1_graphics" value={data.favor1_graphics || ''} onChange={handleChange} />
@@ -484,6 +529,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                 />
                             </div>
                             <Card className="rounded-[2rem] border-none shadow-sm bg-white p-6 space-y-6">
+                                <AssignedProductInfo target={`favor${num}`} />
                                 <div className="grid grid-cols-4 gap-4">
                                     <DynamicField label="Colori" field={`favor${num}_colors`} value={data[`favor${num}_colors`] || ''} onChange={handleChange} />
                                     <DynamicField label="Grafiche" field={`favor${num}_graphics`} value={data[`favor${num}_graphics`] || ''} onChange={handleChange} />
@@ -532,6 +578,7 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                     />
                                 </div>
                                 <Card className="rounded-2xl border-none shadow-sm bg-white p-4">
+                                    <AssignedProductInfo target={`extra${num}`} />
                                     <Textarea 
                                         value={data[`extra${num}_notes`] || ''}
                                         onChange={(e) => handleChange(`extra${num}_notes`, e.target.value)}
