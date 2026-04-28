@@ -48,31 +48,42 @@ const DynamicField = ({
     placeholder?: string, 
     isAccent?: boolean 
 }) => {
-    const values = value ? value.split(',') : [''];
+    // Parsing dei dati: supporta sia "testo" che "testo:quantità"
+    const items = (value ? value.split(',') : ['']).map(item => {
+        const [text, qty] = item.split(':');
+        return { text: text || '', qty: qty || '' };
+    });
 
-    const updatePart = (index: number, newValue: string) => {
-        const newValues = [...values];
-        newValues[index] = newValue;
-        onChange(field, newValues.join(','));
+    const updateItem = (index: number, newText: string, newQty: string) => {
+        const newItems = [...items];
+        newItems[index] = { text: newText, qty: newQty };
+        const serialized = newItems.map(it => `${it.text}:${it.qty}`).join(',');
+        onChange(field, serialized);
     };
 
     const addRow = () => {
-        onChange(field, [...values, ''].join(','));
+        const newItems = [...items, { text: '', qty: '' }];
+        onChange(field, newItems.map(it => `${it.text}:${it.qty}`).join(','));
     };
 
     const removeRow = (index: number) => {
-        if (values.length <= 1) {
+        if (items.length <= 1) {
             onChange(field, '');
             return;
         }
-        const newValues = values.filter((_, i) => i !== index);
-        onChange(field, newValues.join(','));
+        const newItems = items.filter((_, i) => i !== index);
+        onChange(field, newItems.map(it => `${it.text}:${it.qty}`).join(','));
     };
 
     return (
         <div className="space-y-2">
             <div className="flex items-center justify-between">
-                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</Label>
+                <div className="flex items-center gap-2">
+                    <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</Label>
+                    <span className="bg-slate-100 text-slate-400 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-slate-200/50">
+                        {value ? items.length : 0}
+                    </span>
+                </div>
                 <Button 
                     variant="ghost" 
                     size="sm" 
@@ -86,30 +97,45 @@ const DynamicField = ({
                     <Plus className="h-2.5 w-2.5" />
                 </Button>
             </div>
-            <div className="space-y-1.5 pr-1 max-h-[150px] overflow-y-auto custom-scrollbar">
-                {values.map((v, i) => (
-                    <div key={`${field}-${i}`} className="flex gap-2 group animate-in slide-in-from-left-2 duration-200">
-                        <Input 
-                            value={v} 
-                            placeholder={placeholder}
-                            onChange={(e) => updatePart(i, e.target.value)} 
-                            className={cn(
-                                "h-10 rounded-xl bg-slate-50 border-slate-100 font-bold text-xs focus:bg-white transition-all",
-                                isAccent && "text-indigo-600"
+            <div className="space-y-2 pr-1 max-h-[180px] overflow-y-auto custom-scrollbar">
+                {items.map((item, i) => (
+                    <div key={`${field}-${i}`} className="flex gap-2 group animate-in slide-in-from-left-2 duration-200 items-end">
+                        <div className="flex-1">
+                            <Input 
+                                value={item.text} 
+                                placeholder={placeholder}
+                                onChange={(e) => updateItem(i, e.target.value, item.qty)} 
+                                className={cn(
+                                    "h-10 rounded-xl bg-slate-50 border-slate-100 font-bold text-xs focus:bg-white transition-all",
+                                    isAccent && "text-indigo-600"
+                                )}
+                            />
+                        </div>
+                        
+                        <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-[8px] font-black text-slate-400 uppercase leading-none">QT</span>
+                            <Input 
+                                value={item.qty} 
+                                placeholder="0"
+                                onChange={(e) => updateItem(i, item.text, e.target.value)} 
+                                className="h-8 w-10 rounded-lg bg-indigo-50/50 border-none font-black text-[11px] text-center text-indigo-600 p-0 focus:ring-0"
+                            />
+                        </div>
+
+                        <div className="pb-1">
+                            {items.length > 1 && (
+                                <button 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        removeRow(i);
+                                    }}
+                                    type="button"
+                                    className="p-1.5 text-slate-300 hover:text-rose-500 transition-all focus:outline-none"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </button>
                             )}
-                        />
-                        {values.length > 1 && (
-                            <button 
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    removeRow(i);
-                                }}
-                                type="button"
-                                className="p-2 text-slate-300 hover:text-rose-500 transition-all focus:outline-none"
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                        )}
+                        </div>
                     </div>
                 ))}
             </div>
