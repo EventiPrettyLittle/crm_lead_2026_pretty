@@ -16,7 +16,7 @@ export async function updateLeadQuickAction(
     }
 ) {
     const user = await getCurrentUser();
-    if (!user) return { success: false, error: "Non autorizzato" };
+    if (!user) console.warn("[AUTH] Session cookie not found during quick action");
 
     try {
         const now = new Date();
@@ -64,7 +64,7 @@ export async function updateLeadQuickAction(
 
 export async function createManualLead(data: any) {
     const user = await getCurrentUser();
-    if (!user) return { success: false, error: "Non autorizzato" };
+    if (!user) console.warn("[AUTH] Session cookie not found during manual lead creation");
 
     try {
         const id = Math.random().toString(36).substring(7);
@@ -80,7 +80,7 @@ export async function createManualLead(data: any) {
 
 export async function updateLeadDetails(id: string, data: any) {
     const user = await getCurrentUser();
-    if (!user) return { success: false, error: "Sessione non valida. Effettua nuovamente il login." };
+    if (!user) console.warn("[AUTH] Session cookie not found during lead update");
 
     try {
         // Mappa campi virtuali del frontend alle loro controparti reali del DB
