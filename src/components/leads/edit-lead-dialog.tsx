@@ -131,6 +131,9 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
         if (!open) return;
 
         const initAutocomplete = () => {
+             // Evita inizializzazioni multiple che bloccherebbero il campo di testo
+             if (autoCompleteRef.current) return;
+
              if (inputRef.current && window.google && window.google.maps && window.google.maps.places) {
                 autoCompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
                     types: ['geocode', 'establishment'],
@@ -140,7 +143,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                 
                 autoCompleteRef.current.addListener("place_changed", () => {
                     const place = autoCompleteRef.current.getPlace();
-                    console.log("Full Place Object:", place);
                     
                     if (!place.geometry) {
                         setStatusMessage("Seleziona un'opzione dall'elenco suggerito");
@@ -149,27 +151,23 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
                     setStatusMessage(null);
                     
-                    // Indirizzo Formattato
                     if (place.formatted_address) {
-                        form.setValue('eventLocation', place.formatted_address);
+                        form.setValue('eventLocation', place.formatted_address, { shouldDirty: true });
                     } else if (place.name) {
-                        form.setValue('eventLocation', place.name);
+                        form.setValue('eventLocation', place.name, { shouldDirty: true });
                     }
 
                     if (place.name) {
-                        form.setValue('locationName', place.name);
+                        form.setValue('locationName', place.name, { shouldDirty: true });
                     }
 
                     let city = '';
                     let province = '';
                     let region = '';
 
-                    // 1. Estrazione Standard dai componenti
                     if (place.address_components) {
                         for (const component of place.address_components) {
                             const types = component.types;
-                            
-                            // Logica robusta per la Città (Locality o rimpiazzi)
                             if (types.includes('locality')) {
                                 city = component.long_name;
                             } else if (!city && types.includes('administrative_area_level_3')) {
@@ -177,24 +175,18 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                             } else if (!city && types.includes('sublocality_level_1')) {
                                 city = component.long_name;
                             }
-
-                            // Provincia (Livello 2)
                             if (types.includes('administrative_area_level_2')) {
-                                province = component.short_name; // RM, SA, MI
+                                province = component.short_name;
                             }
-
-                            // Regione (Livello 1)
                             if (types.includes('administrative_area_level_1')) {
                                 region = component.long_name;
                             }
                         }
                     }
 
-                    // 2. Fallback: Se la città è ancora vuota, proviamo a cercarla nel formatted_address
                     if (!city && place.formatted_address) {
                         const parts = place.formatted_address.split(',');
                         if (parts.length >= 2) {
-                            // Spesso la città è la penultima o terzultima parte prima della provincia/CAP
                             city = parts[parts.length - 3]?.trim() || parts[parts.length - 2]?.trim() || '';
                         }
                     }
@@ -208,7 +200,6 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
 
         const scriptId = 'google-maps-script';
         if (!window.google) {
-            // Fallback alla chiave hardcoded se la variabile d'ambiente non è disponibile nel build corrente
             const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyBOTQRShuod2e9ipkQ1FhR2nOJvASevr6k';
             if (!document.getElementById(scriptId)) {
                 const script = document.createElement('script');
@@ -218,13 +209,40 @@ export function EditLeadDialog({ lead }: EditLeadDialogProps) {
                 script.onload = () => initAutocomplete();
                 document.head.appendChild(script);
             } else {
-                // Script già nel DOM, aspetta che sia pronto
                 setTimeout(initAutocomplete, 500);
             }
         } else {
-            setTimeout(initAutocomplete, 200); // Ritardo leggero per garantire il mount
+            setTimeout(initAutocomplete, 200); 
         }
 
+        // Aggiunta dinamica di stile per il contenitore dei suggerimenti Google
+        // In questo modo la tendina apparirà sempre sopra il modale e accetterà i click
+        const styleId = 'pac-container-fix';
+        if (!document.getElementById(styleId)) {
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.innerHTML = `
+                .pac-container { 
+                    z-index: 99999 !important; 
+                    pointer-events: auto !important; 
+                    border-radius: 1rem !important;
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+                    margin-top: 8px !important;
+                    border: 1px solid #e2e8f0 !important;
+                    font-family: inherit !important;
+                }
+                .pac-item { padding: 12px 16px !important; cursor: pointer !important; border-top: 1px solid #f1f5f9 !important; }
+                .pac-item:hover { background-color: #f8fafc !important; }
+                .pac-item-query { font-weight: 900 !important; font-size: 14px !important; color: #1e293b !important; }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Reset the autocomplete ref when dialog closes to allow re-initialization if needed
+        return () => {
+            // Note: we don't totally destroy the script, but we reset the ref so it can be re-bound
+            autoCompleteRef.current = null;
+        }
     }, [open, form]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
