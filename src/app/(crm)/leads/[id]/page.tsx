@@ -18,6 +18,7 @@ import { EditLeadDialog } from "@/components/leads/edit-lead-dialog"
 import { DeleteLeadButton } from "@/components/leads/delete-lead-button"
 import { Button } from "@/components/ui/button"
 import { LeadInternalNotes } from "@/components/leads/lead-internal-notes"
+import { LeadCustomerRequests } from "@/components/leads/lead-customer-requests"
 import { LeadFinanceTab } from "@/components/leads/lead-finance-tab"
 import { LeadReferentsPanel } from "@/components/leads/lead-referents-panel"
 import { cn } from "@/lib/utils"
@@ -282,6 +283,21 @@ export default async function LeadDetailPage(props: PageProps) {
                                         {lead.productInterest || 'Nessuna preferenza'}
                                     </Badge>
                                 </div>
+                            </CardContent>
+                        </Card>
+                        
+                        {/* Sezione Richieste Cliente */}
+                        <Card className="rounded-[2.2rem] border-slate-200/60 shadow-sm overflow-hidden bg-white">
+                            <CardHeader className="bg-slate-50/80 border-b border-slate-100 py-4 px-6">
+                                <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <MessageSquare className="h-3.5 w-3.5 text-indigo-500" /> Richieste del Cliente
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-6 pb-6 p-6">
+                                <LeadCustomerRequests 
+                                    leadId={lead.id} 
+                                    initialRequests={(lead as any).customerRequests} 
+                                />
                             </CardContent>
                         </Card>
 
