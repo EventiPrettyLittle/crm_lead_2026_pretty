@@ -76,13 +76,29 @@ export async function updateLeadDetails(id: string, data: any) {
         // Forza creazione colonna referents se manca durante il save
         try { await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "referents" TEXT;`); } catch(e){}
 
+        // Mappa campi virtuali del frontend alle loro controparti reali del DB
+        const dbData: any = { ...data };
+        if ('phone' in dbData) {
+            dbData.phoneRaw = dbData.phone;
+            delete dbData.phone;
+        }
+
+        // Sanitizzazione: converti le stringhe vuote in null (specialmente per le date/numeri)
+        for (const k of Object.keys(dbData)) {
+            if (dbData[k] === '') {
+                dbData[k] = null;
+            }
+        }
+
         // Costruiamo una query SQL dinamica per evitare crash Prisma sui campi
-        const keys = Object.keys(data).filter(k => data[k] !== undefined);
+        const keys = Object.keys(dbData).filter(k => dbData[k] !== undefined);
         const setClause = keys.map((key, i) => `"${key}" = $${i + 1}`).join(', ');
-        const values = keys.map(key => data[key]);
+        const values = keys.map(key => dbData[key]);
+
         
         await prisma.$executeRawUnsafe(
             `UPDATE "Lead" SET ${setClause}, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $${keys.length + 1}`,
+
             ...values, id
         );
 
