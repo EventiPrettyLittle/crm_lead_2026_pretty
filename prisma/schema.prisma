@@ -174,10 +174,11 @@ model CompanySettings {
 }
 
 model SystemSettings {
-  id        String   @id @default("global")
-  logoUrl   String?
-  logoWidth Int      @default(150)
-  updatedAt DateTime @updatedAt
+  id           String   @id @default("global")
+  logoUrl      String?
+  logoWidth    Int      @default(150)
+  googleTokens String?  @map("googleTokens")
+  updatedAt    DateTime @updatedAt
 }
 
 model Deal {

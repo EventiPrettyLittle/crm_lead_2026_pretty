@@ -57,6 +57,20 @@ async function getGoogleTokens(): Promise<any | null> {
         } catch (e) {}
     }
 
+    // 4. ULTIMA SPIAGGIA: Token Globale di Sistema (per il calendario condiviso)
+    try {
+        const settings = await prisma.systemSettings.findUnique({
+            where: { id: 'global' },
+            select: { googleTokens: true }
+        });
+        if (settings && settings.googleTokens) {
+            console.log('[CALENDAR] Using Global System Tokens');
+            return JSON.parse(settings.googleTokens);
+        }
+    } catch (e) {
+        console.warn('[CALENDAR] Global tokens fetch error:', e);
+    }
+
     return null;
 }
 

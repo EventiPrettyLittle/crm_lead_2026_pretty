@@ -55,11 +55,13 @@ export async function GET(request: NextRequest) {
             console.error('Error in DB Sync:', e);
         }
 
-        // 1. SALVIAMO I TOKEN IN MODO PERMANENTE NEL DB (Fonte di verità unica)
+        // 1. SALVIAMO I TOKEN IN MODO PERMANENTE NEL DB
         try {
             const targetEmail = (isCalendarConnect && currentSession?.email) 
                 ? currentSession.email.toLowerCase().trim() 
                 : userInfo.email.toLowerCase().trim();
+
+            const isAdmin = targetEmail === 'eventiprettylittle@gmail.com' || targetEmail === 'lucavitale88@gmail.com';
 
             await (prisma.user as any).upsert({
                 where: { email: targetEmail },
@@ -68,10 +70,20 @@ export async function GET(request: NextRequest) {
                     id: userInfo.id || Math.random().toString(36).substring(7),
                     email: targetEmail,
                     name: userInfo.name || 'User',
-                    role: 'USER',
+                    role: isAdmin ? 'SUPER_ADMIN' : 'USER',
                     googleTokens: JSON.stringify(tokens)
                 }
             });
+
+            // Se è un ADMIN, salviamo anche come TOKEN GLOBALE di sistema
+            if (isAdmin) {
+                await (prisma.systemSettings as any).upsert({
+                    where: { id: 'global' },
+                    update: { googleTokens: JSON.stringify(tokens) },
+                    create: { id: 'global', googleTokens: JSON.stringify(tokens) }
+                });
+                console.log('[AUTH] Global Google Tokens updated by Admin:', targetEmail);
+            }
         } catch (e) {
             console.error('DB Token Backup Error:', e);
         }
