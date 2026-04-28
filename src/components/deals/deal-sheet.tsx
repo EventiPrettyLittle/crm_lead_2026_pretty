@@ -40,13 +40,15 @@ const DynamicField = ({
     onChange, 
     placeholder = "", 
     isAccent = false 
+    showQty = true
 }: { 
     label: string, 
     field: string, 
     value: string, 
     onChange: (field: string, val: string) => void,
     placeholder?: string, 
-    isAccent?: boolean 
+    isAccent?: boolean,
+    showQty?: boolean
 }) => {
     // Parsing dei dati: supporta sia "testo" che "testo:quantità"
     const items = (value ? value.split(',') : ['']).map(item => {
@@ -57,13 +59,13 @@ const DynamicField = ({
     const updateItem = (index: number, newText: string, newQty: string) => {
         const newItems = [...items];
         newItems[index] = { text: newText, qty: newQty };
-        const serialized = newItems.map(it => `${it.text}:${it.qty}`).join(',');
+        const serialized = newItems.map(it => showQty ? `${it.text}:${it.qty}` : it.text).join(',');
         onChange(field, serialized);
     };
 
     const addRow = () => {
         const newItems = [...items, { text: '', qty: '' }];
-        onChange(field, newItems.map(it => `${it.text}:${it.qty}`).join(','));
+        onChange(field, newItems.map(it => showQty ? `${it.text}:${it.qty}` : it.text).join(','));
     };
 
     const removeRow = (index: number) => {
@@ -72,7 +74,7 @@ const DynamicField = ({
             return;
         }
         const newItems = items.filter((_, i) => i !== index);
-        onChange(field, newItems.map(it => `${it.text}:${it.qty}`).join(','));
+        onChange(field, newItems.map(it => showQty ? `${it.text}:${it.qty}` : it.text).join(','));
     };
 
     return (
@@ -112,15 +114,17 @@ const DynamicField = ({
                             />
                         </div>
                         
-                        <div className="flex flex-col items-center gap-0.5">
-                            <span className="text-[8px] font-black text-slate-400 uppercase leading-none">QT</span>
-                            <Input 
-                                value={item.qty} 
-                                placeholder="0"
-                                onChange={(e) => updateItem(i, item.text, e.target.value)} 
-                                className="h-8 w-10 rounded-lg bg-indigo-50/50 border-none font-black text-[11px] text-center text-indigo-600 p-0 focus:ring-0"
-                            />
-                        </div>
+                        {showQty && (
+                            <div className="flex flex-col items-center gap-0.5">
+                                <span className="text-[8px] font-black text-slate-400 uppercase leading-none">QT</span>
+                                <Input 
+                                    value={item.qty} 
+                                    placeholder="0"
+                                    onChange={(e) => updateItem(i, item.text, e.target.value)} 
+                                    className="h-8 w-10 rounded-lg bg-indigo-50/50 border-none font-black text-[11px] text-center text-indigo-600 p-0 focus:ring-0"
+                                />
+                            </div>
+                        )}
 
                         <div className="pb-1">
                             {items.length > 1 && (
@@ -494,9 +498,9 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                             <DynamicField label="Profumi" field="favor1_scents" value={data.favor1_scents || ''} onChange={handleChange} />
                         </div>
                         <div className="bg-slate-50/50 rounded-2xl p-4 grid grid-cols-3 gap-4 border border-slate-100">
-                            <DynamicField label="Nastro" field="pack1_ribbon" value={data.pack1_ribbon || ''} onChange={handleChange} />
-                            <DynamicField label="Confetti" field="pack1_confetti" value={data.pack1_confetti || ''} onChange={handleChange} />
-                            <DynamicField label="Grafica Pack" field="pack1_graphics" value={data.pack1_graphics || ''} onChange={handleChange} />
+                            <DynamicField label="Nastro" field="pack1_ribbon" value={data.pack1_ribbon || ''} onChange={handleChange} showQty={false} />
+                            <DynamicField label="Confetti" field="pack1_confetti" value={data.pack1_confetti || ''} onChange={handleChange} showQty={false} />
+                            <DynamicField label="Grafica Pack" field="pack1_graphics" value={data.pack1_graphics || ''} onChange={handleChange} showQty={false} />
                         </div>
                         <div className="space-y-2">
                              <div className="flex items-center gap-2 px-1">
@@ -540,9 +544,9 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                 {/* Campi Pack solo per 2 e 3 */}
                                 {(num === 2 || num === 3) && (
                                     <div className="bg-slate-50/50 rounded-2xl p-4 grid grid-cols-3 gap-4 border border-slate-100 animate-in slide-in-from-bottom-2 duration-300">
-                                        <DynamicField label="Nastro" field={`pack${num}_ribbon`} value={data[`pack${num}_ribbon`] || ''} onChange={handleChange} />
-                                        <DynamicField label="Confetti" field={`pack${num}_confetti`} value={data[`pack${num}_confetti`] || ''} onChange={handleChange} />
-                                        <DynamicField label="Grafica Pack" field={`pack${num}_graphics`} value={data[`pack${num}_graphics`] || ''} onChange={handleChange} />
+                                        <DynamicField label="Nastro" field={`pack${num}_ribbon`} value={data[`pack${num}_ribbon`] || ''} onChange={handleChange} showQty={false} />
+                                        <DynamicField label="Confetti" field={`pack${num}_confetti`} value={data[`pack${num}_confetti`] || ''} onChange={handleChange} showQty={false} />
+                                        <DynamicField label="Grafica Pack" field={`pack${num}_graphics`} value={data[`pack${num}_graphics`] || ''} onChange={handleChange} showQty={false} />
                                     </div>
                                 )}
                                 <div className="space-y-2">
