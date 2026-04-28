@@ -59,7 +59,11 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
   );
 
   // Protezione Node.js blindata e sicura contro i drop dei cookie di Vercel Edge
-  if (!user) {
+  // Aggiornamento: in Vercel, dopo una Server Action, le chiamate "router.refresh()" (identificate con RSC) 
+  // perdono spesso il contesto dei cookie in Node.js. Ignoriamo il redirect per le azioni interne per non buttare fuori l'utente!
+  const isInternalFetch = headersList.has('rsc') || headersList.has('next-router-state-tree');
+
+  if (!user && !isInternalFetch) {
     redirect('/login');
   }
 
