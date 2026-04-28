@@ -506,19 +506,115 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                 </div>
             </div>
 
-            {/* Stili CSS per la STAMPA */}
+            {/* Stili CSS per la STAMPA - VERSIONE ULTRA-PULITA */}
             <style jsx global>{`
                 @media print {
-                    @page { margin: 1.5cm; }
-                    body { background: white !important; }
-                    header, footer, nav, aside, .print\\:hidden, .SidebarProvider, [role="navigation"] { display: none !important; }
-                    .Card, section { border: 1px solid #e2e8f0 !important; box-shadow: none !important; break-inside: avoid; margin-bottom: 20px; }
-                    input, textarea, select { border: none !important; background: transparent !important; padding: 0 !important; font-size: 11pt !important; height: auto !important; min-height: auto !important; }
-                    .custom-scrollbar, .overflow-y-auto { max-height: none !important; overflow: visible !important; }
-                    .bg-indigo-900 { background-color: #312e81 !important; color: white !important; -webkit-print-color-adjust: exact; }
-                    .bg-emerald-500 { background-color: #10b981 !important; color: white !important; -webkit-print-color-adjust: exact; }
-                    .bg-slate-50, .bg-slate-50\\/20 { background-color: #f8fafc !important; -webkit-print-color-adjust: exact; }
-                    button, .Plus, .Trash2 { display: none !important; }
+                    /* Reset Pagina */
+                    @page { 
+                        margin: 0.5cm; 
+                        size: portrait;
+                    }
+                    body { 
+                        background: white !important; 
+                        color: black !important;
+                        font-family: 'Inter', sans-serif !important;
+                    }
+
+                    /* Nascondi TUTTO il superfluo del CRM */
+                    header, footer, nav, aside, 
+                    .print\\:hidden, 
+                    .SidebarProvider, 
+                    [role="navigation"],
+                    [data-sonner-toaster],
+                    .fixed,
+                    button,
+                    .Plus,
+                    .Trash2,
+                    .Eye,
+                    .ChevronRight,
+                    select { 
+                        display: none !important; 
+                    }
+
+                    /* Layout del Contenuto Principale */
+                    .max-w-full { 
+                        width: 100% !important; 
+                        max-width: 100% !important; 
+                        margin: 0 !important; 
+                        padding: 0 !important; 
+                    }
+
+                    /* Cards e Sezioni come righe di un documento */
+                    .Card, section { 
+                        border: none !important;
+                        border-bottom: 1px solid #eee !important;
+                        box-shadow: none !important; 
+                        break-inside: avoid; 
+                        margin-bottom: 20px !important;
+                        padding: 0 !important;
+                        background: transparent !important;
+                    }
+
+                    /* Header della stampa (Titolo e Location) */
+                    h1 { 
+                        font-size: 24pt !important; 
+                        margin-bottom: 10px !important;
+                    }
+                    
+                    /* Campi di input trasformati in testo piano */
+                    input, textarea { 
+                        border: none !important; 
+                        background: transparent !important; 
+                        padding: 0 !important; 
+                        font-size: 11pt !important; 
+                        height: auto !important; 
+                        min-height: auto !important;
+                        color: black !important;
+                        font-weight: bold !important;
+                    }
+                    
+                    textarea {
+                        margin-top: 5px !important;
+                    }
+
+                    /* Labels */
+                    label, span.text-\\[10px\\], span.text-\\[9px\\], span.text-\\[8px\\] {
+                        color: #666 !important;
+                        font-size: 8pt !important;
+                        text-transform: uppercase !important;
+                        font-weight: bold !important;
+                    }
+
+                    /* Colori e Badge per la stampa */
+                    .bg-indigo-900, .bg-emerald-500, .bg-indigo-600 { 
+                        background-color: transparent !important; 
+                        color: black !important;
+                        border: 1px solid #000 !important;
+                        -webkit-print-color-adjust: exact; 
+                    }
+                    
+                    .bg-slate-50, .bg-slate-50\\/20, .bg-indigo-50 {
+                        background-color: transparent !important;
+                        border: 1px solid #eee !important;
+                    }
+
+                    /* Tabelle e Griglie */
+                    .grid { 
+                        display: block !important; 
+                    }
+                    .grid-cols-2, .grid-cols-4, .grid-cols-3 {
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        gap: 20px !important;
+                    }
+                    .grid-cols-2 > *, .grid-cols-4 > *, .grid-cols-3 > * {
+                        flex: 1 !important;
+                        min-width: 100px !important;
+                        margin-bottom: 10px !important;
+                    }
+
+                    /* Forza visibilità sezioni anche se nascoste in UI */
+                    .animate-in { opacity: 1 !important; transform: none !important; }
                 }
             `}</style>
         </div>
