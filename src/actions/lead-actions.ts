@@ -1,5 +1,6 @@
 'use server'
 
+import { getCurrentUser } from "./auth"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from 'next/cache'
 
@@ -14,6 +15,9 @@ export async function updateLeadQuickAction(
         title?: string;
     }
 ) {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Non autorizzato" };
+
     try {
         const now = new Date();
         const stageMap: Record<string, string> = {
@@ -59,6 +63,9 @@ export async function updateLeadQuickAction(
 }
 
 export async function createManualLead(data: any) {
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Non autorizzato" };
+
     try {
         const id = Math.random().toString(36).substring(7);
         await prisma.$executeRawUnsafe(
@@ -72,10 +79,10 @@ export async function createManualLead(data: any) {
 }
 
 export async function updateLeadDetails(id: string, data: any) {
-    try {
-        // Forza creazione colonna referents se manca durante il save
-        try { await prisma.$executeRawUnsafe(`ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "referents" TEXT;`); } catch(e){}
+    const user = await getCurrentUser();
+    if (!user) return { success: false, error: "Sessione non valida. Effettua nuovamente il login." };
 
+    try {
         // Mappa campi virtuali del frontend alle loro controparti reali del DB
         const dbData: any = { ...data };
         if ('phone' in dbData) {

@@ -7,15 +7,25 @@ export function ClientAuthGuard({ children }: { children: React.ReactNode }) {
     const [isVerified, setIsVerified] = useState<boolean | null>(null)
 
     useEffect(() => {
-        // Verifica se esiste il segnale di presenza (PLATINUM_ACTIVE)
-        // Questo cookie è appositamente NON httpOnly così lo scudo può vederlo
-        const hasActiveSession = document.cookie.includes('PLATINUM_ACTIVE=true');
-        
-        if (hasActiveSession) {
-            setIsVerified(true)
-        } else {
-            setIsVerified(false)
-        }
+        const checkSession = () => {
+            // Verifica se esiste il segnale di presenza (PLATINUM_ACTIVE)
+            const hasActiveSession = document.cookie.includes('PLATINUM_ACTIVE=true');
+            
+            if (hasActiveSession) {
+                setIsVerified(true);
+            } else {
+                // Riprova dopo 500ms prima di arrendersi (per gestire race conditions RSC)
+                setTimeout(() => {
+                    if (document.cookie.includes('PLATINUM_ACTIVE=true')) {
+                        setIsVerified(true);
+                    } else {
+                        setIsVerified(false);
+                    }
+                }, 500);
+            }
+        };
+
+        checkSession();
     }, [])
 
     if (isVerified === null) {
