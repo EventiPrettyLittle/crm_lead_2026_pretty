@@ -3,12 +3,18 @@ import { NextResponse, type NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     
-    // Lista rotta pubbliche
+    // Ignora le richieste preflight OPTIONS che non trasportano mai i cookie
+    if (request.method === 'OPTIONS') {
+        return NextResponse.next();
+    }
+
+    // Lista rotte pubbliche e assets
     if (
         pathname.startsWith('/login') || 
         pathname.startsWith('/api') || 
         pathname.startsWith('/_next') || 
-        pathname === '/favicon.ico'
+        pathname === '/favicon.ico' ||
+        pathname.includes('.') // Ignora file fisici (.txt, .js, .json, ecc) che non richiedono auth
     ) {
         return NextResponse.next();
     }
