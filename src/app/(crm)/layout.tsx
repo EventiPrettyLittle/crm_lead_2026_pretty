@@ -58,10 +58,7 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
     </SidebarProvider>
   );
 
-  // Se il server non trova l'utente, carichiamo comunque la struttura ma protetta dal ClientAuthGuard
-  if (!user) {
-    return <ClientAuthGuard>{layoutContent}</ClientAuthGuard>;
-  }
-
+  // La protezione è ora delegata stabilmente al middleware Edge.
+  // Bypassiamo il fallback aggressivo lato client per evitare kickout durante i salvataggi
   return layoutContent;
 }
