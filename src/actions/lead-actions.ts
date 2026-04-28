@@ -83,10 +83,16 @@ export async function updateLeadDetails(id: string, data: any) {
             delete dbData.phone;
         }
 
-        // Sanitizzazione: converti le stringhe vuote in null (specialmente per le date/numeri)
+        // Sanitizzazione e Type Casting
         for (const k of Object.keys(dbData)) {
+            // Null safety
             if (dbData[k] === '') {
                 dbData[k] = null;
+            }
+            
+            // Gestione Date: Prisma raw necessita oggetti Date per le colonne timestamp
+            if (k === 'eventDate' && typeof dbData[k] === 'string' && dbData[k] !== null) {
+                dbData[k] = new Date(dbData[k]);
             }
         }
 
