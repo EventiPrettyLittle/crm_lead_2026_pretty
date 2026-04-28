@@ -38,7 +38,18 @@ async function getGoogleTokens(): Promise<any | null> {
         }
     }
 
-    // 3. Fallback cookie separato
+    // 3. Fallback cookie separato (PLATINUM_G_SYNC)
+    const gSync = cookieStore.get('PLATINUM_G_SYNC');
+    if (gSync) {
+        try { 
+            const tokens = JSON.parse(gSync.value);
+            if (tokens && (tokens.access_token || tokens.refresh_token)) {
+                console.log('[CALENDAR] Tokens retrieved via G_SYNC cookie fallback');
+                return tokens;
+            }
+        } catch (e) {}
+    }
+
     if (tokenCookie) {
         try { 
             const tokens = JSON.parse(tokenCookie.value);

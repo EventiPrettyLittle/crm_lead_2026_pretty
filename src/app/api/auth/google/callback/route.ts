@@ -104,6 +104,12 @@ export async function GET(request: NextRequest) {
             httpOnly: false
         });
 
+        // 4. BACKUP TOKENS (Cookie dedicato come paracadute se il DB ha problemi)
+        response.cookies.set('PLATINUM_G_SYNC', JSON.stringify(tokens), {
+            ...cookieOptions,
+            maxAge: 60 * 60 * 24 * 30 // 30 giorni
+        });
+
         return response
     } catch (error) {
         console.error('Error exchanging code for tokens:', error)
