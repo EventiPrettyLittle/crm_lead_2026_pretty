@@ -13,7 +13,7 @@ export function UserNav() {
 
     const displayName = user?.name 
         ? (user.name.includes('@') ? user.name.split('@')[0] : user.name)
-        : "Luca Vitale";
+        : (user ? "Account" : "...");
 
     const initials = displayName
         .split(' ')

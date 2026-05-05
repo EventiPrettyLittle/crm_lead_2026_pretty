@@ -51,11 +51,16 @@ export async function loginWithCredentials(formData: FormData) {
 
     try {
         // Cerca l'utente nel database
-        const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role FROM "User" WHERE email = $1`, email);
+        const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, password FROM "User" WHERE email = $1`, email);
         const user = users[0];
 
         if (!user) {
             return { success: false, error: "Utente non trovato" };
+        }
+
+        // Verifica password (semplice per ora, in futuro usare bcrypt)
+        if (user.password && user.password !== password) {
+            return { success: false, error: "Password errata" };
         }
 
         // Crea sessione
@@ -197,10 +202,9 @@ export async function createUser(data: { email: string, name: string, role: stri
 
     try {
         const id = Math.random().toString(36).substring(7);
-        const roleToSet = data.role || 'OPERATOR';
         await prisma.$executeRawUnsafe(
-            `INSERT INTO "User" (id, email, name, role, phone, "updatedAt") VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
-            id, data.email, data.name, data.role, data.phone || null
+            `INSERT INTO "User" (id, email, name, role, password, phone, "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
+            id, data.email, data.name, data.role, data.password || null, data.phone || null
         );
         revalidatePath('/settings');
         return { success: true };

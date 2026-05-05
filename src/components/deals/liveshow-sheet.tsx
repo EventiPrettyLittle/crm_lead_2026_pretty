@@ -861,28 +861,29 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     </Button>
 
                                     <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-4 flex flex-col justify-center gap-2 min-w-[200px]">
-                                    <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Ordina per</span>
-                                    <div className="flex bg-white/5 rounded-xl p-1">
-                                        <button 
-                                            onClick={() => setSortBy('name')}
-                                            className={cn(
-                                                "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
-                                                sortBy === 'name' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
-                                            )}
-                                        >
-                                            Nome
-                                        </button>
-                                        <button 
-                                            onClick={() => setSortBy('missing')}
-                                            className={cn(
-                                                "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
-                                                sortBy === 'missing' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
-                                            )}
-                                        >
-                                            Da Fare
-                                        </button>
-                                    </div>
-                                </Card>
+                                        <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Ordina per</span>
+                                        <div className="flex bg-white/5 rounded-xl p-1">
+                                            <button 
+                                                onClick={() => setSortBy('name')}
+                                                className={cn(
+                                                    "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
+                                                    sortBy === 'name' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
+                                                )}
+                                            >
+                                                Nome
+                                            </button>
+                                            <button 
+                                                onClick={() => setSortBy('missing')}
+                                                className={cn(
+                                                    "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
+                                                    sortBy === 'missing' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
+                                                )}
+                                            >
+                                                Da Fare
+                                            </button>
+                                        </div>
+                                    </Card>
+                                </div>
                             </div>
 
                             <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
