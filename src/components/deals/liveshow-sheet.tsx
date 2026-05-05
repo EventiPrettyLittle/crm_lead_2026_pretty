@@ -976,13 +976,22 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                     <Card className="w-full max-w-lg rounded-[2.5rem] border-none shadow-2xl bg-white overflow-hidden animate-in zoom-in-95 duration-300">
                         <div className="p-8 space-y-8">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 flex-1">
                                     <div className="h-12 w-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100">
                                         <TagIcon className="h-6 w-6" />
                                     </div>
-                                    <div className="flex flex-col">
+                                    <div className="flex flex-col flex-1">
                                         <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Impostazioni Invitato</span>
-                                        <h3 className="text-2xl font-black uppercase italic tracking-tight text-slate-900">{editingGuest.name}</h3>
+                                        <Input 
+                                            value={editingGuest.name}
+                                            onChange={(e) => {
+                                                const newName = e.target.value;
+                                                setEditingGuest({...editingGuest, name: newName});
+                                                handleUpdateGuestSelection(editingGuest.id, 'name', newName);
+                                            }}
+                                            className="bg-transparent border-none p-0 h-auto text-2xl font-black uppercase italic tracking-tight text-slate-900 focus-visible:ring-0 placeholder:text-slate-200"
+                                            placeholder="Nome..."
+                                        />
                                     </div>
                                 </div>
                                 <Button variant="ghost" size="sm" onClick={() => setEditingGuest(null)} className="h-10 w-10 p-0 rounded-full hover:bg-slate-50 text-slate-400">
