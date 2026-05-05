@@ -53,6 +53,15 @@ export async function getCurrentUser() {
     }
 }
 
+export async function logout() {
+    const cookieStore = await cookies();
+    cookieStore.delete('PLATINUM_AUTH_SESSION');
+    cookieStore.delete('PLATINUM_ACTIVE');
+    cookieStore.delete('PLATINUM_ROLE');
+    revalidatePath('/');
+    return { success: true };
+}
+
 export async function loginWithCredentials(formData: FormData) {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
