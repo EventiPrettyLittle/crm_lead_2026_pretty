@@ -68,11 +68,6 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
         }
     };
 
-    // --- FILTRO INVITATI ---
-    const filteredGuests = guests.filter((g: any) => 
-        g.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
     const [editingGuest, setEditingGuest] = useState<any>(null);
 
     const handleUpdateTags = async (guestId: string, tag: string) => {

@@ -198,8 +198,8 @@ function UserSection() {
 
     const name = user?.name 
         ? (user.name.includes('@') ? user.name.split('@')[0] : user.name)
-        : "Luca Vitale";
-    const status = user ? "Active Session" : "Admin Account";
+        : (user ? "Account" : "Caricamento...");
+    const status = user?.role || "In attesa...";
 
     return (
         <div className="flex items-center gap-3 relative z-10">

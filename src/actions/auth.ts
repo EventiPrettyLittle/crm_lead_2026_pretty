@@ -63,6 +63,7 @@ export async function loginWithCredentials(formData: FormData) {
             id: user.id,
             name: user.name || user.email,
             email: user.email,
+            role: user.role,
             image: null
         };
 
