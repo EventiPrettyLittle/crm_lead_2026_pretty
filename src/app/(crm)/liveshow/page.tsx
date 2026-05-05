@@ -8,9 +8,10 @@ export default async function LiveShowPage() {
     const allDeals = await getDeals();
     
     // Filtriamo solo i deal che hanno deliveryType === 'LIVE SHOW' o isLiveShow === true
-    const liveShowDeals = allDeals.filter((deal: any) => 
-        deal.deliveryType === 'LIVE SHOW' || deal.isLiveShow === true
-    );
+    const liveShowDeals = allDeals.filter((d: any) => {
+        const dealData = d.deal || {};
+        return dealData.deliveryType === 'LIVE SHOW' || dealData.isLiveShow === true;
+    });
 
     return (
         <div className="p-4 md:p-8 bg-slate-50/50 min-h-screen space-y-8">
