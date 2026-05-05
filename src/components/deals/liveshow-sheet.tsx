@@ -12,7 +12,7 @@ import {
     Plus, Search, Check, X, User, Users, Sparkles, 
     Settings, Package, ListChecks, ArrowLeft, Loader2,
     CheckCircle2, UserCheck, UserMinus, Tag as TagIcon,
-    ArrowRightLeft, Download, Upload, FileSpreadsheet, Trash2
+    ArrowRightLeft, Download, Upload, FileSpreadsheet, Trash2, Database
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
