@@ -154,3 +154,18 @@ export async function bulkAddGuests(dealId: string, guestsData: { name: string, 
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * Elimina tutti gli invitati di un Deal
+ */
+export async function clearGuests(dealId: string) {
+    try {
+        await prisma.guest.deleteMany({
+            where: { dealId }
+        });
+        revalidatePath(`/deals/${dealId}`);
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
