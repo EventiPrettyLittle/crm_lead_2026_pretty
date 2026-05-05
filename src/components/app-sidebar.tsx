@@ -171,7 +171,7 @@ export function AppSidebar() {
                                         <SidebarMenuItem key={item.title}>
                                             <SidebarMenuButton asChild tooltip={item.title}>
                                                 <Link 
-                                                    href={item.href}
+                                                    href={item.href || '#'}
                                                     className={cn(
                                                         "h-12 rounded-2xl transition-all duration-300 px-4 group",
                                                         isActive 
