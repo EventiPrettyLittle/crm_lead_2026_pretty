@@ -17,6 +17,13 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import { 
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { 
     addGuest, updateGuest, deleteGuest, togglePresence, getGuests, bulkAddGuests
 } from "@/actions/liveshow";
 import { cn } from "@/lib/utils";
