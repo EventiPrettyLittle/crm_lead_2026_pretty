@@ -40,6 +40,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const [loading, setLoading] = useState(false);
     const [configFilter, setConfigFilter] = useState<'ALL' | 'COMPLETED' | 'MISSING'>('ALL');
     const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
+    const [alertStockInfo, setAlertStockInfo] = useState<{name: string, remaining: number, status: string} | null>(null);
     
     const lead = deal.lead || {};
     const leadName = `${lead.firstName || ''} ${lead.lastName || ''}`;
@@ -129,15 +130,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
 
                     if (remaining <= 6 && remaining >= 0) {
                         const status = remaining <= 3 ? "CRITICO" : "ATTENZIONE";
-                        const color = remaining <= 3 ? "text-rose-600" : "text-amber-600";
-                        
-                        toast.error(
-                            <div className="flex flex-col gap-1">
-                                <span className={`font-black text-[10px] uppercase tracking-widest ${color}`}>{status} STOCK</span>
-                                <p className="text-sm font-bold">{value} sta terminando!</p>
-                                <p className="text-[10px] font-black uppercase text-slate-400">Restano solo {remaining} pezzi</p>
-                            </div>
-                        );
+                        setAlertStockInfo({ name: value, remaining, status });
                     }
                 }
             }
@@ -942,7 +935,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                     sortBy === 'missing' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
                                                 )}
                                             >
-                                                !
+                                                Da Fare
                                             </button>
                                         </div>
                                     </Card>
@@ -1168,6 +1161,37 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                     </Card>
                 </TabsContent>
             </Tabs>
+
+            {/* --- ALERT STOCK CRITICO (CENTRALE) --- */}
+            {alertStockInfo && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+                    <Card className={cn(
+                        "w-full max-w-sm rounded-[3rem] border-none shadow-2xl p-8 text-center space-y-6 animate-in zoom-in-95 duration-500",
+                        alertStockInfo.status === 'CRITICO' ? "bg-rose-600 text-white" : "bg-amber-500 text-white"
+                    )}>
+                        <div className="mx-auto h-20 w-20 rounded-full bg-white/20 flex items-center justify-center animate-bounce">
+                            <Database className="h-10 w-10 text-white" />
+                        </div>
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60">
+                                {alertStockInfo.status} STOCK
+                            </span>
+                            <h3 className="text-3xl font-black uppercase italic tracking-tighter leading-none">
+                                {alertStockInfo.name}
+                            </h3>
+                            <p className="text-sm font-bold opacity-90">
+                                Attenzione! Restano solo <span className="text-2xl font-black">{alertStockInfo.remaining}</span> pezzi disponibili.
+                            </p>
+                        </div>
+                        <Button 
+                            onClick={() => setAlertStockInfo(null)}
+                            className="w-full h-14 rounded-2xl bg-white text-slate-900 font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl"
+                        >
+                            Ho Capito, Prosegui
+                        </Button>
+                    </Card>
+                </div>
+            )}
 
             {/* --- DIALOG EDIT INVITATO (TAGS & COLLEGAMENTI) --- */}
             {editingGuest && (
