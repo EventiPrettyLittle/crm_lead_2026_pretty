@@ -111,7 +111,39 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const handleUpdateGuestSelection = async (guestId: string, field: string, value: string) => {
         const res = await updateGuest(guestId, { [field]: value });
         if (res.success) {
-            setGuests(guests.map((g: any) => g.id === guestId ? { ...g, [field]: value } : g));
+            // Calcolo immediato dello stock aggiornato per notifica
+            const updatedGuests = guests.map((g: any) => g.id === guestId ? { ...g, [field]: value } : g);
+            setGuests(updatedGuests);
+
+            if (value) {
+                // Cerchiamo la portata per questo valore
+                const dealField = field === 'baseColor' ? deal.favor1_colors : 
+                                 field === 'stickColor' ? deal.favor1_stick : 
+                                 field === 'scent' ? deal.favor1_scents : 
+                                 field === 'graphic' ? deal.favor1_graphics : '';
+                
+                const options = parseOptions(dealField);
+                const opt = options.find((o: any) => o.name === value);
+                
+                if (opt) {
+                    const totalAvailable = parseInt(opt.qty) || 0;
+                    const chosenCount = updatedGuests.filter((g: any) => g[field] === value).length;
+                    const remaining = totalAvailable - chosenCount;
+
+                    if (remaining <= 6 && remaining >= 0) {
+                        const status = remaining <= 3 ? "CRITICO" : "ATTENZIONE";
+                        const color = remaining <= 3 ? "text-rose-600" : "text-amber-600";
+                        
+                        toast.error(
+                            <div className="flex flex-col gap-1">
+                                <span className={`font-black text-[10px] uppercase tracking-widest ${color}`}>{status} STOCK</span>
+                                <p className="text-sm font-bold">{value} sta terminando!</p>
+                                <p className="text-[10px] font-black uppercase text-slate-400">Restano solo {remaining} pezzi</p>
+                            </div>
+                        );
+                    }
+                }
+            }
         }
     };
 
@@ -133,18 +165,31 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
 
     const [sortBy, setSortBy] = useState<'name' | 'missing'>('name');
 
-    const sortedConfigGuests = [...guests.filter((g: any) => g.isPresent)].sort((a, b) => {
-        if (sortBy === 'name') {
-            return a.name.localeCompare(b.name);
-        } else {
-            // Missing parameters first
-            const aMissing = !(a.baseColor && a.stickColor && a.scent && a.graphic);
-            const bMissing = !(b.baseColor && b.stickColor && b.scent && b.graphic);
-            if (aMissing && !bMissing) return -1;
-            if (!aMissing && bMissing) return 1;
-            return a.name.localeCompare(b.name);
-        }
-    });
+    // Funzione helper per l'ordinamento
+    const sortGuests = (list: any[]) => {
+        return [...list].sort((a, b) => {
+            if (sortBy === 'name') {
+                return a.name.localeCompare(b.name);
+            } else {
+                // Chi manca (parametri non scelti) va in alto
+                const aMissing = !(a.baseColor && a.stickColor && a.scent && a.graphic);
+                const bMissing = !(b.baseColor && b.stickColor && b.scent && b.graphic);
+                if (aMissing && !bMissing) return -1;
+                if (!aMissing && bMissing) return 1;
+                return a.name.localeCompare(b.name);
+            }
+        });
+    };
+
+    const filteredGuests = sortGuests(
+        guests.filter((g: any) => 
+            g.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+    );
+
+    const sortedConfigGuests = sortGuests(
+        guests.filter((g: any) => g.isPresent)
+    );
 
     const handleClearList = async () => {
         if (confirm("Sei sicuro di voler cancellare TUTTA la lista? Questa operazione non è reversibile.")) {
@@ -481,18 +526,44 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         {/* List View */}
                         <div className="lg:col-span-3 space-y-6">
                             {/* Summary Stats for Invitati */}
-                            <div className="grid grid-cols-3 gap-4">
-                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
-                                    <p className="text-3xl font-black text-slate-900">{guests.length}</p>
-                                </Card>
-                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Gift</span>
-                                    <p className="text-3xl font-black text-indigo-600">{guests.filter((g: any) => g.tags?.includes("GIFT")).length}</p>
-                                </Card>
-                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Assenti</span>
-                                    <p className="text-3xl font-black text-rose-600">{guests.filter((g: any) => !g.isPresent).length}</p>
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="grid grid-cols-3 gap-4 flex-1">
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
+                                        <p className="text-3xl font-black text-slate-900">{guests.length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Gift</span>
+                                        <p className="text-3xl font-black text-indigo-600">{guests.filter((g: any) => g.tags?.includes("GIFT")).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Assenti</span>
+                                        <p className="text-3xl font-black text-rose-600">{guests.filter((g: any) => !g.isPresent).length}</p>
+                                    </Card>
+                                </div>
+
+                                <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-4 flex flex-col justify-center gap-2 min-w-[200px]">
+                                    <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Ordina per</span>
+                                    <div className="flex bg-white/5 rounded-xl p-1">
+                                        <button 
+                                            onClick={() => setSortBy('name')}
+                                            className={cn(
+                                                "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
+                                                sortBy === 'name' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
+                                            )}
+                                        >
+                                            Nome
+                                        </button>
+                                        <button 
+                                            onClick={() => setSortBy('missing')}
+                                            className={cn(
+                                                "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
+                                                sortBy === 'missing' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
+                                            )}
+                                        >
+                                            Da Fare
+                                        </button>
+                                    </div>
                                 </Card>
                             </div>
 
@@ -534,7 +605,12 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-black text-slate-900 uppercase italic leading-none">{guest.name}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm font-black text-slate-900 uppercase italic leading-none">{guest.name}</span>
+                                                                    {!(guest.baseColor && guest.stickColor && guest.scent && guest.graphic) && (
+                                                                        <Badge className="bg-rose-50 text-rose-500 border-none text-[7px] font-black px-1.5 py-0 uppercase">Incompleto</Badge>
+                                                                    )}
+                                                                </div>
                                                                 {guest.chosenBy && (
                                                                     <span className="text-[8px] font-black text-indigo-500 uppercase mt-1 animate-pulse">
                                                                         SCELTO DA: {guest.chosenBy}
@@ -631,166 +707,124 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                 {/* --- CONFIGURATORE --- */}
                 <TabsContent value="configuratore" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        {/* Quick Selection Form */}
-                        <div className="lg:col-span-1 space-y-6">
-                            <Card className="rounded-[2.5rem] border-none shadow-sm bg-slate-900 text-white p-6 space-y-6 sticky top-24">
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2 text-indigo-400">
-                                        <Sparkles className="h-4 w-4" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Configuratore Rapido</span>
-                                    </div>
-                                    <h3 className="text-xl font-black uppercase italic tracking-tight">Selezione Prodotto</h3>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest">Cerca Invitato Presente</Label>
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                                            <Input 
-                                                placeholder="Scrivi il nome..." 
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="bg-white/5 border-none h-12 pl-10 rounded-xl font-bold text-sm focus:ring-1 focus:ring-indigo-500 transition-all"
-                                            />
+                        {/* Sidebar: Configuratore & Stock Monitor */}
+                        <div className="lg:col-span-1">
+                            <div className="sticky top-24 space-y-6">
+                                <Card className="rounded-[2.5rem] border-none shadow-sm bg-slate-900 text-white p-6 space-y-6">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-indigo-400">
+                                            <Sparkles className="h-4 w-4" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Configuratore Rapido</span>
                                         </div>
+                                        <h3 className="text-xl font-black uppercase italic tracking-tight">Selezione Prodotto</h3>
                                     </div>
 
-                                    {filteredGuests.filter((g: any) => g.isPresent).length > 0 ? (
-                                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
-                                            {/* Mostriamo solo il primo o una lista selezionabile? L'utente dice "barra di ricerca e poi riempire parametri" */}
-                                            {/* Prendo il primo dei filtrati se ce n'è uno solo o se l'utente clicca */}
-                                            <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                                <span className="text-[8px] font-black uppercase text-white/30 tracking-widest block mb-2">Invitato Selezionato</span>
-                                                <p className="text-sm font-black uppercase italic text-indigo-400">{filteredGuests.filter((g: any) => g.isPresent)[0].name}</p>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                <div className="grid grid-cols-1 gap-3">
-                                                    <div className="space-y-1.5">
-                                                        <Label className="text-[8px] font-black uppercase text-white/40 tracking-widest">Barattolo (Base)</Label>
-                                                        <select 
-                                                            className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
-                                                            onChange={(e) => {
-                                                                const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
-                                                                handleUpdateGuestSelection(gid, 'baseColor', e.target.value);
-                                                            }}
-                                                            value={filteredGuests.filter((g: any) => g.isPresent)[0].baseColor || ""}
-                                                        >
-                                                            <option value="">Scegli...</option>
-                                                            {deal.favor1_colors?.split(',').map((opt: string) => (
-                                                                <option key={opt} value={opt.split(':')[0]}>{opt.split(':')[0]}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    <div className="space-y-1.5">
-                                                        <Label className="text-[8px] font-black uppercase text-white/40 tracking-widest">Stick</Label>
-                                                        <select 
-                                                            className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
-                                                            onChange={(e) => {
-                                                                const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
-                                                                handleUpdateGuestSelection(gid, 'stickColor', e.target.value);
-                                                            }}
-                                                            value={filteredGuests.filter((g: any) => g.isPresent)[0].stickColor || ""}
-                                                        >
-                                                            <option value="">Scegli...</option>
-                                                            {deal.favor1_stick?.split(',').map((opt: string) => (
-                                                                <option key={opt} value={opt.split(':')[0]}>{opt.split(':')[0]}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    <div className="space-y-1.5">
-                                                        <Label className="text-[8px] font-black uppercase text-white/40 tracking-widest">Profumo</Label>
-                                                        <select 
-                                                            className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
-                                                            onChange={(e) => {
-                                                                const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
-                                                                handleUpdateGuestSelection(gid, 'scent', e.target.value);
-                                                            }}
-                                                            value={filteredGuests.filter((g: any) => g.isPresent)[0].scent || ""}
-                                                        >
-                                                            <option value="">Scegli...</option>
-                                                            {deal.favor1_scents?.split(',').map((opt: string) => (
-                                                                <option key={opt} value={opt.split(':')[0]}>{opt.split(':')[0]}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    <div className="space-y-1.5">
-                                                        <Label className="text-[8px] font-black uppercase text-white/40 tracking-widest">Grafica</Label>
-                                                        <select 
-                                                            className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
-                                                            onChange={(e) => {
-                                                                const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
-                                                                handleUpdateGuestSelection(gid, 'graphic', e.target.value);
-                                                            }}
-                                                            value={filteredGuests.filter((g: any) => g.isPresent)[0].graphic || ""}
-                                                        >
-                                                            <option value="">Scegli...</option>
-                                                            {deal.favor1_graphics?.split(',').map((opt: string) => (
-                                                                <option key={opt} value={opt.split(':')[0]}>{opt.split(':')[0]}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-[9px] font-black uppercase text-white/40 tracking-widest">Cerca Invitato Presente</Label>
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
+                                                <Input 
+                                                    placeholder="Scrivi il nome..." 
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    className="bg-white/5 border-none h-12 pl-10 rounded-xl font-bold text-sm focus:ring-1 focus:ring-indigo-500 transition-all"
+                                                />
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className="py-8 text-center border-2 border-dashed border-white/10 rounded-2xl">
-                                            <p className="text-[10px] font-black uppercase text-white/20">Nessun invitato presente trovato</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
 
-                            {/* Stock Monitor Section */}
-                            <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-6 space-y-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Sparkles className="h-4 w-4 text-indigo-400" />
-                                    <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">Monitor Stock</span>
-                                </div>
-                                <div className="space-y-6">
-                                    {[
-                                        { label: 'Barattoli', value: deal.favor1_colors, field: 'baseColor' },
-                                        { label: 'Stick', value: deal.favor1_stick, field: 'stickColor' },
-                                        { label: 'Profumi', value: deal.favor1_scents, field: 'scent' },
-                                        { label: 'Grafiche', value: deal.favor1_graphics, field: 'graphic' }
-                                    ].map((cat, idx) => {
-                                        const options = parseOptions(cat.value);
-                                        return (
-                                            <div key={idx} className="space-y-2">
-                                                <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
-                                                    <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">{cat.label}</span>
-                                                    <span className="text-[8px] font-bold text-white/20 uppercase italic">Portata / Scelta</span>
+                                        {filteredGuests.filter((g: any) => g.isPresent).length > 0 ? (
+                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                                <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                                                    <span className="text-[8px] font-black uppercase text-white/30 tracking-widest block mb-2">Invitato Selezionato</span>
+                                                    <p className="text-sm font-black uppercase italic text-indigo-400">{filteredGuests.filter((g: any) => g.isPresent)[0].name}</p>
                                                 </div>
-                                                <div className="space-y-1">
-                                                    {options.length > 0 ? options.map((opt: any) => {
-                                                        const chosenCount = guests.filter((g: any) => g[cat.field] === opt.name).length;
-                                                        const totalAvailable = parseInt(opt.qty) || 0;
-                                                        const isOverLimit = totalAvailable > 0 && chosenCount > totalAvailable;
-                                                        return (
-                                                            <div key={opt.name} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-1.5 hover:bg-white/10 transition-colors">
-                                                                <span className="text-[10px] font-bold text-white/80">{opt.name}</span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-[9px] font-black text-white/20">{totalAvailable}</span>
-                                                                    <div className="h-2 w-px bg-white/10" />
-                                                                    <span className={cn(
-                                                                        "text-[10px] font-black",
-                                                                        isOverLimit ? "text-rose-500" : (chosenCount > 0 ? "text-indigo-400" : "text-white/20")
-                                                                    )}>
-                                                                        {chosenCount}
-                                                                    </span>
+
+                                                <div className="space-y-3">
+                                                    {[
+                                                        { label: 'Barattolo (Base)', field: 'baseColor', options: deal.favor1_colors },
+                                                        { label: 'Stick', field: 'stickColor', options: deal.favor1_stick },
+                                                        { label: 'Profumo', field: 'scent', options: deal.favor1_scents },
+                                                        { label: 'Grafica', field: 'graphic', options: deal.favor1_graphics }
+                                                    ].map((cfg) => (
+                                                        <div key={cfg.field} className="space-y-1.5">
+                                                            <Label className="text-[8px] font-black uppercase text-white/40 tracking-widest">{cfg.label}</Label>
+                                                            <select 
+                                                                className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                onChange={(e) => {
+                                                                    const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
+                                                                    handleUpdateGuestSelection(gid, cfg.field, e.target.value);
+                                                                }}
+                                                                value={filteredGuests.filter((g: any) => g.isPresent)[0][cfg.field] || ""}
+                                                            >
+                                                                <option value="">Scegli...</option>
+                                                                {cfg.options?.split(',').map((opt: string) => (
+                                                                    <option key={opt} value={opt.split(':')[0]}>{opt.split(':')[0]}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="py-8 text-center border-2 border-dashed border-white/10 rounded-2xl">
+                                                <p className="text-[10px] font-black uppercase text-white/20">Nessun invitato presente trovato</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </Card>
+
+                                <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-6 space-y-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Database className="h-4 w-4 text-indigo-400" />
+                                        <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">Monitor Stock</span>
+                                    </div>
+                                    <div className="space-y-6">
+                                        {[
+                                            { label: 'Barattoli', value: deal.favor1_colors, field: 'baseColor' },
+                                            { label: 'Stick', value: deal.favor1_stick, field: 'stickColor' },
+                                            { label: 'Profumi', value: deal.favor1_scents, field: 'scent' },
+                                            { label: 'Grafiche', value: deal.favor1_graphics, field: 'graphic' }
+                                        ].map((cat, idx) => {
+                                            const options = parseOptions(cat.value);
+                                            return (
+                                                <div key={idx} className="space-y-2">
+                                                    <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+                                                        <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">{cat.label}</span>
+                                                        <span className="text-[8px] font-bold text-white/20 uppercase italic">Disp. / Scelta</span>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        {options.length > 0 ? options.map((opt: any) => {
+                                                            const chosenCount = guests.filter((g: any) => g[cat.field] === opt.name).length;
+                                                            const totalAvailable = parseInt(opt.qty) || 0;
+                                                            const remaining = totalAvailable - chosenCount;
+                                                            
+                                                            let statusColor = "text-emerald-400";
+                                                            if (remaining <= 3) statusColor = "text-rose-500";
+                                                            else if (remaining <= 6) statusColor = "text-amber-400";
+
+                                                            return (
+                                                                <div key={opt.name} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors">
+                                                                    <span className="text-[11px] font-bold text-white/80">{opt.name}</span>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="text-[11px] font-black text-white/20">{totalAvailable}</span>
+                                                                        <div className="h-3 w-px bg-white/10" />
+                                                                        <span className={cn("text-[14px] font-black", statusColor)}>
+                                                                            {chosenCount}
+                                                                        </span>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        );
-                                                    }) : (
-                                                        <span className="text-[9px] text-white/10 italic">Nessuna opzione</span>
-                                                    )}
+                                                            );
+                                                        }) : (
+                                                            <span className="text-[9px] text-white/10 italic">Nessuna opzione</span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </Card>
+                                            );
+                                        })}
+                                    </div>
+                                </Card>
+                            </div>
                         </div>
 
                         {/* Configurator Table View */}
