@@ -401,13 +401,13 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                         </div>
                                     </div>
 
-                                    {filteredGuests.filter(g => g.isPresent).length > 0 ? (
+                                    {filteredGuests.filter((g: any) => g.isPresent).length > 0 ? (
                                         <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
                                             {/* Mostriamo solo il primo o una lista selezionabile? L'utente dice "barra di ricerca e poi riempire parametri" */}
                                             {/* Prendo il primo dei filtrati se ce n'è uno solo o se l'utente clicca */}
                                             <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
                                                 <span className="text-[8px] font-black uppercase text-white/30 tracking-widest block mb-2">Invitato Selezionato</span>
-                                                <p className="text-sm font-black uppercase italic text-indigo-400">{filteredGuests.filter(g => g.isPresent)[0].name}</p>
+                                                <p className="text-sm font-black uppercase italic text-indigo-400">{filteredGuests.filter((g: any) => g.isPresent)[0].name}</p>
                                             </div>
 
                                             <div className="space-y-3">
@@ -417,10 +417,10 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                         <select 
                                                             className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
                                                             onChange={(e) => {
-                                                                const gid = filteredGuests.filter(g => g.isPresent)[0].id;
+                                                                const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
                                                                 handleUpdateGuestSelection(gid, 'baseColor', e.target.value);
                                                             }}
-                                                            value={filteredGuests.filter(g => g.isPresent)[0].baseColor || ""}
+                                                            value={filteredGuests.filter((g: any) => g.isPresent)[0].baseColor || ""}
                                                         >
                                                             <option value="">Scegli...</option>
                                                             {deal.favor1_colors?.split(',').map((opt: string) => (
@@ -433,10 +433,10 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                         <select 
                                                             className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
                                                             onChange={(e) => {
-                                                                const gid = filteredGuests.filter(g => g.isPresent)[0].id;
+                                                                const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
                                                                 handleUpdateGuestSelection(gid, 'stickColor', e.target.value);
                                                             }}
-                                                            value={filteredGuests.filter(g => g.isPresent)[0].stickColor || ""}
+                                                            value={filteredGuests.filter((g: any) => g.isPresent)[0].stickColor || ""}
                                                         >
                                                             <option value="">Scegli...</option>
                                                             {deal.favor1_stick?.split(',').map((opt: string) => (
@@ -449,10 +449,10 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                         <select 
                                                             className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
                                                             onChange={(e) => {
-                                                                const gid = filteredGuests.filter(g => g.isPresent)[0].id;
+                                                                const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
                                                                 handleUpdateGuestSelection(gid, 'scent', e.target.value);
                                                             }}
-                                                            value={filteredGuests.filter(g => g.isPresent)[0].scent || ""}
+                                                            value={filteredGuests.filter((g: any) => g.isPresent)[0].scent || ""}
                                                         >
                                                             <option value="">Scegli...</option>
                                                             {deal.favor1_scents?.split(',').map((opt: string) => (
@@ -465,10 +465,10 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                         <select 
                                                             className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
                                                             onChange={(e) => {
-                                                                const gid = filteredGuests.filter(g => g.isPresent)[0].id;
+                                                                const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
                                                                 handleUpdateGuestSelection(gid, 'graphic', e.target.value);
                                                             }}
-                                                            value={filteredGuests.filter(g => g.isPresent)[0].graphic || ""}
+                                                            value={filteredGuests.filter((g: any) => g.isPresent)[0].graphic || ""}
                                                         >
                                                             <option value="">Scegli...</option>
                                                             {deal.favor1_graphics?.split(',').map((opt: string) => (
@@ -504,7 +504,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
-                                            {guests.filter(g => g.isPresent).map((guest: any) => (
+                                            {guests.filter((g: any) => g.isPresent).map((guest: any) => (
                                                 <tr key={guest.id} className="hover:bg-slate-50/50 transition-colors">
                                                     <td className="px-6 py-4">
                                                         <span className="text-xs font-black text-slate-900 uppercase italic">{guest.name}</span>
@@ -531,7 +531,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                     </td>
                                                 </tr>
                                             ))}
-                                            {guests.filter(g => g.isPresent).length === 0 && (
+                                            {guests.filter((g: any) => g.isPresent).length === 0 && (
                                                 <tr>
                                                     <td colSpan={6} className="px-6 py-20 text-center text-slate-300 italic font-medium uppercase text-xs">
                                                         Nessun invitato presente da configurare
@@ -560,7 +560,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {guests.filter(g => g.isPresent).map((guest: any) => (
+                                    {guests.filter((g: any) => g.isPresent).map((guest: any) => (
                                         <tr 
                                             key={guest.id} 
                                             className={cn(
@@ -608,7 +608,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                             </td>
                                         </tr>
                                     ))}
-                                    {guests.filter(g => g.isPresent).length === 0 && (
+                                    {guests.filter((g: any) => g.isPresent).length === 0 && (
                                         <tr>
                                             <td colSpan={4} className="px-6 py-20 text-center text-slate-300 italic font-medium uppercase text-xs">
                                                 Nessun prodotto in produzione
