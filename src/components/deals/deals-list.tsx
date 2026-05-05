@@ -17,13 +17,14 @@ import {
 
 interface DealsListProps {
     initialDeals: any[];
+    linkPrefix?: string;
 }
 
-export function DealsList({ initialDeals }: DealsListProps) {
+export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProps) {
     const [search, setSearch] = useState("");
     const [sortBy, setSortBy] = useState("date_asc"); // date_asc, date_desc, progress_asc, progress_desc
 
-    // Logica di Filtro e Sort
+    // ... (rest of logic)
     const filteredDeals = initialDeals
         .filter(deal => 
             `${deal.firstName} ${deal.lastName}`.toLowerCase().includes(search.toLowerCase())
@@ -90,7 +91,7 @@ export function DealsList({ initialDeals }: DealsListProps) {
                 ) : filteredDeals.map((deal: any) => (
                     <Card key={deal.id} className="rounded-[2.5rem] border-none shadow-sm hover:shadow-xl transition-all duration-500 bg-white overflow-hidden group">
                         <CardContent className="p-0">
-                            <Link href={`/deals/${deal.id}`}>
+                            <Link href={`${linkPrefix}/${deal.id}`}>
                                 <div className="p-8 space-y-6">
                                     <div className="flex justify-between items-start">
                                         <div className="space-y-2">
