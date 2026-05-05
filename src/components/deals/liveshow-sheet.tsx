@@ -127,7 +127,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         for (const ref of refs) {
                             if (ref.name) {
                                 const res = await addGuest(deal.id, ref.name);
-                                if (res.success) {
+                                if (res.success && res.data) {
                                     // Aggiungiamo il tag basato sul ruolo
                                     const guestId = res.data.id;
                                     const tag = ref.role?.toUpperCase();
