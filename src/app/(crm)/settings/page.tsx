@@ -529,7 +529,8 @@ export default function SettingsPage() {
                                                             <Badge className={cn(
                                                                 "font-black text-[9px] uppercase tracking-widest px-3 py-1 rounded-full",
                                                                 m.role === 'SUPER_ADMIN' ? "bg-slate-900 text-white shadow-lg" : 
-                                                                m.role === 'ADMIN' ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600"
+                                                                m.role === 'ADMIN' ? "bg-indigo-600 text-white" : 
+                                                                m.role === 'PRODUZIONE' ? "bg-amber-500 text-white" : "bg-indigo-50 text-indigo-600"
                                                             )}>
                                                                 {m.role}
                                                             </Badge>
@@ -590,6 +591,7 @@ export default function SettingsPage() {
                                             >
                                                 <option value="OPERATOR">OPERATORE (Standard)</option>
                                                 <option value="ADMIN">ADMIN (Privilegiato)</option>
+                                                <option value="PRODUZIONE">PRODUZIONE (Limitato: Solo Deal & LiveShow)</option>
                                             </select>
                                         </div>
                                         <div className="space-y-2">

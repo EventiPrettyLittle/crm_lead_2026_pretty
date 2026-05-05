@@ -28,15 +28,29 @@ export function AppSidebar() {
         getSystemSettings().then(setLogoSettings);
     }, []);
 
+    const [user, setUser] = useState<{name: string, email: string, role?: string} | null>(null);
+
+    useEffect(() => {
+        import("@/actions/auth").then(m => m.getCurrentUser()).then(setUser);
+    }, []);
+
+    // Filtriamo i link in base al ruolo
+    const filteredLinks = sidebarLinks.filter(item => {
+        if (user?.role === 'PRODUZIONE') {
+            return item.title === 'Deal' || item.title === 'Live Show';
+        }
+        return true;
+    });
+
     const [openIntegrations, setOpenIntegrations] = useState(false);
 
     // Auto-apri il menu integrazioni se siamo in una delle sue pagine
     useEffect(() => {
-        const isIntegrationActive = sidebarLinks.some(item => 
+        const isIntegrationActive = filteredLinks.some(item => 
             item.title === "Integrazioni" && item.subItems?.some(sub => pathname === sub.href)
         );
         if (isIntegrationActive) setOpenIntegrations(true);
-    }, [pathname]);
+    }, [pathname, filteredLinks]);
 
     return (
         <Sidebar className="border-r border-slate-200/60 bg-white/50 backdrop-blur-xl">
@@ -73,7 +87,7 @@ export function AppSidebar() {
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu className="gap-1.5">
-                            {sidebarLinks.map((item) => {
+                            {filteredLinks.map((item) => {
                                 const hasSubItems = item.subItems && item.subItems.length > 0;
                                 const isActive = pathname === item.href || (hasSubItems && item.subItems?.some(sub => pathname === sub.href));
                                 
