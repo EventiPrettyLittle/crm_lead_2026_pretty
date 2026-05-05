@@ -131,6 +131,21 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
         });
     };
 
+    const [sortBy, setSortBy] = useState<'name' | 'missing'>('name');
+
+    const sortedConfigGuests = [...guests.filter((g: any) => g.isPresent)].sort((a, b) => {
+        if (sortBy === 'name') {
+            return a.name.localeCompare(b.name);
+        } else {
+            // Missing parameters first
+            const aMissing = !(a.baseColor && a.stickColor && a.scent && a.graphic);
+            const bMissing = !(b.baseColor && b.stickColor && b.scent && b.graphic);
+            if (aMissing && !bMissing) return -1;
+            if (!aMissing && bMissing) return 1;
+            return a.name.localeCompare(b.name);
+        }
+    });
+
     const handleClearList = async () => {
         if (confirm("Sei sicuro di voler cancellare TUTTA la lista? Questa operazione non è reversibile.")) {
             setLoading(true);
@@ -781,18 +796,44 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         {/* Configurator Table View */}
                         <div className="lg:col-span-3 space-y-6">
                             {/* Summary Stats for Configuratore */}
-                            <div className="grid grid-cols-3 gap-4">
-                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
-                                    <p className="text-3xl font-black text-slate-900">{guests.length}</p>
-                                </Card>
-                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
-                                    <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
-                                </Card>
-                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Mancanti</span>
-                                    <p className="text-3xl font-black text-rose-600">{guests.length - guests.filter((g: any) => g.isPresent).length}</p>
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="grid grid-cols-3 gap-4 flex-1">
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
+                                        <p className="text-3xl font-black text-slate-900">{guests.length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
+                                        <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Mancanti</span>
+                                        <p className="text-3xl font-black text-rose-600">{guests.length - guests.filter((g: any) => g.isPresent).length}</p>
+                                    </Card>
+                                </div>
+                                
+                                <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-4 flex flex-col justify-center gap-2 min-w-[200px]">
+                                    <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Ordina per</span>
+                                    <div className="flex bg-white/5 rounded-xl p-1">
+                                        <button 
+                                            onClick={() => setSortBy('name')}
+                                            className={cn(
+                                                "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
+                                                sortBy === 'name' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
+                                            )}
+                                        >
+                                            Nome
+                                        </button>
+                                        <button 
+                                            onClick={() => setSortBy('missing')}
+                                            className={cn(
+                                                "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
+                                                sortBy === 'missing' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
+                                            )}
+                                        >
+                                            Da Fare
+                                        </button>
+                                    </div>
                                 </Card>
                             </div>
 
@@ -810,7 +851,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
-                                            {guests.filter((g: any) => g.isPresent).map((guest: any) => (
+                                            {sortedConfigGuests.map((guest: any) => (
                                                 <tr 
                                                     key={guest.id} 
                                                     className={cn(
