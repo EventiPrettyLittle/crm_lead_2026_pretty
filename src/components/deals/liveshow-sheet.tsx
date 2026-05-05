@@ -12,7 +12,7 @@ import {
     Plus, Search, Check, X, User, Users, Sparkles, 
     Settings, Package, ListChecks, ArrowLeft, Loader2,
     CheckCircle2, UserCheck, UserMinus, Tag as TagIcon,
-    ArrowRightLeft, Download, Upload, FileSpreadsheet, Trash2, Database
+    ArrowRightLeft, Download, Upload, FileSpreadsheet, Trash2, Database, RotateCcw
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -159,6 +159,14 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     };
 
     const [sortBy, setSortBy] = useState<'name' | 'missing'>('name');
+
+    const handleRefresh = async () => {
+        setLoading(true);
+        const latestGuests = await getGuests(deal.id);
+        setGuests(latestGuests);
+        setLoading(false);
+        toast.success("Dati aggiornati!");
+    };
 
     // Funzione helper per l'ordinamento
     const sortGuests = (list: any[]) => {
@@ -841,7 +849,18 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     </Card>
                                 </div>
                                 
-                                <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-4 flex flex-col justify-center gap-2 min-w-[200px]">
+                                <div className="flex items-center gap-2">
+                                    <Button 
+                                        variant="outline" 
+                                        size="icon" 
+                                        onClick={handleRefresh}
+                                        disabled={loading}
+                                        className="h-14 w-14 rounded-[2rem] border-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 shadow-sm transition-all"
+                                    >
+                                        <RotateCcw className={cn("h-5 w-5", loading && "animate-spin")} />
+                                    </Button>
+
+                                    <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-4 flex flex-col justify-center gap-2 min-w-[200px]">
                                     <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Ordina per</span>
                                     <div className="flex bg-white/5 rounded-xl p-1">
                                         <button 
@@ -940,6 +959,22 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
 
                 {/* --- PRODUZIONE --- */}
                 <TabsContent value="produzione" className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-black uppercase italic tracking-tighter text-slate-900">Monitor Produzione</h2>
+                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Gestione preparazione e completamento prodotti</p>
+                        </div>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={handleRefresh}
+                            disabled={loading}
+                            className="h-12 w-12 rounded-2xl border-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 shadow-sm transition-all"
+                        >
+                            <RotateCcw className={cn("h-5 w-5", loading && "animate-spin")} />
+                        </Button>
+                    </div>
+
                     {/* Summary Stats for Produzione */}
                     <div className="grid grid-cols-3 gap-4">
                         <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
