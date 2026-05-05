@@ -19,28 +19,36 @@ export async function getCurrentUser() {
         const userCookie = cookieStore.get('PLATINUM_AUTH_SESSION');
         
         let session = null;
-
         if (userCookie?.value) {
             try {
                 session = JSON.parse(userCookie.value);
-            } catch (e) {}
+            } catch (e) {
+                console.error("[AUTH] Error parsing session cookie:", e);
+            }
         }
 
-        if (!session || !session.email) return null;
+        if (!session || !session.email) {
+            // Se non c'è la sessione Platinum, proviamo a vedere se c'è quella di Google (fallback)
+            const googleActive = cookieStore.get('PLATINUM_ACTIVE')?.value === 'true';
+            if (!googleActive) return null;
+            
+            // Se PLATINUM_ACTIVE è true ma non abbiamo i dati, forziamo il logout o il ricaricamento
+            return null;
+        }
         
-        const SUPER_ADMINS = [
-            'eventiprettylittle@gmail.com',
-            'lucavitale88@gmail.com',
-            'maria.vitale@prettylittle.it'
-        ];
+        const email = session.email.toLowerCase().trim();
+        const isSuperAdmin = SUPER_ADMIN_EMAILS.some(e => e.toLowerCase() === email);
         
-        const isSuperAdmin = SUPER_ADMINS.some(e => e.toLowerCase() === session.email.toLowerCase());
-        
-        return {
+        const user = {
             ...session,
+            email: email,
             role: isSuperAdmin ? 'SUPER_ADMIN' : (session.role || 'OPERATOR')
         };
+
+        console.log(`[AUTH] Current User identified: ${email} | Role: ${user.role}`);
+        return user;
     } catch (e) {
+        console.error("[AUTH] Critical error in getCurrentUser:", e);
         return null;
     }
 }
@@ -50,17 +58,21 @@ export async function loginWithCredentials(formData: FormData) {
     const password = formData.get('password') as string;
 
     try {
-        // Cerca l'utente nel database
-        const users: any[] = await prisma.$queryRawUnsafe(`SELECT id, email, name, role, password FROM "User" WHERE email = $1`, email);
+        // Cerca l'utente nel database (case-insensitive)
+        const users: any[] = await prisma.$queryRaw`SELECT id, email, name, role, password FROM "User" WHERE LOWER(email) = LOWER(${email})`;
         const user = users[0];
+
+        console.log(`[AUTH] Login attempt for: ${email} | Found in DB: ${!!user}`);
 
         if (!user) {
             return { success: false, error: "Utente non trovato" };
         }
 
-        // Verifica password (semplice per ora, in futuro usare bcrypt)
-        if (user.password && user.password !== password) {
-            return { success: false, error: "Password errata" };
+        // VERIFICA PASSWORD RIGOROSA
+        const dbPassword = user.password;
+        if (dbPassword !== password) {
+            console.warn(`[AUTH SECURITY] Password mismatch for ${email}. Access DENIED.`);
+            return { success: false, error: "Password errata. Se è il primo accesso, assicurati di aver creato l'account correttamente." };
         }
 
         // Crea sessione

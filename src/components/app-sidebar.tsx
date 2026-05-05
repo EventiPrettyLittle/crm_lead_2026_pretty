@@ -17,8 +17,9 @@ import { sidebarLinks } from "@/config/sidebar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { getSystemSettings } from "@/actions/settings-actions"
+import { getCurrentUser, logout } from "@/actions/auth"
 import { cn } from "@/lib/utils"
-import { User, LogOut, ChevronRight, LayoutGrid } from "lucide-react"
+import { User, LogOut, ChevronRight, LayoutGrid, ShieldCheck } from "lucide-react"
 
 export function AppSidebar() {
     const pathname = usePathname();
@@ -29,14 +30,29 @@ export function AppSidebar() {
     }, []);
 
     const [user, setUser] = useState<{name: string, email: string, role?: string} | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        import("@/actions/auth").then(m => m.getCurrentUser()).then(setUser);
+        getSystemSettings().then(setLogoSettings);
+        getCurrentUser()
+            .then(u => {
+                console.log(`[SIDEBAR] User loaded: ${u?.email} | Role: ${u?.role}`);
+                setUser(u);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("[SIDEBAR] Auth error:", err);
+                setLoading(false);
+            });
     }, []);
 
     // Filtriamo i link in base al ruolo
     const filteredLinks = sidebarLinks.filter(item => {
-        if (user?.role === 'PRODUZIONE') {
+        if (loading) return false;
+        if (!user) return false;
+        
+        const role = user.role?.toUpperCase();
+        if (role === 'PRODUZIONE') {
             return item.title === 'Deal' || item.title === 'Live Show';
         }
         return true;
