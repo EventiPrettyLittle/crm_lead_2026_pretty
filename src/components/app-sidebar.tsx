@@ -190,7 +190,7 @@ export function AppSidebar() {
 }
 
 function UserSection() {
-    const [user, setUser] = useState<{name: string, email: string} | null>(null);
+    const [user, setUser] = useState<{name: string, email: string, role?: string} | null>(null);
 
     useEffect(() => {
         import("@/actions/auth").then(m => m.getCurrentUser()).then(setUser);
