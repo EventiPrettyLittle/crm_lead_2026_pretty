@@ -726,6 +726,56 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     )}
                                 </div>
                             </Card>
+
+                            {/* Stock Monitor Section */}
+                            <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-6 space-y-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Sparkles className="h-4 w-4 text-indigo-400" />
+                                    <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">Monitor Stock</span>
+                                </div>
+                                <div className="space-y-6">
+                                    {[
+                                        { label: 'Barattoli', value: deal.favor1_colors, field: 'baseColor' },
+                                        { label: 'Stick', value: deal.favor1_stick, field: 'stickColor' },
+                                        { label: 'Profumi', value: deal.favor1_scents, field: 'scent' },
+                                        { label: 'Grafiche', value: deal.favor1_graphics, field: 'graphic' }
+                                    ].map((cat, idx) => {
+                                        const options = parseOptions(cat.value);
+                                        return (
+                                            <div key={idx} className="space-y-2">
+                                                <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+                                                    <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">{cat.label}</span>
+                                                    <span className="text-[8px] font-bold text-white/20 uppercase italic">Portata / Scelta</span>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    {options.length > 0 ? options.map((opt: any) => {
+                                                        const chosenCount = guests.filter((g: any) => g[cat.field] === opt.name).length;
+                                                        const totalAvailable = parseInt(opt.qty) || 0;
+                                                        const isOverLimit = totalAvailable > 0 && chosenCount > totalAvailable;
+                                                        return (
+                                                            <div key={opt.name} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-1.5 hover:bg-white/10 transition-colors">
+                                                                <span className="text-[10px] font-bold text-white/80">{opt.name}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[9px] font-black text-white/20">{totalAvailable}</span>
+                                                                    <div className="h-2 w-px bg-white/10" />
+                                                                    <span className={cn(
+                                                                        "text-[10px] font-black",
+                                                                        isOverLimit ? "text-rose-500" : (chosenCount > 0 ? "text-indigo-400" : "text-white/20")
+                                                                    )}>
+                                                                        {chosenCount}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }) : (
+                                                        <span className="text-[9px] text-white/10 italic">Nessuna opzione</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </Card>
                         </div>
 
                         {/* Configurator Table View */}
@@ -761,9 +811,20 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {guests.filter((g: any) => g.isPresent).map((guest: any) => (
-                                                <tr key={guest.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <tr 
+                                                    key={guest.id} 
+                                                    className={cn(
+                                                        "transition-all duration-300", 
+                                                        guest.isCompleted ? "bg-emerald-50 hover:bg-emerald-100/50" : "hover:bg-slate-50/50"
+                                                    )}
+                                                >
                                                     <td className="px-6 py-4">
-                                                        <span className="text-xs font-black text-slate-900 uppercase italic">{guest.name}</span>
+                                                        <span className={cn(
+                                                            "text-xs font-black uppercase italic",
+                                                            guest.isCompleted ? "text-emerald-700" : "text-slate-900"
+                                                        )}>
+                                                            {guest.name}
+                                                        </span>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className="text-[10px] font-bold text-slate-600">{guest.baseColor || "-"}</span>
