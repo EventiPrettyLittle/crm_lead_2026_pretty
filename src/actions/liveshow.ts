@@ -99,7 +99,8 @@ export async function getDealWithGuests(leadId: string) {
                         firstName: true,
                         lastName: true,
                         locationName: true,
-                        eventDate: true
+                        eventDate: true,
+                        referents: true
                     }
                 }
             }

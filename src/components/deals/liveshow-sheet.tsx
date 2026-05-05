@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import { 
-    addGuest, updateGuest, deleteGuest, togglePresence 
+    addGuest, updateGuest, deleteGuest, togglePresence, getGuests
 } from "@/actions/liveshow";
 import { cn } from "@/lib/utils";
 
@@ -113,6 +113,50 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
         if (res.success) {
             setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isCompleted: !current } : g));
             if (!current) toast.success("Prodotto pronto!");
+        }
+    };
+
+    // --- AUTO-IMPORT REFERENTI ---
+    useEffect(() => {
+        const importReferents = async () => {
+            if (guests.length === 0 && lead.referents) {
+                try {
+                    const refs = JSON.parse(lead.referents);
+                    if (refs && refs.length > 0) {
+                        setLoading(true);
+                        for (const ref of refs) {
+                            if (ref.name) {
+                                const res = await addGuest(deal.id, ref.name);
+                                if (res.success) {
+                                    // Aggiungiamo il tag basato sul ruolo
+                                    const guestId = res.data.id;
+                                    const tag = ref.role?.toUpperCase();
+                                    if (tag) {
+                                        await updateGuest(guestId, { tags: [tag] });
+                                    }
+                                }
+                            }
+                        }
+                        // Ricarichiamo i guest
+                        const updatedGuests = await getGuests(deal.id);
+                        setGuests(updatedGuests);
+                        toast.success("Referenti importati automaticamente dal Deal!");
+                        setLoading(false);
+                    }
+                } catch (e) {
+                    console.error("Error importing referents:", e);
+                }
+            }
+        };
+
+        importReferents();
+    }, [deal.id, lead.referents, guests.length]);
+
+    const handleToggleServed = async (guestId: string, current: boolean) => {
+        const res = await updateGuest(guestId, { isServed: !current });
+        if (res.success) {
+            setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isServed: !current } : g));
+            if (!current) toast.success("Ospite servito!");
         }
     };
 
@@ -221,6 +265,26 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     <p className="text-sm font-bold text-indigo-400">{deal.favor1_graphics || "Non impostato"}</p>
                                 </div>
                             </div>
+                            
+                            <Separator className="bg-white/10 my-6" />
+                            
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex flex-col">
+                                        <span className="text-[8px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Data Evento</span>
+                                        <p className="text-xs font-black uppercase text-indigo-300">{lead.eventDate ? new Date(lead.eventDate).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Da definire'}</p>
+                                    </div>
+                                    <div className="h-8 w-px bg-white/10" />
+                                    <div className="flex flex-col">
+                                        <span className="text-[8px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Location</span>
+                                        <p className="text-xs font-black uppercase text-indigo-300">{lead.locationName || 'Nessuna location'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col items-end">
+                                    <span className="text-[8px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Orario Arrivo</span>
+                                    <p className="text-xs font-black uppercase text-indigo-300">{deal.arrivalTime || '--:--'}</p>
+                                </div>
+                            </div>
                         </Card>
                     </div>
                 </TabsContent>
@@ -284,7 +348,13 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                             {filteredGuests.map((guest: any) => {
                                                 const choosesForList = guest.choosesFor ? JSON.parse(guest.choosesFor) : [];
                                                 return (
-                                                    <tr key={guest.id} className={cn("group hover:bg-slate-50/50 transition-colors", guest.isPresent ? "bg-white" : "opacity-60")}>
+                                                    <tr 
+                                                        key={guest.id} 
+                                                        className={cn(
+                                                            "group transition-all duration-300", 
+                                                            guest.isServed ? "bg-emerald-50/50" : (guest.isPresent ? "bg-white" : "opacity-60 hover:bg-slate-50/50")
+                                                        )}
+                                                    >
                                                         <td className="px-6 py-4">
                                                             <button 
                                                                 onClick={() => handleTogglePresence(guest.id, guest.isPresent)}
@@ -348,19 +418,32 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                             </div>
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm" 
-                                                                onClick={async () => {
-                                                                    if (confirm("Eliminare invitato?")) {
-                                                                        const res = await deleteGuest(guest.id, deal.id);
-                                                                        if (res.success) setGuests(guests.filter((g: any) => g.id !== guest.id));
-                                                                    }
-                                                                }}
-                                                                className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50"
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </Button>
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm" 
+                                                                    onClick={() => handleToggleServed(guest.id, guest.isServed)}
+                                                                    className={cn(
+                                                                        "h-8 w-8 p-0 rounded-lg transition-all",
+                                                                        guest.isServed ? "bg-emerald-500 text-white shadow-lg shadow-emerald-100" : "text-slate-300 hover:text-emerald-500 hover:bg-emerald-50"
+                                                                    )}
+                                                                >
+                                                                    <CheckCircle2 className="h-4 w-4" />
+                                                                </Button>
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm" 
+                                                                    onClick={async () => {
+                                                                        if (confirm("Eliminare invitato?")) {
+                                                                            const res = await deleteGuest(guest.id, deal.id);
+                                                                            if (res.success) setGuests(guests.filter((g: any) => g.id !== guest.id));
+                                                                        }
+                                                                    }}
+                                                                    className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50"
+                                                                >
+                                                                    <X className="h-4 w-4" />
+                                                                </Button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 );
