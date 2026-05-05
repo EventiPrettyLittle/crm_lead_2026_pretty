@@ -207,7 +207,8 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
         const reader = new FileReader();
         reader.onload = async (event) => {
             const text = event.target?.result as string;
-            const lines = text.split('\n');
+            // Split by any newline sequence (CRLF or LF)
+            const lines = text.split(/\r?\n/);
             const newGuests: any[] = [];
 
             // Saltiamo l'header
@@ -215,9 +216,13 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                 const line = lines[i].trim();
                 if (!line) continue;
                 
-                const [name, tag] = line.split(',');
+                // Split by comma e trim dei valori
+                const parts = line.split(',');
+                const name = parts[0]?.trim();
+                const tag = parts[1]?.trim();
+
                 if (name) {
-                    newGuests.push({ name: name.trim(), tag: tag?.trim() });
+                    newGuests.push({ name, tag });
                 }
             }
 
@@ -236,6 +241,8 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
             }
         };
         reader.readAsText(file);
+        // Reset input
+        e.target.value = '';
     };
 
     return (
@@ -561,6 +568,14 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                         </td>
                                                         <td className="px-6 py-4 text-right">
                                                             <div className="flex items-center justify-end gap-2">
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm" 
+                                                                    onClick={() => setEditingGuest(guest)}
+                                                                    className="h-8 w-8 p-0 rounded-lg text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
+                                                                >
+                                                                    <Settings className="h-4 w-4" />
+                                                                </Button>
                                                                 <Button 
                                                                     variant="ghost" 
                                                                     size="sm" 
