@@ -283,6 +283,36 @@ model Deal {
   notes             String?
   status            String   @default("IN_LAVORAZIONE") // IN_LAVORAZIONE, PRONTO, CONSEGNATO
   
+  isLiveShow        Boolean  @default(false)
+  guests            Guest[]
+  
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+model Guest {
+  id               String   @id @default(cuid())
+  dealId           String
+  deal             Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  
+  name             String
+  tags             String[] // GIFT, TESTIMONE, PADRE SPOSO, PADRE SPOSA, MAMMA SPOSO, MAMMA SPOSA, NONNI
+  isPresent        Boolean  @default(false)
+  isServed         Boolean  @default(false)
+  
+  // Selection fields (Columns B-F in Sheet)
+  baseColor        String? // BARATTOLO
+  stickColor       String? // STICK
+  scent            String? // PROFUMO
+  graphic          String? // GRAFICA
+  ammStatus        String? // AMM
+  
+  isCompleted      Boolean  @default(false) // For Production row green
+  
+  // Sceglie per / Scelto da
+  choosesFor       String? // JSON stringified array of guest names
+  chosenBy         String? // Name of the guest who chose for them
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

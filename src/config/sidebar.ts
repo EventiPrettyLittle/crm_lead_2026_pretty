@@ -49,6 +49,11 @@ export const sidebarLinks = [
         icon: Workflow,
     },
     {
+        title: "Live Show",
+        href: "/liveshow",
+        icon: Clock,
+    },
+    {
         title: "Incassi & Pagamenti",
         href: "/finance",
         icon: Euro,
