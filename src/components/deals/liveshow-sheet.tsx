@@ -408,7 +408,23 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         </div>
 
                         {/* List View */}
-                        <div className="lg:col-span-3">
+                        <div className="lg:col-span-3 space-y-6">
+                            {/* Summary Stats for Invitati */}
+                            <div className="grid grid-cols-3 gap-4">
+                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
+                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
+                                    <p className="text-3xl font-black text-slate-900">{guests.length}</p>
+                                </Card>
+                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
+                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
+                                    <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
+                                </Card>
+                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
+                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Gift</span>
+                                    <p className="text-3xl font-black text-indigo-600">{guests.filter((g: any) => g.tags?.includes("GIFT")).length}</p>
+                                </Card>
+                            </div>
+
                             <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full">
