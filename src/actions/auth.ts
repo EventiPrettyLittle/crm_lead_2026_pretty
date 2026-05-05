@@ -251,10 +251,12 @@ export async function forgotPassword(email: string) {
         });
 
         if (!user) {
+            console.log(`[AUTH] Richiesta reset per email non trovata: ${email}`);
             // Per sicurezza, non confermiamo se l'email esiste o meno
             return { success: true, message: "Se l'email è registrata, riceverai un link di reset." };
         }
 
+        console.log(`[AUTH] Generazione token per: ${user.email}`);
         const token = crypto.randomBytes(32).toString('hex');
         const expiry = new Date(Date.now() + 3600000); // 1 ora
 
