@@ -38,6 +38,8 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [newGuestName, setNewGuestName] = useState("");
     const [loading, setLoading] = useState(false);
+    const [configFilter, setConfigFilter] = useState<'ALL' | 'COMPLETED' | 'MISSING'>('ALL');
+    const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
     
     const lead = deal.lead || {};
     const leadName = `${lead.firstName || ''} ${lead.lastName || ''}`;
@@ -143,6 +145,23 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     };
 
     const handleToggleCompleted = async (guestId: string, current: boolean) => {
+        const guest = guests.find((g: any) => g.id === guestId);
+        
+        // Se stiamo cercando di segnare come completato
+        if (!current && guest) {
+            const isConfigComplete = !!(guest.baseColor && guest.stickColor && guest.scent && guest.graphic);
+            if (!isConfigComplete) {
+                toast.error(
+                    <div className="flex flex-col gap-1">
+                        <span className="font-black text-[10px] uppercase tracking-widest text-rose-600">Configurazione Incompleta</span>
+                        <p className="text-sm font-bold">Impossibile segnare come pronto.</p>
+                        <p className="text-[10px] font-black uppercase text-slate-400">Mancano dei parametri di scelta per {guest.name}.</p>
+                    </div>
+                );
+                return;
+            }
+        }
+
         const res = await updateGuest(guestId, { isCompleted: !current });
         if (res.success) {
             setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isCompleted: !current } : g));
@@ -191,7 +210,25 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     );
 
     const sortedConfigGuests = sortGuests(
-        guests.filter((g: any) => g.isPresent)
+        guests.filter((g: any) => {
+            const isPresent = g.isPresent;
+            if (!isPresent) return false;
+            
+            const isComplete = !!(g.baseColor && g.stickColor && g.scent && g.graphic);
+            if (configFilter === 'COMPLETED') return isComplete;
+            if (configFilter === 'MISSING') return !isComplete;
+            return true;
+        })
+    );
+
+    const sortedProductionGuests = sortGuests(
+        guests.filter((g: any) => {
+            if (!g.isPresent) return false;
+            const isComplete = !!(g.baseColor && g.stickColor && g.scent && g.graphic);
+            if (configFilter === 'COMPLETED') return isComplete;
+            if (configFilter === 'MISSING') return !isComplete;
+            return true;
+        })
     );
 
     const handleClearList = async () => {
@@ -736,32 +773,49 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                             </div>
                                         </div>
 
-                                        {filteredGuests.filter((g: any) => g.isPresent).length > 0 ? (
-                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
-                                                <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                                    <span className="text-[8px] font-black uppercase text-white/30 tracking-widest block mb-2">Invitato Selezionato</span>
-                                                    <p className="text-sm font-black uppercase italic text-indigo-400">{filteredGuests.filter((g: any) => g.isPresent)[0].name}</p>
+                                        {(() => {
+                                            const guest = guests.find((g: any) => g.id === (selectedGuestId || filteredGuests.filter((x: any) => x.isPresent)[0]?.id));
+                                            if (!guest || !guest.isPresent) return (
+                                                <div className="p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
+                                                    <UserMinus className="h-8 w-8 text-white/10 mx-auto mb-2" />
+                                                    <p className="text-[10px] font-black uppercase text-white/20">Seleziona un invitato presente</p>
                                                 </div>
+                                            );
 
-                                                <div className="space-y-3">
-                                                    {[
-                                                        { label: 'Barattolo (Base)', field: 'baseColor', options: deal.favor1_colors },
-                                                        { label: 'Stick', field: 'stickColor', options: deal.favor1_stick },
-                                                        { label: 'Profumo', field: 'scent', options: deal.favor1_scents },
-                                                        { label: 'Grafica', field: 'graphic', options: deal.favor1_graphics }
-                                                    ].map((cfg) => (
-                                                        <div key={cfg.field} className="space-y-1.5">
-                                                            <Label className="text-[8px] font-black uppercase text-white/40 tracking-widest">{cfg.label}</Label>
-                                                            <select 
-                                                                className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500"
-                                                                onChange={(e) => {
-                                                                    const gid = filteredGuests.filter((g: any) => g.isPresent)[0].id;
-                                                                    handleUpdateGuestSelection(gid, cfg.field, e.target.value);
-                                                                }}
-                                                                value={filteredGuests.filter((g: any) => g.isPresent)[0][cfg.field] || ""}
-                                                            >
-                                                                <option value="">Scegli...</option>
-                                                                {cfg.options?.split(',').map((opt: string) => (
+                                            return (
+                                                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                                    <div className="p-4 bg-indigo-600 rounded-2xl border border-indigo-400 shadow-lg shadow-indigo-900/20">
+                                                        <span className="text-[8px] font-black uppercase text-white/50 tracking-widest block mb-2">Invitato Selezionato</span>
+                                                        <p className="text-sm font-black uppercase italic text-white">{guest.name}</p>
+                                                    </div>
+
+                                                    <div className="space-y-3">
+                                                        {[
+                                                            { label: 'Barattolo (Base)', field: 'baseColor', options: deal.favor1_colors },
+                                                            { label: 'Stick', field: 'stickColor', options: deal.favor1_stick },
+                                                            { label: 'Profumo', field: 'scent', options: deal.favor1_scents },
+                                                            { label: 'Grafica', field: 'graphic', options: deal.favor1_graphics }
+                                                        ].map((cfg) => (
+                                                            <div key={cfg.field} className="space-y-1.5">
+                                                                <Label className="text-[8px] font-black uppercase text-white/40 tracking-widest">{cfg.label}</Label>
+                                                                <select 
+                                                                    className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500 text-white"
+                                                                    onChange={(e) => handleUpdateGuestSelection(guest.id, cfg.field, e.target.value)}
+                                                                    value={guest[cfg.field] || ""}
+                                                                >
+                                                                    <option value="" className="text-slate-900">Scegli...</option>
+                                                                    {cfg.options?.split(',').map((opt: string) => {
+                                                                        const optName = opt.split(':')[0].trim();
+                                                                        return <option key={optName} value={optName} className="text-slate-900">{optName}</option>
+                                                                    })}
+                                                                </select>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
                                                                     <option key={opt} value={opt.split(':')[0]}>{opt.split(':')[0]}</option>
                                                                 ))}
                                                             </select>
@@ -860,8 +914,30 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                         <RotateCcw className={cn("h-5 w-5", loading && "animate-spin")} />
                                     </Button>
 
-                                    <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-4 flex flex-col justify-center gap-2 min-w-[200px]">
-                                        <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Ordina per</span>
+                                    <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-4 flex flex-col justify-center gap-2 min-w-[320px]">
+                                        <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Filtra Lista Invitati</span>
+                                        <div className="flex bg-white/5 rounded-xl p-1">
+                                            {[
+                                                { id: 'ALL', label: 'Tutti' },
+                                                { id: 'COMPLETED', label: 'Scelti' },
+                                                { id: 'MISSING', label: 'Da Scegliere' }
+                                            ].map((f) => (
+                                                <button 
+                                                    key={f.id}
+                                                    onClick={() => setConfigFilter(f.id as any)}
+                                                    className={cn(
+                                                        "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
+                                                        configFilter === f.id ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
+                                                    )}
+                                                >
+                                                    {f.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </Card>
+
+                                    <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-4 flex flex-col justify-center gap-2 min-w-[150px]">
+                                        <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Ordina</span>
                                         <div className="flex bg-white/5 rounded-xl p-1">
                                             <button 
                                                 onClick={() => setSortBy('name')}
@@ -879,7 +955,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                     sortBy === 'missing' ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
                                                 )}
                                             >
-                                                Da Fare
+                                                !
                                             </button>
                                         </div>
                                     </Card>
@@ -909,12 +985,25 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                     )}
                                                 >
                                                     <td className="px-6 py-4">
-                                                        <span className={cn(
-                                                            "text-xs font-black uppercase italic",
-                                                            guest.isCompleted ? "text-emerald-700" : "text-slate-900"
-                                                        )}>
-                                                            {guest.name}
-                                                        </span>
+                                                        <div className="flex items-center gap-3">
+                                                            <button 
+                                                                onClick={() => setSelectedGuestId(guest.id)}
+                                                                className={cn(
+                                                                    "h-6 w-6 rounded-lg flex items-center justify-center transition-all",
+                                                                    selectedGuestId === guest.id 
+                                                                        ? "bg-indigo-600 text-white shadow-lg" 
+                                                                        : "bg-slate-50 text-slate-300 hover:bg-indigo-100 hover:text-indigo-600"
+                                                                )}
+                                                            >
+                                                                <Plus className="h-3.5 w-3.5" />
+                                                            </button>
+                                                            <span className={cn(
+                                                                "text-xs font-black uppercase italic transition-all",
+                                                                guest.isCompleted ? "text-emerald-700" : (selectedGuestId === guest.id ? "text-indigo-600 underline decoration-2" : "text-slate-900")
+                                                            )}>
+                                                                {guest.name}
+                                                            </span>
+                                                        </div>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className="text-[10px] font-bold text-slate-600">{guest.baseColor || "-"}</span>
@@ -1011,7 +1100,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-50">
-                                    {guests.filter((g: any) => g.isPresent).map((guest: any) => (
+                                    {sortedProductionGuests.map((guest: any) => (
                                         <tr 
                                             key={guest.id} 
                                             className={cn(
@@ -1033,14 +1122,31 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                 </button>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex flex-col">
-                                                    <span className={cn(
-                                                        "text-sm font-black uppercase italic transition-all",
-                                                        guest.isCompleted ? "text-emerald-700" : "text-slate-900"
-                                                    )}>
-                                                        {guest.name}
-                                                    </span>
-                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">AMM: {guest.ammStatus === 'A' ? 'SI' : 'NO'}</span>
+                                                <div className="flex items-center gap-3">
+                                                    <button 
+                                                        onClick={() => {
+                                                            setSelectedGuestId(guest.id);
+                                                            // Forziamo il passaggio al tab configuratore se necessario? 
+                                                            // In realtà è utile restare qui ma sapere chi è agganciato
+                                                        }}
+                                                        className={cn(
+                                                            "h-6 w-6 rounded-lg flex items-center justify-center transition-all",
+                                                            selectedGuestId === guest.id 
+                                                                ? "bg-indigo-600 text-white shadow-lg" 
+                                                                : "bg-slate-50 text-slate-300 hover:bg-indigo-100 hover:text-indigo-600"
+                                                        )}
+                                                    >
+                                                        <Plus className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <div className="flex flex-col">
+                                                        <span className={cn(
+                                                            "text-sm font-black uppercase italic transition-all",
+                                                            guest.isCompleted ? "text-emerald-700" : (selectedGuestId === guest.id ? "text-indigo-600 underline decoration-2" : "text-slate-900")
+                                                        )}>
+                                                            {guest.name}
+                                                        </span>
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">AMM: {guest.ammStatus === 'A' ? 'SI' : 'NO'}</span>
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
