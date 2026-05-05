@@ -39,6 +39,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const [newGuestName, setNewGuestName] = useState("");
     const [loading, setLoading] = useState(false);
     const [configFilter, setConfigFilter] = useState<'ALL' | 'COMPLETED' | 'MISSING'>('ALL');
+    const [prodFilter, setProdFilter] = useState<'ALL' | 'TODO' | 'DONE'>('ALL');
     const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
     const [alertStockInfo, setAlertStockInfo] = useState<{name: string, remaining: number, status: string} | null>(null);
     
@@ -217,9 +218,12 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const sortedProductionGuests = sortGuests(
         guests.filter((g: any) => {
             if (!g.isPresent) return false;
-            const isComplete = !!(g.baseColor && g.stickColor && g.scent && g.graphic);
-            if (configFilter === 'COMPLETED') return isComplete;
-            if (configFilter === 'MISSING') return !isComplete;
+            
+            const isConfigComplete = !!(g.baseColor && g.stickColor && g.scent && g.graphic);
+            const isReady = g.isCompleted;
+
+            if (prodFilter === 'TODO') return isConfigComplete && !isReady;
+            if (prodFilter === 'DONE') return isReady;
             return true;
         })
     );
@@ -1046,18 +1050,42 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                     </div>
 
                     {/* Summary Stats for Produzione */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
-                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
-                            <p className="text-3xl font-black text-slate-900">{guests.filter((g: any) => g.isPresent).length}</p>
-                        </Card>
-                        <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-amber-500">
-                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Configurati</span>
-                            <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && (g.baseColor || g.scent)).length}</p>
-                        </Card>
-                        <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
-                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Pronti</span>
-                            <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isCompleted).length}</p>
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="grid grid-cols-3 gap-4 flex-1">
+                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
+                                <p className="text-3xl font-black text-slate-900">{guests.filter((g: any) => g.isPresent).length}</p>
+                            </Card>
+                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-amber-500">
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Fare</span>
+                                <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && (g.baseColor && g.stickColor && g.scent && g.graphic) && !g.isCompleted).length}</p>
+                            </Card>
+                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Pronti</span>
+                                <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isCompleted).length}</p>
+                            </Card>
+                        </div>
+
+                        <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-4 flex flex-col justify-center gap-2 min-w-[320px]">
+                            <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Stato Produzione</span>
+                            <div className="flex bg-white/5 rounded-xl p-1">
+                                {[
+                                    { id: 'ALL', label: 'Tutti' },
+                                    { id: 'TODO', label: 'Da Fare' },
+                                    { id: 'DONE', label: 'Fatti' }
+                                ].map((f) => (
+                                    <button 
+                                        key={f.id}
+                                        onClick={() => setProdFilter(f.id as any)}
+                                        className={cn(
+                                            "flex-1 h-8 rounded-lg text-[9px] font-black uppercase transition-all",
+                                            prodFilter === f.id ? "bg-indigo-600 text-white shadow-lg" : "text-white/40 hover:text-white"
+                                        )}
+                                    >
+                                        {f.label}
+                                    </button>
+                                ))}
+                            </div>
                         </Card>
                     </div>
 
