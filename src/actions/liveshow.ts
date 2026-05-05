@@ -29,7 +29,8 @@ export async function addGuest(dealId: string, name: string) {
             data: {
                 dealId,
                 name: name.toUpperCase(),
-                tags: []
+                tags: [],
+                isPresent: true
             }
         });
         revalidatePath(`/deals/${dealId}`);
@@ -141,7 +142,8 @@ export async function bulkAddGuests(dealId: string, guestsData: { name: string, 
                 data: {
                     dealId,
                     name: data.name.toUpperCase(),
-                    tags: data.tag ? [data.tag.toUpperCase()] : []
+                    tags: data.tag ? [data.tag.toUpperCase()] : [],
+                    isPresent: true
                 }
             });
             results.push(guest);

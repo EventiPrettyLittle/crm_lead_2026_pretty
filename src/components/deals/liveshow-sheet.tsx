@@ -298,23 +298,37 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     <h3 className="text-xl font-black uppercase italic tracking-tight text-white">Opzioni Disponibili</h3>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                <div className="space-y-1">
-                                    <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Barattolo</span>
-                                    <p className="text-sm font-bold text-indigo-400">{deal.favor1_colors || "Non impostato"}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Stick</span>
-                                    <p className="text-sm font-bold text-indigo-400">{deal.favor1_stick || "Non impostato"}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Profumo</span>
-                                    <p className="text-sm font-bold text-indigo-400">{deal.favor1_scents || "Non impostato"}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Grafica</span>
-                                    <p className="text-sm font-bold text-indigo-400">{deal.favor1_graphics || "Non impostato"}</p>
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                                {[
+                                    { label: 'Barattolo', value: deal.favor1_colors },
+                                    { label: 'Stick', value: deal.favor1_stick },
+                                    { label: 'Profumo', value: deal.favor1_scents },
+                                    { label: 'Grafica', value: deal.favor1_graphics }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="space-y-3">
+                                        <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                                            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">{item.label}</span>
+                                            <span className="text-[8px] font-bold text-indigo-400/60 uppercase">Opzioni</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {item.value ? item.value.split(',').map((opt: string, i: number) => {
+                                                const [name, qty] = opt.split(':');
+                                                return (
+                                                    <div key={i} className="flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1.5 gap-2 group hover:bg-white/10 transition-all">
+                                                        <span className="text-[11px] font-bold text-white tracking-tight">{name.trim()}</span>
+                                                        {qty && (
+                                                            <div className="bg-indigo-500 text-white text-[9px] font-black h-4 px-1.5 rounded-full flex items-center justify-center">
+                                                                {qty.trim()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            }) : (
+                                                <span className="text-[10px] font-bold text-white/20 italic">Non impostato</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                             
                             <Separator className="bg-white/10 my-6" />
@@ -415,13 +429,13 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
                                     <p className="text-3xl font-black text-slate-900">{guests.length}</p>
                                 </Card>
-                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
-                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
-                                    <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
-                                </Card>
                                 <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
                                     <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Gift</span>
                                     <p className="text-3xl font-black text-indigo-600">{guests.filter((g: any) => g.tags?.includes("GIFT")).length}</p>
+                                </Card>
+                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
+                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Assenti</span>
+                                    <p className="text-3xl font-black text-rose-600">{guests.filter((g: any) => !g.isPresent).length}</p>
                                 </Card>
                             </div>
 
@@ -445,7 +459,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                         key={guest.id} 
                                                         className={cn(
                                                             "group transition-all duration-300", 
-                                                            guest.isServed ? "bg-emerald-50/50" : (guest.isPresent ? "bg-white" : "opacity-60 hover:bg-slate-50/50")
+                                                            guest.isServed ? "bg-emerald-50/50" : (guest.isPresent ? "bg-white" : "opacity-80 bg-rose-50/20")
                                                         )}
                                                     >
                                                         <td className="px-6 py-4">
@@ -455,7 +469,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                                     "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
                                                                     guest.isPresent 
                                                                         ? "bg-emerald-500 text-white shadow-lg shadow-emerald-100" 
-                                                                        : "bg-slate-100 text-slate-300 hover:bg-slate-200"
+                                                                        : "bg-rose-500 text-white shadow-lg shadow-rose-100"
                                                                 )}
                                                             >
                                                                 {guest.isPresent ? <UserCheck className="h-5 w-5" /> : <UserMinus className="h-5 w-5" />}
@@ -665,7 +679,23 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         </div>
 
                         {/* Configurator Table View */}
-                        <div className="lg:col-span-3">
+                        <div className="lg:col-span-3 space-y-6">
+                            {/* Summary Stats for Configuratore */}
+                            <div className="grid grid-cols-3 gap-4">
+                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
+                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
+                                    <p className="text-3xl font-black text-slate-900">{guests.length}</p>
+                                </Card>
+                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
+                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
+                                    <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
+                                </Card>
+                                <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
+                                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Mancanti</span>
+                                    <p className="text-3xl font-black text-rose-600">{guests.length - guests.filter((g: any) => g.isPresent).length}</p>
+                                </Card>
+                            </div>
+
                             <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full">
@@ -698,12 +728,17 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                         <span className="text-[10px] font-bold text-slate-600">{guest.graphic || "-"}</span>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <Input 
-                                                            value={guest.ammStatus || ""} 
-                                                            onChange={(e) => handleUpdateGuestSelection(guest.id, 'ammStatus', e.target.value)}
-                                                            className="h-8 w-20 bg-slate-50 border-none text-[10px] font-black text-center"
-                                                            placeholder="..."
-                                                        />
+                                                        <button 
+                                                            onClick={() => handleUpdateGuestSelection(guest.id, 'ammStatus', guest.ammStatus === 'A' ? '' : 'A')}
+                                                            className={cn(
+                                                                "h-8 w-8 rounded-lg flex items-center justify-center transition-all border-2",
+                                                                guest.ammStatus === 'A' 
+                                                                    ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-100" 
+                                                                    : "bg-white border-slate-200 text-slate-200 hover:border-slate-400 hover:text-slate-500"
+                                                            )}
+                                                        >
+                                                            <Check className="h-4 w-4" />
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -723,13 +758,36 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                 </TabsContent>
 
                 {/* --- PRODUZIONE --- */}
-                <TabsContent value="produzione" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <TabsContent value="produzione" className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+                    {/* Summary Stats for Produzione */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
+                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
+                            <p className="text-3xl font-black text-slate-900">{guests.filter((g: any) => g.isPresent).length}</p>
+                        </Card>
+                        <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-amber-500">
+                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Configurati</span>
+                            <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && (g.baseColor || g.scent)).length}</p>
+                        </Card>
+                        <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
+                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Pronti</span>
+                            <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isCompleted).length}</p>
+                        </Card>
+                    </div>
+
+                    {guests.filter((g: any) => g.isPresent).length === guests.filter((g: any) => g.isCompleted).length && guests.filter((g: any) => g.isPresent).length > 0 && (
+                        <div className="bg-emerald-600 text-white p-4 rounded-3xl flex items-center justify-center gap-3 animate-in zoom-in duration-500 shadow-xl shadow-emerald-100">
+                            <CheckCircle2 className="h-6 w-6" />
+                            <span className="font-black uppercase tracking-[0.2em] text-[10px]">Produzione Completata! Ottimo lavoro.</span>
+                        </div>
+                    )}
+
                     <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
                                     <tr className="bg-slate-50/50 border-b border-slate-100">
-                                        <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest">PRONTO</th>
+                                        <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest w-20">PRONTO</th>
                                         <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest">INVITATO</th>
                                         <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest">CONFIGURAZIONE SCELTA</th>
                                         <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest">TAG</th>
@@ -748,29 +806,32 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                 <button 
                                                     onClick={() => handleToggleCompleted(guest.id, guest.isCompleted)}
                                                     className={cn(
-                                                        "h-8 w-8 rounded-lg flex items-center justify-center transition-all border-2",
+                                                        "h-10 w-10 rounded-xl flex items-center justify-center transition-all border-2",
                                                         guest.isCompleted 
                                                             ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-100" 
                                                             : "bg-white border-slate-200 text-slate-200 hover:border-emerald-200 hover:text-emerald-500"
                                                     )}
                                                 >
-                                                    <Check className="h-4 w-4" />
+                                                    <Check className="h-5 w-5" />
                                                 </button>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={cn(
-                                                    "text-sm font-black uppercase italic transition-all",
-                                                    guest.isCompleted ? "text-emerald-700" : "text-slate-900"
-                                                )}>
-                                                    {guest.name}
-                                                </span>
+                                                <div className="flex flex-col">
+                                                    <span className={cn(
+                                                        "text-sm font-black uppercase italic transition-all",
+                                                        guest.isCompleted ? "text-emerald-700" : "text-slate-900"
+                                                    )}>
+                                                        {guest.name}
+                                                    </span>
+                                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">AMM: {guest.ammStatus === 'A' ? 'SI' : 'NO'}</span>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-wrap gap-2">
-                                                    {guest.baseColor && <Badge variant="outline" className="text-[8px] font-black border-slate-200 text-slate-400 uppercase">{guest.baseColor}</Badge>}
-                                                    {guest.stickColor && <Badge variant="outline" className="text-[8px] font-black border-slate-200 text-slate-400 uppercase">{guest.stickColor}</Badge>}
-                                                    {guest.scent && <Badge variant="outline" className="text-[8px] font-black border-slate-200 text-slate-400 uppercase">{guest.scent}</Badge>}
-                                                    {guest.graphic && <Badge variant="outline" className="text-[8px] font-black border-slate-200 text-slate-400 uppercase">{guest.graphic}</Badge>}
+                                                    {guest.baseColor && <Badge variant="outline" className="text-[8px] font-black border-slate-200 text-slate-500 uppercase bg-slate-50">{guest.baseColor}</Badge>}
+                                                    {guest.stickColor && <Badge variant="outline" className="text-[8px] font-black border-slate-200 text-slate-500 uppercase bg-slate-50">{guest.stickColor}</Badge>}
+                                                    {guest.scent && <Badge variant="outline" className="text-[8px] font-black border-indigo-100 text-indigo-600 uppercase bg-indigo-50">{guest.scent}</Badge>}
+                                                    {guest.graphic && <Badge variant="outline" className="text-[8px] font-black border-slate-200 text-slate-500 uppercase bg-slate-50 italic">{guest.graphic}</Badge>}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -847,6 +908,88 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                 </button>
                                             );
                                         })}
+                                    </div>
+                                </div>
+
+                                <Separator className="bg-slate-100" />
+
+                                {/* Product Config for Single Guest */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Barattolo</Label>
+                                        <Select 
+                                            value={editingGuest.baseColor || ""} 
+                                            onValueChange={(val) => {
+                                                handleUpdateGuestSelection(editingGuest.id, 'baseColor', val);
+                                                setEditingGuest({...editingGuest, baseColor: val});
+                                            }}
+                                        >
+                                            <SelectTrigger className="h-10 rounded-xl bg-slate-50 border-none font-bold text-xs">
+                                                <SelectValue placeholder="Seleziona..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-2xl shadow-2xl border-slate-100">
+                                                {parseOptions(deal.favor1_colors).map(opt => (
+                                                    <SelectItem key={opt.name} value={opt.name} className="font-bold">{opt.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Stick</Label>
+                                        <Select 
+                                            value={editingGuest.stickColor || ""} 
+                                            onValueChange={(val) => {
+                                                handleUpdateGuestSelection(editingGuest.id, 'stickColor', val);
+                                                setEditingGuest({...editingGuest, stickColor: val});
+                                            }}
+                                        >
+                                            <SelectTrigger className="h-10 rounded-xl bg-slate-50 border-none font-bold text-xs">
+                                                <SelectValue placeholder="Seleziona..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-2xl shadow-2xl border-slate-100">
+                                                {parseOptions(deal.favor1_stick).map(opt => (
+                                                    <SelectItem key={opt.name} value={opt.name} className="font-bold">{opt.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Profumo</Label>
+                                        <Select 
+                                            value={editingGuest.scent || ""} 
+                                            onValueChange={(val) => {
+                                                handleUpdateGuestSelection(editingGuest.id, 'scent', val);
+                                                setEditingGuest({...editingGuest, scent: val});
+                                            }}
+                                        >
+                                            <SelectTrigger className="h-10 rounded-xl bg-slate-50 border-none font-bold text-xs">
+                                                <SelectValue placeholder="Seleziona..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-2xl shadow-2xl border-slate-100">
+                                                {parseOptions(deal.favor1_scents).map(opt => (
+                                                    <SelectItem key={opt.name} value={opt.name} className="font-bold">{opt.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Grafica</Label>
+                                        <Select 
+                                            value={editingGuest.graphic || ""} 
+                                            onValueChange={(val) => {
+                                                handleUpdateGuestSelection(editingGuest.id, 'graphic', val);
+                                                setEditingGuest({...editingGuest, graphic: val});
+                                            }}
+                                        >
+                                            <SelectTrigger className="h-10 rounded-xl bg-slate-50 border-none font-bold text-xs">
+                                                <SelectValue placeholder="Seleziona..." />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-2xl shadow-2xl border-slate-100">
+                                                {parseOptions(deal.favor1_graphics).map(opt => (
+                                                    <SelectItem key={opt.name} value={opt.name} className="font-bold">{opt.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
 
