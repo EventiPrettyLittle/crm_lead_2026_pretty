@@ -24,7 +24,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { 
-    addGuest, updateGuest, deleteGuest, togglePresence, getGuests, bulkAddGuests
+    addGuest, updateGuest, deleteGuest, togglePresence, getGuests, bulkAddGuests, clearGuests
 } from "@/actions/liveshow";
 import { cn } from "@/lib/utils";
 
@@ -123,6 +123,26 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
         }
     };
 
+    const parseOptions = (str: string) => {
+        if (!str) return [];
+        return str.split(',').map(opt => {
+            const [name, qty] = opt.split(':');
+            return { name: name.trim(), qty: qty?.trim() };
+        });
+    };
+
+    const handleClearList = async () => {
+        if (confirm("Sei sicuro di voler cancellare TUTTA la lista? Questa operazione non è reversibile.")) {
+            setLoading(true);
+            const res = await clearGuests(deal.id);
+            setLoading(false);
+            if (res.success) {
+                setGuests([]);
+                toast.success("Lista svuotata!");
+            }
+        }
+    };
+
     // --- AUTO-IMPORT REFERENTI ---
     useEffect(() => {
         const importReferents = async () => {
@@ -138,9 +158,9 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     // Aggiungiamo il tag basato sul ruolo
                                     const guestId = res.data.id;
                                     const tag = ref.role?.toUpperCase();
-                                    if (tag) {
-                                        await updateGuest(guestId, { tags: [tag] });
-                                    }
+                                    const updates: any = { isPresent: true };
+                                    if (tag) updates.tags = [tag];
+                                    await updateGuest(guestId, updates);
                                 }
                             }
                         }
@@ -305,33 +325,32 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     <h3 className="text-xl font-black uppercase italic tracking-tight text-white">Opzioni Disponibili</h3>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                                 {[
-                                    { label: 'Barattolo', value: deal.favor1_colors },
-                                    { label: 'Stick', value: deal.favor1_stick },
-                                    { label: 'Profumo', value: deal.favor1_scents },
-                                    { label: 'Grafica', value: deal.favor1_graphics }
+                                    { label: 'Barattolo', value: deal.favor1_colors, icon: Package },
+                                    { label: 'Stick', value: deal.favor1_stick, icon: ListChecks },
+                                    { label: 'Profumo', value: deal.favor1_scents, icon: Settings },
+                                    { label: 'Grafica', value: deal.favor1_graphics, icon: TagIcon }
                                 ].map((item, idx) => (
-                                    <div key={idx} className="space-y-3">
-                                        <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                                            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">{item.label}</span>
-                                            <span className="text-[8px] font-bold text-indigo-400/60 uppercase">Opzioni</span>
+                                    <div key={idx} className="space-y-4">
+                                        <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+                                            <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                                <item.icon className="h-4 w-4" />
+                                            </div>
+                                            <span className="text-[11px] font-black text-white/60 uppercase tracking-[0.2em]">{item.label}</span>
                                         </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {item.value ? item.value.split(',').map((opt: string, i: number) => {
-                                                const [name, qty] = opt.split(':');
-                                                return (
-                                                    <div key={i} className="flex items-center bg-white/5 border border-white/10 rounded-full px-3 py-1.5 gap-2 group hover:bg-white/10 transition-all">
-                                                        <span className="text-[11px] font-bold text-white tracking-tight">{name.trim()}</span>
-                                                        {qty && (
-                                                            <div className="bg-indigo-500 text-white text-[9px] font-black h-4 px-1.5 rounded-full flex items-center justify-center">
-                                                                {qty.trim()}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            }) : (
-                                                <span className="text-[10px] font-bold text-white/20 italic">Non impostato</span>
+                                        <div className="flex flex-wrap gap-3">
+                                            {parseOptions(item.value).length > 0 ? parseOptions(item.value).map((opt: any, i: number) => (
+                                                <div key={i} className="flex items-center bg-white/10 border border-white/20 rounded-2xl px-4 py-2.5 gap-3 group hover:bg-indigo-600 transition-all cursor-default shadow-lg shadow-black/20">
+                                                    <span className="text-sm font-black text-white tracking-tight uppercase italic">{opt.name}</span>
+                                                    {opt.qty && (
+                                                        <div className="bg-indigo-500 text-white text-[10px] font-black h-5 px-2 rounded-lg flex items-center justify-center min-w-[24px]">
+                                                            {opt.qty}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )) : (
+                                                <span className="text-[10px] font-bold text-white/20 italic uppercase tracking-widest">Opzioni non definite</span>
                                             )}
                                         </div>
                                     </div>
@@ -423,9 +442,18 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                     placeholder="Filtra per nome..." 
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="h-12 rounded-xl bg-slate-50 border-none font-bold text-sm focus:bg-white transition-all shadow-inner"
+                                    className="rounded-xl bg-slate-50 border-none font-bold text-xs"
                                 />
                             </Card>
+
+                            <Button 
+                                variant="ghost" 
+                                onClick={handleClearList}
+                                disabled={loading || guests.length === 0}
+                                className="w-full h-12 rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-100 font-black text-[10px] uppercase tracking-widest transition-all"
+                            >
+                                <Trash2 className="h-4 w-4 mr-2" /> Svuota Lista
+                            </Button>
                         </div>
 
                         {/* List View */}
