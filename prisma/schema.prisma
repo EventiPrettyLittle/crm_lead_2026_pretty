@@ -17,6 +17,8 @@ model User {
   name         String?
   role         String        @default("OPERATOR") // ADMIN, OPERATOR
   password     String?
+  resetToken   String?       @unique
+  resetExpiry  DateTime?
   phone        String?
   leads        Lead[]
   appointments Appointment[]

@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { LogIn, Sparkles, ShieldCheck, Zap, Globe, Loader2 } from "lucide-react"
+import Link from "next/link"
 
 export default function LoginPage() {
     const [mode, setMode] = useState<'selection' | 'credentials'>('selection');
@@ -137,7 +138,12 @@ export default function LoginPage() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Password</Label>
+                                        <div className="flex justify-between items-center">
+                                            <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Password</Label>
+                                            <Link href="/forgot-password" title="Recupera la tua password" className="text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-600 transition-colors">
+                                                Password dimenticata?
+                                            </Link>
+                                        </div>
                                         <Input 
                                             name="password" 
                                             type="password" 

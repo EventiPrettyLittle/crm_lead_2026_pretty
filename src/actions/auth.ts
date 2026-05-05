@@ -2,6 +2,8 @@
 
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
+import crypto from 'crypto'
+import { sendResetPasswordEmail } from '@/lib/mail'
 
 import prisma from "@/lib/prisma"
 import { serializePrisma } from "@/lib/serialize"
@@ -239,5 +241,65 @@ export async function createUser(data: { email: string, name: string, role: stri
     } catch (e: any) {
         console.error("[AUTH] Create/Update User Error:", e);
         return { success: false, error: "Errore salvataggio utente: " + e.message };
+    }
+}
+
+export async function forgotPassword(email: string) {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase().trim() }
+        });
+
+        if (!user) {
+            // Per sicurezza, non confermiamo se l'email esiste o meno
+            return { success: true, message: "Se l'email è registrata, riceverai un link di reset." };
+        }
+
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiry = new Date(Date.now() + 3600000); // 1 ora
+
+        await prisma.user.update({
+            where: { email: user.email },
+            data: {
+                resetToken: token,
+                resetExpiry: expiry
+            }
+        });
+
+        await sendResetPasswordEmail(user.email, token);
+
+        return { success: true, message: "Email di recupero inviata correttamente." };
+    } catch (e) {
+        console.error("[AUTH] Forgot Password Error:", e);
+        return { success: false, error: "Errore durante l'invio dell'email di recupero." };
+    }
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+    try {
+        const user = await prisma.user.findFirst({
+            where: {
+                resetToken: token,
+                resetExpiry: { gt: new Date() }
+            }
+        });
+
+        if (!user) {
+            return { success: false, error: "Token non valido o scaduto." };
+        }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: newPassword,
+                resetToken: null,
+                resetExpiry: null
+            }
+        });
+
+        return { success: true };
+    } catch (e) {
+        console.error("[AUTH] Reset Password Error:", e);
+        return { success: false, error: "Errore durante il reset della password." };
     }
 }

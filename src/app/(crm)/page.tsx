@@ -7,6 +7,7 @@ import { getCompanySettings } from "@/actions/settings"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
+import { redirect } from "next/navigation"
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
