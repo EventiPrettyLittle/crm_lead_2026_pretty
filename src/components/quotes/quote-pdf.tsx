@@ -204,7 +204,7 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
     const vatNumber = settings.vatNumber || "10477641210";
     const phone = settings.phone || "+39";
     const email = settings.email || "eventi@prettylittle.it";
-    const referente = quote.createdBy || settings.referente || "Luca Vitale";
+    const referente = quote.createdBy || settings.referente || "Referente";
 
     return (
         <Document>

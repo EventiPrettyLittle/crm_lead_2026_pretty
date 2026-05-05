@@ -9,12 +9,18 @@ import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 
 export default async function DashboardPage() {
-  const stats = await getDashboardStats();
   const user = await getCurrentUser();
+  
+  // Reindirizzamento automatico per il ruolo PRODUZIONE
+  if (user?.role === 'PRODUZIONE') {
+    redirect('/liveshow');
+  }
+
+  const stats = await getDashboardStats();
   const settings = await getCompanySettings();
   
-  // Usiamo il nome del referente impostato nelle impostazioni, o il nome utente, o fallback
-  const displayName = settings?.referente || user?.name || user?.email?.split('@')[0] || 'Utente';
+  // Usiamo il nome dell'utente dalla sessione, o fallback
+  const displayName = user?.name || user?.email?.split('@')[0] || settings?.referente || 'Utente';
   const firstName = displayName.split(' ')[0];
 
   const progressPercentage = stats.todayTasks > 0 

@@ -4,9 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
+import { getCurrentUser } from "@/actions/auth";
+
 export default async function LiveShowPage() {
     const allDeals = await getDeals();
+    const user = await getCurrentUser();
     
+    // Nome per il saluto
+    const displayName = user?.name || user?.email?.split('@')[0] || 'Utente';
+    const firstName = displayName.split(' ')[0];
+
     // Filtriamo solo i deal che hanno deliveryType === 'LIVE SHOW' o isLiveShow === true
     const liveShowDeals = allDeals.filter((d: any) => {
         const dealData = d.deal || {};
@@ -22,10 +29,10 @@ export default async function LiveShowPage() {
                         <span className="text-[10px] font-black uppercase tracking-widest">Operativo Eventi</span>
                     </div>
                     <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
-                        Live Show Dashboard
+                        Bentornato, <span className="text-indigo-600">{firstName}</span>
                     </h1>
                     <p className="text-slate-500 text-sm font-medium">
-                        Gestione in tempo reale degli eventi con postazione dal vivo.
+                        Ecco la lista dei tuoi <span className="text-indigo-600 font-bold uppercase">Live Show</span> operativi per oggi.
                     </p>
                 </div>
                 

@@ -122,8 +122,9 @@ export default function QuoteBuilder({ leadId: initialLeadId, quoteId, existingQ
                 // Fallback a cascata: Quote -> Session -> Company Settings
                 let creator = data.createdBy;
                 if (!creator) {
-                    const user = await getCurrentUser();
-                    creator = user?.name || data.companySettings?.referente || "Luca Vitale";
+                    const email = data.companySettings?.email || "eventi@prettylittle.it";
+                    const referente = data.createdBy || data.companySettings?.referente || "Referente";
+                    creator = referente;
                 }
                 setCreatedBy(creator);
             }

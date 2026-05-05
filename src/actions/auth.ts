@@ -216,20 +216,28 @@ export async function deleteUser(userId: string) {
 }
 
 export async function createUser(data: { email: string, name: string, role: string, phone?: string, password?: string }) {
-    const admin = await getCurrentUser();
-    
-    // LOGICA DI DIAGNOSTICA: Se vogliamo rimettere il blocco, usare la riga sotto
-    // if (admin?.role !== 'SUPER_ADMIN') return { success: false, error: `Non autorizzato (Email rilevata: ${admin?.email || 'Nessuna'})` };
-
     try {
         const id = Math.random().toString(36).substring(7);
-        await prisma.$executeRawUnsafe(
-            `INSERT INTO "User" (id, email, name, role, password, phone, "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
-            id, data.email, data.name, data.role, data.password || null, data.phone || null
-        );
+        const email = data.email.toLowerCase().trim();
+        
+        console.log(`[AUTH] Creating/Updating user: ${email} | Role: ${data.role}`);
+
+        // Usiamo ON CONFLICT per gestire sia la creazione che l'aggiornamento (inclusa la password)
+        await prisma.$executeRaw`
+            INSERT INTO "User" (id, email, name, role, password, phone, "updatedAt") 
+            VALUES (${id}, ${email}, ${data.name}, ${data.role}, ${data.password || null}, ${data.phone || null}, CURRENT_TIMESTAMP)
+            ON CONFLICT (email) DO UPDATE SET 
+                name = EXCLUDED.name,
+                role = EXCLUDED.role,
+                password = EXCLUDED.password,
+                phone = EXCLUDED.phone,
+                "updatedAt" = CURRENT_TIMESTAMP
+        `;
+        
         revalidatePath('/settings');
         return { success: true };
-    } catch (e) {
-        return { success: false, error: "L'utente esiste già o errore DB" };
+    } catch (e: any) {
+        console.error("[AUTH] Create/Update User Error:", e);
+        return { success: false, error: "Errore salvataggio utente: " + e.message };
     }
 }
