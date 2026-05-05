@@ -12,12 +12,12 @@ import {
     Plus, Search, Check, X, User, Users, Sparkles, 
     Settings, Package, ListChecks, ArrowLeft, Loader2,
     CheckCircle2, UserCheck, UserMinus, Tag as TagIcon,
-    ArrowRightLeft
+    ArrowRightLeft, Download, Upload, FileSpreadsheet
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { 
-    addGuest, updateGuest, deleteGuest, togglePresence, getGuests
+    addGuest, updateGuest, deleteGuest, togglePresence, getGuests, bulkAddGuests
 } from "@/actions/liveshow";
 import { cn } from "@/lib/utils";
 
@@ -158,6 +158,57 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
             setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isServed: !current } : g));
             if (!current) toast.success("Ospite servito!");
         }
+    };
+
+    const downloadCsvTemplate = () => {
+        const content = "Nome,Tag\nMario Rossi,GIFT\nGiulia Bianchi,TESTIMONE";
+        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "template_invitati_liveshow.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleCsvImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const text = event.target?.result as string;
+            const lines = text.split('\n');
+            const newGuests: any[] = [];
+
+            // Saltiamo l'header
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const [name, tag] = line.split(',');
+                if (name) {
+                    newGuests.push({ name: name.trim(), tag: tag?.trim() });
+                }
+            }
+
+            if (newGuests.length > 0) {
+                setLoading(true);
+                const res = await bulkAddGuests(deal.id, newGuests);
+                setLoading(false);
+                
+                if (res.success) {
+                    const updated = await getGuests(deal.id);
+                    setGuests(updated);
+                    toast.success(`Importati ${res.count} invitati!`);
+                } else {
+                    toast.error("Errore importazione: " + res.error);
+                }
+            }
+        };
+        reader.readAsText(file);
     };
 
     return (
@@ -314,6 +365,32 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aggiungi alla lista"}
                                     </Button>
                                 </form>
+                            </Card>
+
+                            <Card className="rounded-[2rem] border-none shadow-sm bg-indigo-600 p-6 space-y-4 text-white">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <FileSpreadsheet className="h-4 w-4 text-indigo-200" />
+                                    <span className="text-[10px] font-black uppercase text-indigo-200 tracking-widest">Importa CSV</span>
+                                </div>
+                                <div className="space-y-3">
+                                    <Button 
+                                        variant="ghost" 
+                                        onClick={downloadCsvTemplate}
+                                        className="w-full h-10 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[9px] uppercase tracking-widest transition-all"
+                                    >
+                                        <Download className="h-3.5 w-3.5 mr-2" /> Scarica Template
+                                    </Button>
+                                    
+                                    <label className="flex flex-col items-center justify-center w-full h-24 rounded-2xl border-2 border-dashed border-white/20 hover:border-white/40 bg-white/5 cursor-pointer transition-all">
+                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <Upload className="h-5 w-5 text-indigo-200 mb-2" />
+                                            <p className="text-[9px] font-bold text-indigo-100 uppercase tracking-widest text-center px-4">
+                                                {loading ? "Importazione..." : "Seleziona File CSV"}
+                                            </p>
+                                        </div>
+                                        <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} disabled={loading} />
+                                    </label>
+                                </div>
                             </Card>
 
                             <Card className="rounded-[2rem] border-none shadow-sm bg-white p-6">

@@ -129,3 +129,26 @@ export async function getDealWithGuests(leadId: string) {
         return null;
     }
 }
+
+/**
+ * Aggiunge più invitati in blocco
+ */
+export async function bulkAddGuests(dealId: string, guestsData: { name: string, tag?: string }[]) {
+    try {
+        const results = [];
+        for (const data of guestsData) {
+            const guest = await prisma.guest.create({
+                data: {
+                    dealId,
+                    name: data.name.toUpperCase(),
+                    tags: data.tag ? [data.tag.toUpperCase()] : []
+                }
+            });
+            results.push(guest);
+        }
+        revalidatePath(`/deals/${dealId}`);
+        return { success: true, count: results.length };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
