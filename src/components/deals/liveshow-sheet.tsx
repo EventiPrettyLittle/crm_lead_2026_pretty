@@ -814,22 +814,9 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                     </div>
                                                 </div>
                                             );
-                                        })()}
-                                    </div>
-                                                                    <option key={opt} value={opt.split(':')[0]}>{opt.split(':')[0]}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="py-8 text-center border-2 border-dashed border-white/10 rounded-2xl">
-                                                <p className="text-[10px] font-black uppercase text-white/20">Nessun invitato presente trovato</p>
-                                            </div>
-                                        )}
-                                    </div>
+                                        })()}                                    </div>
                                 </Card>
+
 
                                 <Card className="rounded-[2rem] border-none shadow-sm bg-slate-900 p-6 space-y-4">
                                     <div className="flex items-center gap-2 mb-2">
