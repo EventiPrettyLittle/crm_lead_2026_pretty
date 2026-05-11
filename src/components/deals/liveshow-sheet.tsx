@@ -791,14 +791,21 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                             { label: 'Barattolo (Base)', field: 'baseColor', options: deal.favor1_colors },
                                                             { label: 'Stick', field: 'stickColor', options: deal.favor1_stick },
                                                             { label: 'Profumo', field: 'scent', options: deal.favor1_scents },
-                                                            { label: 'Grafica', field: 'graphic', options: deal.favor1_graphics }
+                                                            { label: 'Grafica', field: 'graphic', options: deal.favor1_graphics },
+                                                            { label: 'Ammaccato', field: 'ammStatus', options: 'SÌ,NO' }
                                                         ].map((cfg) => (
                                                             <div key={cfg.field} className="space-y-1.5">
                                                                 <Label className="text-[8px] font-black uppercase text-white/40 tracking-widest">{cfg.label}</Label>
                                                                 <select 
                                                                     className="w-full bg-white/5 border-none h-10 rounded-xl px-3 text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500 text-white"
-                                                                    onChange={(e) => handleUpdateGuestSelection(guest.id, cfg.field, e.target.value)}
-                                                                    value={guest[cfg.field] || ""}
+                                                                    onChange={(e) => {
+                                                                        let val = e.target.value;
+                                                                        if (cfg.field === 'ammStatus') {
+                                                                            val = val === 'SÌ' ? 'A' : '';
+                                                                        }
+                                                                        handleUpdateGuestSelection(guest.id, cfg.field, val);
+                                                                    }}
+                                                                    value={cfg.field === 'ammStatus' ? (guest.ammStatus === 'A' ? 'SÌ' : 'NO') : (guest[cfg.field] || "")}
                                                                 >
                                                                     <option value="" className="text-slate-900">Scegli...</option>
                                                                     {cfg.options?.split(',').map((opt: string) => {

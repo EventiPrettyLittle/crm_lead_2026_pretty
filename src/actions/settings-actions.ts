@@ -71,6 +71,9 @@ export async function updateSystemSettings(data: { logoUrl?: string, logoWidth?:
             );
         }
 
+        const { revalidateTag } = await import('next/cache');
+        revalidateTag('settings');
+
         return { success: true };
     } catch (error) {
         console.error("Error updating settings in DB:", error);

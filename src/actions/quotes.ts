@@ -148,14 +148,8 @@ export async function createQuote(leadId: string) {
     };
     reval();
     
-    return serializePrisma({ 
-        id: quoteId, 
-        number: nextNumber, 
-        leadId, 
-        status: 'BOZZA', 
-        createdBy: creatorName, 
-        creatorPhone 
-    });
+    // Restituiamo il preventivo completo (con settings) caricandolo via getQuote
+    return getQuote(quoteId);
 }
 
 export async function getQuote(id: string) {
