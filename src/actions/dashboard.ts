@@ -36,13 +36,13 @@ export async function getDashboardStats() {
 
         // 4. Actual Revenue (Allineato con sezione Finanza per precisione)
         const revenueQuotes = await prisma.$queryRawUnsafe(`
-            SELECT q."totalAmount", q.totalamount
+            SELECT q."totalAmount"
             FROM "Quote" q
             JOIN "Lead" l ON q."leadId" = l.id
             WHERE q.status = 'ACCETTATO'
         `).catch(() => []) as any[];
         
-        const totalRevenue = revenueQuotes.reduce((acc, q) => acc + Number(q.totalAmount || q.totalamount || 0), 0);
+        const totalRevenue = revenueQuotes.reduce((acc, q) => acc + Number(q.totalAmount || 0), 0);
 
         // 5. Conversion Rate
         const won = await prisma.lead.count({ where: { stage: 'VINTO' } }).catch(() => 0);

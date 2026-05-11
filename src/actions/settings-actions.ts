@@ -72,7 +72,7 @@ export async function updateSystemSettings(data: { logoUrl?: string, logoWidth?:
         }
 
         const { revalidateTag } = await import('next/cache');
-        revalidateTag('settings');
+        (revalidateTag as any)('settings');
 
         return { success: true };
     } catch (error) {

@@ -72,7 +72,7 @@ export async function updateCompanySettings(data: any) {
     revalidatePath('/quotes');
     
     const { revalidateTag } = await import('next/cache');
-    revalidateTag('settings');
+    (revalidateTag as any)('settings');
 }
 
 async function initSettingsTable() {

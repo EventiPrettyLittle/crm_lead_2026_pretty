@@ -263,7 +263,7 @@ export async function forgotPassword(email: string) {
         await prisma.user.update({
             where: { email: user.email },
             data: {
-                resetToken: token,
+                resetToken: token as any,
                 resetExpiry: expiry
             }
         });
