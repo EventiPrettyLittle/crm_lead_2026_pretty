@@ -43,7 +43,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const [configFilter, setConfigFilter] = useState<'ALL' | 'COMPLETED' | 'MISSING'>('ALL');
     const [prodFilter, setProdFilter] = useState<'ALL' | 'TODO' | 'DONE'>('ALL');
     const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
-    const [alertStockInfo, setAlertStockInfo] = useState<{name: string, remaining: number, status: string} | null>(null);
+    const [alertStockInfo, setAlertStockInfo] = useState<{name: string, remaining: number, status: string, total?: number} | null>(null);
     
     const lead = deal.lead || {};
     const leadName = `${lead.firstName || ''} ${lead.lastName || ''}`;
