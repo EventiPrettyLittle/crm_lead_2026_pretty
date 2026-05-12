@@ -110,14 +110,55 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const AVAILABLE_TAGS = ["GIFT", "TESTIMONE", "PADRE SPOSO", "PADRE SPOSA", "MAMMA SPOSO", "MAMMA SPOSA", "NONNI"];
 
     const handleUpdateGuestSelection = async (guestId: string, field: string, value: string) => {
+        // Se svuotiamo il campo, procediamo normalmente senza controlli stock
+        if (!value) {
+            const res = await updateGuest(guestId, { [field]: "" });
+            if (res.success) {
+                setGuests(guests.map((g: any) => g.id === guestId ? { ...g, [field]: "" } : g));
+            }
+            return;
+        }
+
+        // Se è ammStatus, non ha limiti di stock (è solo un flag SI/NO)
+        if (field !== 'ammStatus') {
+            const dealField = field === 'baseColor' ? deal.favor1_colors : 
+                             field === 'stickColor' ? deal.favor1_stick : 
+                             field === 'scent' ? deal.favor1_scents : 
+                             field === 'graphic' ? deal.favor1_graphics : '';
+            
+            if (dealField) {
+                const options = parseOptions(dealField);
+                const opt = options.find((o: any) => o.name === value);
+                
+                if (opt) {
+                    const totalAvailable = parseInt(opt.qty) || 0;
+                    // Contiamo quanti ALTRI ospiti hanno già questa scelta (escludendo l'ospite corrente)
+                    const chosenCount = guests.filter((g: any) => g.id !== guestId && g[field] === value).length;
+                    
+                    if (chosenCount >= totalAvailable) {
+                        toast.error(
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                    <X className="h-3 w-3 text-rose-500" />
+                                    <span className="font-black text-[10px] uppercase tracking-widest text-rose-600">Prodotto Esaurito</span>
+                                </div>
+                                <p className="text-sm font-bold leading-tight">{value.toUpperCase()} non disponibile.</p>
+                                <p className="text-[10px] font-black uppercase text-slate-400">Limite raggiunto: {totalAvailable}/{totalAvailable}.</p>
+                            </div>
+                        );
+                        return;
+                    }
+                }
+            }
+        }
+
         const res = await updateGuest(guestId, { [field]: value });
         if (res.success) {
             // Calcolo immediato dello stock aggiornato per notifica
             const updatedGuests = guests.map((g: any) => g.id === guestId ? { ...g, [field]: value } : g);
             setGuests(updatedGuests);
 
-            if (value) {
-                // Cerchiamo la portata per questo valore
+            if (value && field !== 'ammStatus') {
                 const dealField = field === 'baseColor' ? deal.favor1_colors : 
                                  field === 'stickColor' ? deal.favor1_stick : 
                                  field === 'scent' ? deal.favor1_scents : 
