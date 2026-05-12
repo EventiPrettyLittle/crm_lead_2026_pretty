@@ -239,7 +239,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
             const isConfigComplete = !!(g.baseColor && g.stickColor && g.scent && g.graphic);
             const isReady = g.isCompleted;
 
-            if (prodFilter === 'TODO') return isConfigComplete && !isReady;
+            if (prodFilter === 'TODO') return !isReady;
             if (prodFilter === 'DONE') return isReady;
             return true;
         })
@@ -696,8 +696,8 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         {/* List View */}
                         <div className="lg:col-span-3 space-y-6">
                             {/* Summary Stats for Invitati */}
-                            <div className="flex flex-col md:flex-row items-center gap-4">
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 flex-1">
+                            <div className="flex flex-col xl:flex-row items-start gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1 w-full">
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
                                         <p className="text-3xl font-black text-slate-900">{guests.length}</p>
@@ -1023,8 +1023,8 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         {/* Configurator Table View */}
                         <div className="lg:col-span-3 space-y-6">
                             {/* Summary Stats for Configuratore */}
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 flex-1">
+                            <div className="flex flex-col xl:flex-row items-start gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1 w-full">
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
                                         <p className="text-3xl font-black text-slate-900">{guests.length}</p>
@@ -1213,9 +1213,8 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         </Button>
                     </div>
 
-                    {/* Summary Stats for Produzione */}
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 flex-1">
+                    <div className="flex flex-col xl:flex-row items-start gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1 w-full">
                             <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
                                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
                                 <p className="text-3xl font-black text-slate-900">{guests.length}</p>
