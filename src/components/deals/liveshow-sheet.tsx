@@ -35,7 +35,8 @@ interface LiveShowSheetProps {
 export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const [deal, setDeal] = useState(initialDeal);
     const [guests, setGuests] = useState(initialDeal.guests || []);
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQueryInvitati, setSearchQueryInvitati] = useState("");
+    const [searchQueryConfig, setSearchQueryConfig] = useState("");
     const [newGuestName, setNewGuestName] = useState("");
     const [loading, setLoading] = useState(false);
     const [configFilter, setConfigFilter] = useState<'ALL' | 'COMPLETED' | 'MISSING'>('ALL');
@@ -212,7 +213,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
 
     const filteredGuests = sortGuests(
         guests.filter((g: any) => 
-            g.name.toLowerCase().includes(searchQuery.toLowerCase())
+            g.name.toLowerCase().includes(searchQueryInvitati.toLowerCase())
         )
     );
 
@@ -220,6 +221,9 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
         guests.filter((g: any) => {
             const isPresent = g.isPresent;
             if (!isPresent) return false;
+
+            // Filtro ricerca specifica per configuratore
+            if (searchQueryConfig && !g.name.toLowerCase().includes(searchQueryConfig.toLowerCase())) return false;
             
             const isComplete = !!(g.baseColor && g.stickColor && g.scent && g.graphic);
             if (configFilter === 'COMPLETED') return isComplete;
@@ -673,8 +677,8 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                 </div>
                                 <Input 
                                     placeholder="Filtra per nome..." 
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    value={searchQueryInvitati}
+                                    onChange={(e) => setSearchQueryInvitati(e.target.value)}
                                     className="rounded-xl bg-slate-50 border-none font-bold text-xs"
                                 />
                             </Card>
@@ -892,15 +896,15 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
                                                 <Input 
                                                     placeholder="Scrivi il nome..." 
-                                                    value={searchQuery}
-                                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                                    value={searchQueryConfig}
+                                                    onChange={(e) => setSearchQueryConfig(e.target.value)}
                                                     className="bg-white/5 border-none h-12 pl-10 rounded-xl font-bold text-sm focus:ring-1 focus:ring-indigo-500 transition-all"
                                                 />
                                             </div>
                                         </div>
 
                                         {(() => {
-                                            const guest = guests.find((g: any) => g.id === (selectedGuestId || filteredGuests.filter((x: any) => x.isPresent)[0]?.id));
+                                            const guest = guests.find((g: any) => g.id === (selectedGuestId || sortedConfigGuests.filter((x: any) => x.isPresent)[0]?.id));
                                             if (!guest || !guest.isPresent) return (
                                                 <div className="p-8 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
                                                     <UserMinus className="h-8 w-8 text-white/10 mx-auto mb-2" />
