@@ -37,6 +37,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const [guests, setGuests] = useState(initialDeal.guests || []);
     const [searchQueryInvitati, setSearchQueryInvitati] = useState("");
     const [searchQueryConfig, setSearchQueryConfig] = useState("");
+    const [searchQueryProd, setSearchQueryProd] = useState("");
     const [newGuestName, setNewGuestName] = useState("");
     const [loading, setLoading] = useState(false);
     const [configFilter, setConfigFilter] = useState<'ALL' | 'COMPLETED' | 'MISSING'>('ALL');
@@ -236,6 +237,9 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
         guests.filter((g: any) => {
             if (!g.isPresent) return false;
             
+            // Filtro ricerca specifica per produzione
+            if (searchQueryProd && !g.name.toLowerCase().includes(searchQueryProd.toLowerCase())) return false;
+
             const isConfigComplete = !!(g.baseColor && g.stickColor && g.scent && g.graphic);
             const isReady = g.isCompleted;
 
@@ -1262,6 +1266,18 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                 ))}
                             </div>
                         </Card>
+                    </div>
+
+                    <div className="flex items-center gap-4 bg-white p-4 rounded-3xl shadow-sm border border-slate-50">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
+                            <Input 
+                                placeholder="Cerca invitato in produzione..." 
+                                value={searchQueryProd}
+                                onChange={(e) => setSearchQueryProd(e.target.value)}
+                                className="pl-10 rounded-xl border-none bg-slate-50 font-bold text-sm h-12"
+                            />
+                        </div>
                     </div>
 
                     {guests.filter((g: any) => g.isPresent).length === guests.filter((g: any) => g.isCompleted).length && guests.filter((g: any) => g.isPresent).length > 0 && (
