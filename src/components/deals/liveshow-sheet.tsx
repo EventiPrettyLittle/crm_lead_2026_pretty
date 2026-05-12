@@ -136,16 +136,12 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                     const chosenCount = guests.filter((g: any) => g.id !== guestId && g[field] === value).length;
                     
                     if (chosenCount >= totalAvailable) {
-                        toast.error(
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-2">
-                                    <X className="h-3 w-3 text-rose-500" />
-                                    <span className="font-black text-[10px] uppercase tracking-widest text-rose-600">Prodotto Esaurito</span>
-                                </div>
-                                <p className="text-sm font-bold leading-tight">{value.toUpperCase()} non disponibile.</p>
-                                <p className="text-[10px] font-black uppercase text-slate-400">Limite raggiunto: {totalAvailable}/{totalAvailable}.</p>
-                            </div>
-                        );
+                        setAlertStockInfo({ 
+                            name: value, 
+                            remaining: 0, 
+                            status: 'ESAURITO',
+                            total: totalAvailable 
+                        });
                         return;
                     }
                 }
@@ -1451,27 +1447,38 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
                     <Card className={cn(
                         "w-full max-w-sm rounded-[3rem] border-none shadow-2xl p-8 text-center space-y-6 animate-in zoom-in-95 duration-500",
-                        alertStockInfo.status === 'CRITICO' ? "bg-rose-600 text-white" : "bg-amber-500 text-white"
+                        alertStockInfo.status === 'ESAURITO' ? "bg-slate-900 text-white ring-4 ring-rose-500" :
+                        (alertStockInfo.status === 'CRITICO' ? "bg-rose-600 text-white" : "bg-amber-500 text-white")
                     )}>
-                        <div className="mx-auto h-20 w-20 rounded-full bg-white/20 flex items-center justify-center animate-bounce">
-                            <Database className="h-10 w-10 text-white" />
+                        <div className={cn(
+                            "mx-auto h-20 w-20 rounded-full flex items-center justify-center animate-bounce",
+                            alertStockInfo.status === 'ESAURITO' ? "bg-rose-500 text-white" : "bg-white/20 text-white"
+                        )}>
+                            {alertStockInfo.status === 'ESAURITO' ? <X className="h-10 w-10" /> : <Database className="h-10 w-10" />}
                         </div>
                         <div className="space-y-2">
                             <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60">
-                                {alertStockInfo.status} STOCK
+                                {alertStockInfo.status === 'ESAURITO' ? "NON DISPONIBILE" : `${alertStockInfo.status} STOCK`}
                             </span>
                             <h3 className="text-3xl font-black uppercase italic tracking-tighter leading-none">
                                 {alertStockInfo.name}
                             </h3>
                             <p className="text-sm font-bold opacity-90">
-                                Attenzione! Restano solo <span className="text-2xl font-black">{alertStockInfo.remaining}</span> pezzi disponibili.
+                                {alertStockInfo.status === 'ESAURITO' ? (
+                                    <>Prodotto esaurito! Limite raggiunto <span className="text-2xl font-black text-rose-400">{alertStockInfo.total}/{alertStockInfo.total}</span></>
+                                ) : (
+                                    <>Attenzione! Restano solo <span className="text-2xl font-black">{alertStockInfo.remaining}</span> pezzi disponibili.</>
+                                )}
                             </p>
                         </div>
                         <Button 
                             onClick={() => setAlertStockInfo(null)}
-                            className="w-full h-14 rounded-2xl bg-white text-slate-900 font-black uppercase tracking-widest hover:bg-slate-100 transition-all shadow-xl"
+                            className={cn(
+                                "w-full h-14 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl",
+                                alertStockInfo.status === 'ESAURITO' ? "bg-rose-500 hover:bg-rose-600 text-white" : "bg-white text-slate-900 hover:bg-slate-100"
+                            )}
                         >
-                            Ho Capito, Prosegui
+                            {alertStockInfo.status === 'ESAURITO' ? "CHIUDI E CAMBIA SCELTA" : "Ho Capito, Prosegui"}
                         </Button>
                     </Card>
                 </div>
