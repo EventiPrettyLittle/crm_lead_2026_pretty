@@ -743,17 +743,9 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                             {/* Summary Stats for Invitati */}
                             <div className="flex flex-col xl:flex-row items-start gap-4">
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1 w-full">
-                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
-                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
-                                        <p className="text-3xl font-black text-slate-900">{guests.length}</p>
-                                    </Card>
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
                                         <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
-                                    </Card>
-                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
-                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Assenti</span>
-                                        <p className="text-3xl font-black text-rose-600">{guests.filter((g: any) => !g.isPresent).length}</p>
                                     </Card>
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Configurati</span>
@@ -763,9 +755,17 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Conf.</span>
                                         <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && !(g.baseColor && g.stickColor && g.scent && g.graphic)).length}</p>
                                     </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-orange-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Fare</span>
+                                        <p className="text-3xl font-black text-orange-600">{guests.filter((g: any) => g.isPresent && (g.baseColor && g.stickColor && g.scent && g.graphic) && !g.isCompleted).length}</p>
+                                    </Card>
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-600">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Pronti</span>
                                         <p className="text-3xl font-black text-emerald-700">{guests.filter((g: any) => g.isCompleted).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-yellow-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Consegnati</span>
+                                        <p className="text-3xl font-black text-yellow-600">{guests.filter((g: any) => g.isServed).length}</p>
                                     </Card>
                                 </div>
 
@@ -1070,17 +1070,9 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                             {/* Summary Stats for Configuratore */}
                             <div className="flex flex-col xl:flex-row items-start gap-4">
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1 w-full">
-                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
-                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
-                                        <p className="text-3xl font-black text-slate-900">{guests.length}</p>
-                                    </Card>
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
                                         <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
-                                    </Card>
-                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
-                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Assenti</span>
-                                        <p className="text-3xl font-black text-rose-600">{guests.filter((g: any) => !g.isPresent).length}</p>
                                     </Card>
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Configurati</span>
@@ -1090,9 +1082,17 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Conf.</span>
                                         <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && !(g.baseColor && g.stickColor && g.scent && g.graphic)).length}</p>
                                     </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-orange-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Fare</span>
+                                        <p className="text-3xl font-black text-orange-600">{guests.filter((g: any) => g.isPresent && (g.baseColor && g.stickColor && g.scent && g.graphic) && !g.isCompleted).length}</p>
+                                    </Card>
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-600">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Pronti</span>
                                         <p className="text-3xl font-black text-emerald-700">{guests.filter((g: any) => g.isCompleted).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-yellow-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Consegnati</span>
+                                        <p className="text-3xl font-black text-yellow-600">{guests.filter((g: any) => g.isServed).length}</p>
                                     </Card>
                                 </div>
                                 
@@ -1260,10 +1260,6 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
 
                     <div className="flex flex-col xl:flex-row items-start gap-4">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1 w-full">
-                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
-                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
-                                <p className="text-3xl font-black text-slate-900">{guests.length}</p>
-                            </Card>
                             <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
                                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
                                 <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
@@ -1275,6 +1271,10 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                             <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-amber-500">
                                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Conf.</span>
                                 <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && !(g.baseColor && g.stickColor && g.scent && g.graphic)).length}</p>
+                            </Card>
+                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-orange-500">
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Fare</span>
+                                <p className="text-3xl font-black text-orange-600">{guests.filter((g: any) => g.isPresent && (g.baseColor && g.stickColor && g.scent && g.graphic) && !g.isCompleted).length}</p>
                             </Card>
                             <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-600">
                                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Pronti</span>
