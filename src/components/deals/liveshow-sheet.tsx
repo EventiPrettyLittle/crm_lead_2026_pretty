@@ -12,7 +12,7 @@ import {
     Plus, Search, Check, X, User, Users, Sparkles, 
     Settings, Package, ListChecks, ArrowLeft, Loader2,
     CheckCircle2, UserCheck, UserMinus, Tag as TagIcon,
-    ArrowRightLeft, Download, Upload, FileSpreadsheet, Trash2, Database, RotateCcw
+    ArrowRightLeft, Download, Upload, FileSpreadsheet, Trash2, Database, RotateCcw, Printer
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -159,7 +159,10 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
         const res = await updateGuest(guestId, { isCompleted: !current });
         if (res.success) {
             setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isCompleted: !current } : g));
-            if (!current) toast.success("Prodotto pronto!");
+            if (!current) {
+                toast.success("Prodotto pronto!");
+                handlePrintLabel(res.data);
+            }
         }
     };
 
@@ -282,6 +285,112 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
             setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isServed: !current } : g));
             if (!current) toast.success("Ospite servito!");
         }
+    };
+
+    const handlePrintLabel = (guest: any) => {
+        const printWindow = window.open('', '_blank', 'width=600,height=400');
+        if (!printWindow) {
+            toast.error("Blocco popup rilevato. Abilita i popup per stampare le etichette.");
+            return;
+        }
+
+        const ammText = guest.ammStatus === 'A' ? 'SI' : 'NO';
+        
+        const html = `
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title>Print Label - ${guest.name}</title>
+                    <style>
+                        @page {
+                            size: 50mm 30mm;
+                            margin: 0;
+                        }
+                        * {
+                            box-sizing: border-box;
+                            -webkit-print-color-adjust: exact;
+                        }
+                        body {
+                            width: 50mm;
+                            height: 30mm;
+                            margin: 0;
+                            padding: 2.5mm 3mm;
+                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                            display: flex;
+                            flex-direction: column;
+                            background: white;
+                            color: black;
+                        }
+                        .name {
+                            font-size: 10.5pt;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            border-bottom: 1.5pt solid black;
+                            padding-bottom: 0.5mm;
+                            margin-bottom: 1.5mm;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            font-style: italic;
+                            letter-spacing: -0.02em;
+                        }
+                        .grid {
+                            display: grid;
+                            grid-template-cols: 1fr 1fr;
+                            gap: 0.8mm;
+                            flex-grow: 1;
+                        }
+                        .item {
+                            font-size: 7.5pt;
+                            font-weight: 700;
+                            display: flex;
+                            align-items: baseline;
+                            text-transform: uppercase;
+                        }
+                        .label {
+                            font-weight: 500;
+                            font-size: 6pt;
+                            color: #666;
+                            margin-right: 1mm;
+                            width: 8.5mm;
+                            flex-shrink: 0;
+                        }
+                        .value {
+                            font-weight: 900;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            color: #000;
+                        }
+                        .amm-row {
+                            grid-column: span 2;
+                            margin-top: 0.5mm;
+                            padding-top: 0.5mm;
+                            border-top: 0.5pt dashed #ccc;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="name">${guest.name}</div>
+                    <div class="grid">
+                        <div class="item"><span class="label">BAR.</span> <span class="value">${guest.baseColor || '-'}</span></div>
+                        <div class="item"><span class="label">STK.</span> <span class="value">${guest.stickColor || '-'}</span></div>
+                        <div class="item"><span class="label">PROF.</span> <span class="value">${guest.scent || '-'}</span></div>
+                        <div class="item"><span class="label">GRAF.</span> <span class="value">${guest.graphic || '-'}</span></div>
+                        <div class="item amm-row"><span class="label">AMM.</span> <span class="value">${ammText}</span></div>
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            setTimeout(function() { window.close(); }, 500);
+                        };
+                    </script>
+                </body>
+            </html>
+        `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
     };
 
     const downloadCsvTemplate = () => {
@@ -1109,6 +1218,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                 <thead>
                                     <tr className="bg-slate-50/50 border-b border-slate-100">
                                         <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest w-20">PRONTO</th>
+                                        <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest w-16">STAMPA</th>
                                         <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest">INVITATO</th>
                                         <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest">CONFIGURAZIONE SCELTA</th>
                                         <th className="px-6 py-4 text-left text-[9px] font-black uppercase text-slate-400 tracking-widest">TAG</th>
@@ -1135,6 +1245,18 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                                 >
                                                     <Check className="h-5 w-5" />
                                                 </button>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="icon"
+                                                        onClick={() => handlePrintLabel(guest)}
+                                                        className="h-10 w-10 rounded-xl border-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shrink-0"
+                                                    >
+                                                        <Printer className="h-5 w-5" />
+                                                    </Button>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
