@@ -156,13 +156,23 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
             }
         }
 
-        const res = await updateGuest(guestId, { isCompleted: !current });
+        // Aggiornamento Ottimistico: rendiamo verde la colonna SUBITO
+        const nextState = !current;
+        setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isCompleted: nextState } : g));
+
+        if (nextState && guest) {
+            // Lanciamo il popup di stampa IMMEDIATAMENTE
+            handlePrintLabel(guest);
+        }
+
+        // Procediamo con il salvataggio in background
+        const res = await updateGuest(guestId, { isCompleted: nextState });
         if (res.success) {
-            setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isCompleted: !current } : g));
-            if (!current) {
-                toast.success("Prodotto pronto!");
-                handlePrintLabel(res.data);
-            }
+            if (nextState) toast.success("Prodotto pronto!");
+        } else {
+            // In caso di errore raro, facciamo rollback dello stato visivo
+            setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isCompleted: current } : g));
+            toast.error("Errore durante il salvataggio");
         }
     };
 
@@ -288,10 +298,18 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     };
 
     const handlePrintLabel = (guest: any) => {
-        const printWindow = window.open('', '_blank', 'width=600,height=400');
-        if (!printWindow) {
-            toast.error("Blocco popup rilevato. Abilita i popup per stampare le etichette.");
-            return;
+        // Creazione di un iframe nascosto per la stampa (più veloce e non bloccato dai popup)
+        let iframe = document.getElementById('print-iframe') as HTMLIFrameElement;
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'print-iframe';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            document.body.appendChild(iframe);
         }
 
         const ammText = guest.ammStatus === 'A' ? 'SI' : 'NO';
@@ -300,7 +318,6 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
             <!DOCTYPE html>
             <html>
                 <head>
-                    <title>Print Label - ${guest.name}</title>
                     <style>
                         @page {
                             size: 50mm 30mm;
@@ -379,18 +396,21 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         <div class="item"><span class="label">GRAF.</span> <span class="value">${guest.graphic || '-'}</span></div>
                         <div class="item amm-row"><span class="label">AMM.</span> <span class="value">${ammText}</span></div>
                     </div>
-                    <script>
-                        window.onload = function() {
-                            window.print();
-                            setTimeout(function() { window.close(); }, 500);
-                        };
-                    </script>
                 </body>
             </html>
         `;
 
-        printWindow.document.write(html);
-        printWindow.document.close();
+        const doc = iframe.contentWindow?.document || iframe.contentDocument;
+        if (doc) {
+            doc.open();
+            doc.write(html);
+            doc.close();
+            
+            setTimeout(() => {
+                iframe.contentWindow?.focus();
+                iframe.contentWindow?.print();
+            }, 250);
+        }
     };
 
     const downloadCsvTemplate = () => {
