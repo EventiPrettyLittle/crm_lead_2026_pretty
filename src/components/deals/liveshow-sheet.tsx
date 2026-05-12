@@ -12,7 +12,7 @@ import {
     Plus, Search, Check, X, User, Users, Sparkles, 
     Settings, Package, ListChecks, ArrowLeft, Loader2,
     CheckCircle2, UserCheck, UserMinus, Tag as TagIcon,
-    ArrowRightLeft, Download, Upload, FileSpreadsheet, Trash2, Database, RotateCcw, Printer
+    ArrowRightLeft, Download, Upload, FileSpreadsheet, Trash2, Database, RotateCcw, Printer, Truck
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -696,19 +696,31 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         {/* List View */}
                         <div className="lg:col-span-3 space-y-6">
                             {/* Summary Stats for Invitati */}
-                            <div className="flex items-center justify-between gap-4">
-                                <div className="grid grid-cols-3 gap-4 flex-1">
+                            <div className="flex flex-col md:flex-row items-center gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 flex-1">
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
                                         <p className="text-3xl font-black text-slate-900">{guests.length}</p>
                                     </Card>
-                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
-                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Gift</span>
-                                        <p className="text-3xl font-black text-indigo-600">{guests.filter((g: any) => g.tags?.includes("GIFT")).length}</p>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
+                                        <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
                                     </Card>
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Assenti</span>
                                         <p className="text-3xl font-black text-rose-600">{guests.filter((g: any) => !g.isPresent).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Configurati</span>
+                                        <p className="text-3xl font-black text-indigo-600">{guests.filter((g: any) => g.isPresent && (g.baseColor && g.stickColor && g.scent && g.graphic)).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-amber-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Conf.</span>
+                                        <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && !(g.baseColor && g.stickColor && g.scent && g.graphic)).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-600">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Pronti</span>
+                                        <p className="text-3xl font-black text-emerald-700">{guests.filter((g: any) => g.isCompleted).length}</p>
                                     </Card>
                                 </div>
 
@@ -1012,7 +1024,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                         <div className="lg:col-span-3 space-y-6">
                             {/* Summary Stats for Configuratore */}
                             <div className="flex items-center justify-between gap-4">
-                                <div className="grid grid-cols-3 gap-4 flex-1">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 flex-1">
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
                                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
                                         <p className="text-3xl font-black text-slate-900">{guests.length}</p>
@@ -1022,8 +1034,20 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                         <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
                                     </Card>
                                     <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-rose-500">
-                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Mancanti</span>
-                                        <p className="text-3xl font-black text-rose-600">{guests.length - guests.filter((g: any) => g.isPresent).length}</p>
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Assenti</span>
+                                        <p className="text-3xl font-black text-rose-600">{guests.filter((g: any) => !g.isPresent).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Configurati</span>
+                                        <p className="text-3xl font-black text-indigo-600">{guests.filter((g: any) => g.isPresent && (g.baseColor && g.stickColor && g.scent && g.graphic)).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-amber-500">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Conf.</span>
+                                        <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && !(g.baseColor && g.stickColor && g.scent && g.graphic)).length}</p>
+                                    </Card>
+                                    <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-600">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Pronti</span>
+                                        <p className="text-3xl font-black text-emerald-700">{guests.filter((g: any) => g.isCompleted).length}</p>
                                     </Card>
                                 </div>
                                 
@@ -1191,18 +1215,30 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
 
                     {/* Summary Stats for Produzione */}
                     <div className="flex items-center justify-between gap-4">
-                        <div className="grid grid-cols-3 gap-4 flex-1">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 flex-1">
                             <Card className="rounded-3xl border-none shadow-sm bg-white p-6">
-                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
-                                <p className="text-3xl font-black text-slate-900">{guests.filter((g: any) => g.isPresent).length}</p>
-                            </Card>
-                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-amber-500">
-                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Fare</span>
-                                <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && (g.baseColor && g.stickColor && g.scent && g.graphic) && !g.isCompleted).length}</p>
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Totale Lista</span>
+                                <p className="text-3xl font-black text-slate-900">{guests.length}</p>
                             </Card>
                             <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-500">
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Presenti</span>
+                                <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isPresent).length}</p>
+                            </Card>
+                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-indigo-500">
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Configurati</span>
+                                <p className="text-3xl font-black text-indigo-600">{guests.filter((g: any) => g.isPresent && (g.baseColor && g.stickColor && g.scent && g.graphic)).length}</p>
+                            </Card>
+                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-amber-500">
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Da Conf.</span>
+                                <p className="text-3xl font-black text-amber-600">{guests.filter((g: any) => g.isPresent && !(g.baseColor && g.stickColor && g.scent && g.graphic)).length}</p>
+                            </Card>
+                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-emerald-600">
                                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Pronti</span>
-                                <p className="text-3xl font-black text-emerald-600">{guests.filter((g: any) => g.isCompleted).length}</p>
+                                <p className="text-3xl font-black text-emerald-700">{guests.filter((g: any) => g.isCompleted).length}</p>
+                            </Card>
+                            <Card className="rounded-3xl border-none shadow-sm bg-white p-6 border-l-4 border-l-yellow-500">
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest block mb-1">Consegnati</span>
+                                <p className="text-3xl font-black text-yellow-600">{guests.filter((g: any) => g.isServed).length}</p>
                             </Card>
                         </div>
 
@@ -1254,7 +1290,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                             key={guest.id} 
                                             className={cn(
                                                 "transition-all duration-500",
-                                                guest.isCompleted ? "bg-emerald-50/50" : "hover:bg-slate-50/50"
+                                                guest.isServed ? "bg-yellow-50 hover:bg-yellow-100/50" : (guest.isCompleted ? "bg-emerald-50/50" : "hover:bg-slate-50/50")
                                             )}
                                         >
                                             <td className="px-6 py-4">
@@ -1272,6 +1308,17 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
+                                                    <Button 
+                                                        variant="outline" 
+                                                        size="icon"
+                                                        onClick={() => handleToggleServed(guest.id, guest.isServed)}
+                                                        className={cn(
+                                                            "h-10 w-10 rounded-xl border-slate-100 transition-all shrink-0",
+                                                            guest.isServed ? "bg-yellow-500 border-yellow-500 text-white shadow-lg shadow-yellow-100" : "text-slate-400 hover:text-yellow-600 hover:bg-yellow-50"
+                                                        )}
+                                                    >
+                                                        <Truck className="h-5 w-5" />
+                                                    </Button>
                                                     <Button 
                                                         variant="outline" 
                                                         size="icon"
