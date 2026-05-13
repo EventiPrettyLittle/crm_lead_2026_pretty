@@ -426,7 +426,9 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
             setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isServed: !current } : g));
             if (!current) toast.success("Ospite servito!");
         }
-        const handlePrintLabel = async (guest: any) => {
+    };
+
+    const handlePrintLabel = async (guest: any) => {
         try {
             const ammText = guest.ammStatus === 'A' ? 'SI' : 'NO';
             
