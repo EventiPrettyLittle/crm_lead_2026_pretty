@@ -23,6 +23,92 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
+
+// Stili per il PDF delle etichette (50x30mm)
+const pdfStyles = StyleSheet.create({
+    page: {
+        width: '50mm',
+        height: '30mm',
+        padding: '2.5mm 3mm',
+        backgroundColor: '#ffffff',
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    name: {
+        fontSize: 10,
+        fontWeight: 900,
+        textTransform: 'uppercase',
+        borderBottom: '1pt solid #000',
+        paddingBottom: 1,
+        marginBottom: 2,
+        fontStyle: 'italic',
+    },
+    grid: {
+        display: 'flex',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+    },
+    item: {
+        width: '48%',
+        fontSize: 7,
+        fontWeight: 700,
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        textTransform: 'uppercase',
+        marginBottom: 1,
+    },
+    label: {
+        fontSize: 5,
+        color: '#666',
+        marginRight: 2,
+        width: 18,
+    },
+    value: {
+        fontSize: 7,
+        fontWeight: 900,
+        color: '#000',
+    },
+    fullRow: {
+        width: '100%',
+        marginTop: 1,
+        borderTop: '0.5pt solid #eee',
+        paddingTop: 1,
+    }
+});
+
+const LabelPDF = ({ guest, ammText }: { guest: any, ammText: string }) => (
+    <Document>
+        <Page size={[141.73, 85.04]} style={pdfStyles.page}>
+            <Text style={pdfStyles.name}>{guest.name}</Text>
+            <View style={pdfStyles.grid}>
+                <View style={pdfStyles.item}>
+                    <Text style={pdfStyles.label}>BASE</Text>
+                    <Text style={pdfStyles.value}>{guest.baseColor || '-'}</Text>
+                </View>
+                <View style={pdfStyles.item}>
+                    <Text style={pdfStyles.label}>STICK</Text>
+                    <Text style={pdfStyles.value}>{guest.stickColor || '-'}</Text>
+                </View>
+                <View style={pdfStyles.item}>
+                    <Text style={pdfStyles.label}>SCENT</Text>
+                    <Text style={pdfStyles.value}>{guest.scent || '-'}</Text>
+                </View>
+                <View style={pdfStyles.item}>
+                    <Text style={pdfStyles.label}>GRAF</Text>
+                    <Text style={pdfStyles.value}>{guest.graphic || '-'}</Text>
+                </View>
+                <View style={[pdfStyles.item, pdfStyles.fullRow]}>
+                    <Text style={pdfStyles.label}>AMM</Text>
+                    <Text style={pdfStyles.value}>{ammText}</Text>
+                </View>
+            </View>
+        </Page>
+    </Document>
+);
+
 import { 
     addGuest, updateGuest, deleteGuest, togglePresence, getGuests, bulkAddGuests, clearGuests
 } from "@/actions/liveshow";
@@ -340,121 +426,41 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
             setGuests(guests.map((g: any) => g.id === guestId ? { ...g, isServed: !current } : g));
             if (!current) toast.success("Ospite servito!");
         }
-    };
-
-    const handlePrintLabel = (guest: any) => {
-        // Creazione di un iframe nascosto per la stampa (più veloce e non bloccato dai popup)
-        let iframe = document.getElementById('print-iframe') as HTMLIFrameElement;
-        if (!iframe) {
-            iframe = document.createElement('iframe');
-            iframe.id = 'print-iframe';
-            iframe.style.position = 'fixed';
-            iframe.style.right = '0';
-            iframe.style.bottom = '0';
-            iframe.style.width = '0';
-            iframe.style.height = '0';
-            iframe.style.border = '0';
-            document.body.appendChild(iframe);
-        }
-
-        const ammText = guest.ammStatus === 'A' ? 'SI' : 'NO';
-        
-        const html = `
-            <!DOCTYPE html>
-            <html>
-                <head>
-                    <style>
-                        @page {
-                            size: 50mm 30mm;
-                            margin: 0;
-                        }
-                        * {
-                            box-sizing: border-box;
-                            -webkit-print-color-adjust: exact;
-                        }
-                        body {
-                            width: 50mm;
-                            height: 30mm;
-                            margin: 0;
-                            padding: 2.5mm 3mm;
-                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                            display: flex;
-                            flex-direction: column;
-                            background: white;
-                            color: black;
-                        }
-                        .name {
-                            font-size: 10.5pt;
-                            font-weight: 900;
-                            text-transform: uppercase;
-                            border-bottom: 1.5pt solid black;
-                            padding-bottom: 0.5mm;
-                            margin-bottom: 1.5mm;
-                            white-space: nowrap;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                            font-style: italic;
-                            letter-spacing: -0.02em;
-                        }
-                        .grid {
-                            display: grid;
-                            grid-template-cols: 1fr 1fr;
-                            gap: 0.8mm;
-                            flex-grow: 1;
-                        }
-                        .item {
-                            font-size: 7.5pt;
-                            font-weight: 700;
-                            display: flex;
-                            align-items: baseline;
-                            text-transform: uppercase;
-                        }
-                        .label {
-                            font-weight: 500;
-                            font-size: 6pt;
-                            color: #666;
-                            margin-right: 1mm;
-                            width: 8.5mm;
-                            flex-shrink: 0;
-                        }
-                        .value {
-                            font-weight: 900;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                            white-space: nowrap;
-                            color: #000;
-                        }
-                        .amm-row {
-                            grid-column: span 2;
-                            margin-top: 0.5mm;
-                            padding-top: 0.5mm;
-                            border-top: 0.5pt dashed #ccc;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="name">${guest.name}</div>
-                    <div class="grid">
-                        <div class="item"><span class="label">BAR.</span> <span class="value">${guest.baseColor || '-'}</span></div>
-                        <div class="item"><span class="label">STK.</span> <span class="value">${guest.stickColor || '-'}</span></div>
-                        <div class="item"><span class="label">PROF.</span> <span class="value">${guest.scent || '-'}</span></div>
-                        <div class="item"><span class="label">GRAF.</span> <span class="value">${guest.graphic || '-'}</span></div>
-                        <div class="item amm-row"><span class="label">AMM.</span> <span class="value">${ammText}</span></div>
-                    </div>
-                </body>
-            </html>
-        `;
-
-        const doc = iframe.contentWindow?.document || iframe.contentDocument;
-        if (doc) {
-            doc.open();
-            doc.write(html);
-            doc.close();
+        const handlePrintLabel = async (guest: any) => {
+        try {
+            const ammText = guest.ammStatus === 'A' ? 'SI' : 'NO';
             
-            setTimeout(() => {
-                iframe.contentWindow?.focus();
-                iframe.contentWindow?.print();
-            }, 250);
+            // Generazione del PDF in memoria come Blob
+            const blob = await pdf(<LabelPDF guest={guest} ammText={ammText} />).toBlob();
+            const url = URL.createObjectURL(blob);
+            
+            // Utilizzo di un iframe per stampare il PDF direttamente
+            let iframe = document.getElementById('print-iframe') as HTMLIFrameElement;
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.id = 'print-iframe';
+                iframe.style.position = 'fixed';
+                iframe.style.right = '100%'; // Nascosto
+                iframe.style.bottom = '100%';
+                iframe.style.width = '0';
+                iframe.style.height = '0';
+                iframe.style.border = '0';
+                document.body.appendChild(iframe);
+            }
+            
+            iframe.src = url;
+            
+            iframe.onload = () => {
+                setTimeout(() => {
+                    iframe.contentWindow?.focus();
+                    iframe.contentWindow?.print();
+                    // Pulizia dell'URL dopo la stampa
+                    setTimeout(() => URL.revokeObjectURL(url), 60000);
+                }, 500);
+            };
+        } catch (error) {
+            console.error("Errore durante la generazione del PDF:", error);
+            toast.error("Errore durante la creazione dell'etichetta PDF");
         }
     };
 
