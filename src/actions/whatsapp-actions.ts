@@ -2,6 +2,7 @@
 
 import { getLeadById } from "@/actions/lead-detail"
 import { sendWhatsAppTemplate, sendWhatsAppMessage } from "@/lib/whatsapp"
+import { getQuote } from "@/actions/quotes"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { format } from "date-fns"
@@ -87,4 +88,59 @@ export async function sendFreeWhatsAppMessageAction(leadId: string, message: str
         }
         return res;
     } catch (error) { return { success: false, error: "Errore" }; }
+}
+export async function sendQuoteWhatsAppAction(quoteId: string) {
+    try {
+        const quote = await getQuote(quoteId);
+        if (!quote || !quote.lead?.phoneRaw) return { success: false, error: "Preventivo o telefono mancante" };
+
+        const templateName = "preventivi";
+        const pdfUrl = `https://app.events-prettylittle.it/api/public/quote/${quote.id}/pdf`;
+        const firstName = quote.lead.firstName || "Cliente";
+
+        const res = await sendWhatsAppTemplate({
+            to: quote.lead.phoneRaw,
+            templateName,
+            bodyVariables: [firstName, pdfUrl]
+        });
+
+        const timestamp = new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
+
+        if (res.success) {
+            await Promise.all([
+                prisma.activity.create({
+                    data: {
+                        leadId: quote.lead.id,
+                        type: "WHATSAPP",
+                        notes: `✅ Inviato Preventivo #${quote.number} via WhatsApp (Template: preventivi)`
+                    }
+                }),
+                prisma.quote.update({
+                    where: { id: quoteId },
+                    data: { status: 'INVIATO', sentAt: new Date() }
+                })
+            ]);
+
+            const systemNote = `[WhatsApp - ${timestamp}]: ✅ INVIATO Preventivo #${quote.number} (Template: preventivi)\n\n`;
+            await prisma.lead.update({
+                where: { id: quote.lead.id },
+                data: { notesInternal: systemNote + (quote.lead.notesInternal || "") }
+            });
+
+            revalidatePath(`/leads/${quote.lead.id}`);
+            revalidatePath('/quotes');
+        } else {
+            const errorMsg = res.error || "Errore SendApp";
+            const systemError = `[WhatsApp - ${timestamp}]: ❌ FALLITO invio Preventivo #${quote.number}: ${errorMsg}\n\n`;
+            await prisma.lead.update({
+                where: { id: quote.lead.id },
+                data: { notesInternal: systemError + (quote.lead.notesInternal || "") }
+            });
+        }
+
+        return res;
+    } catch (error: any) {
+        console.error("WhatsApp Quote Action Error:", error);
+        return { success: false, error: error.message };
+    }
 }

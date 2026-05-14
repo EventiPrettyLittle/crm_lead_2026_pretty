@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { deleteQuote, updateQuoteStatus } from "@/actions/quotes";
 import { toast } from "sonner";
-import { Check, X, Pencil, Eye, Printer, MoreHorizontal, Mail, Trash2, Loader2 } from "lucide-react";
+import { Check, X, Pencil, Eye, Printer, MoreHorizontal, Mail, Trash2, Loader2, MessageCircle } from "lucide-react";
+import { sendQuoteWhatsAppAction } from "@/actions/whatsapp-actions";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -18,6 +19,7 @@ import Link from "next/link";
 export function QuoteRowActions({ quote }: { quote: any }) {
     const [loading, setLoading] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
 
     async function handleStatus(status: string) {
         setLoading(true);
@@ -44,6 +46,22 @@ export function QuoteRowActions({ quote }: { quote: any }) {
         }
     }
 
+    async function handleWhatsAppSend() {
+        setSendingWhatsApp(true);
+        try {
+            const res = await sendQuoteWhatsAppAction(quote.id);
+            if (res.success) {
+                toast.success("Preventivo inviato via WhatsApp!");
+            } else {
+                toast.error(res.error || "Errore durante l'invio WhatsApp");
+            }
+        } catch (e) {
+            toast.error("Errore di connessione");
+        } finally {
+            setSendingWhatsApp(false);
+        }
+    }
+
     return (
         <div className="flex gap-2 items-center">
             {/* Anteprima Rapida */}
@@ -58,6 +76,18 @@ export function QuoteRowActions({ quote }: { quote: any }) {
                 quoteId={quote.id} 
                 existingQuote={quote} 
             />
+
+            {/* Invia WhatsApp */}
+            <Button
+                variant="ghost"
+                size="icon"
+                disabled={sendingWhatsApp}
+                onClick={handleWhatsAppSend}
+                className="rounded-xl h-10 w-10 text-emerald-600 hover:bg-emerald-50 transition-all"
+                title="Invia via WhatsApp"
+            >
+                {sendingWhatsApp ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
+            </Button>
 
             {/* Accetta/Rifiuta rapido se in bozza/inviato */}
             {(quote.status === 'BOZZA' || quote.status === 'INVIATO') && (
