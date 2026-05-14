@@ -19,7 +19,7 @@ export async function GET(
         const { QuoteDocument } = await import('@/components/quotes/quote-pdf');
         const React = await import('react');
 
-        const buffer = await renderToBuffer(React.createElement(QuoteDocument as any, { quote }));
+        const buffer = await renderToBuffer(React.createElement(QuoteDocument as any, { quote }) as any);
         
         return new NextResponse(buffer as any, {
             headers: {
