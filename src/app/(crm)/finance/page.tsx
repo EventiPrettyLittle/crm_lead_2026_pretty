@@ -159,7 +159,7 @@ export default async function FinancePage() {
                 </Card>
             </div>
 
-            </div>
+
 
             {/* Orders & Payments Table */}
             <div className="space-y-4 pt-4">
