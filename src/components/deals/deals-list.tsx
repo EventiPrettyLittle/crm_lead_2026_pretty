@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Calendar, Users, Workflow, Search, SortAsc, SortDesc, Filter } from "lucide-react";
+import { ArrowRight, Calendar, Users, Workflow, Search, SortAsc, SortDesc, Filter, Trophy, CheckCircle, Clock } from "lucide-react";
+import { toggleDealCompletion } from "@/actions/deals";
+import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -22,13 +24,50 @@ interface DealsListProps {
 
 export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProps) {
     const [search, setSearch] = useState("");
-    const [sortBy, setSortBy] = useState("date_asc"); // date_asc, date_desc, progress_asc, progress_desc
+    const [sortBy, setSortBy] = useState("date_asc"); 
+    const [filterMode, setFilterMode] = useState("next15"); // all, next15, completed
+    const [loadingId, setLoadingId] = useState<string | null>(null);
+
+    const handleToggleComplete = async (e: React.MouseEvent, leadId: string, currentStatus: boolean) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLoadingId(leadId);
+        try {
+            const res = await toggleDealCompletion(leadId, currentStatus);
+            if (res.success) {
+                toast.success(res.isCompleted ? "Evento completato! 🏆" : "Evento riportato in lavorazione");
+                // La pagina verrà ricaricata via revalidatePath
+            }
+        } catch (e) {
+            toast.error("Errore durante l'aggiornamento");
+        } finally {
+            setLoadingId(null);
+        }
+    };
 
     // ... (rest of logic)
     const filteredDeals = initialDeals
-        .filter(deal => 
-            `${deal.firstName} ${deal.lastName}`.toLowerCase().includes(search.toLowerCase())
-        )
+        .filter(deal => {
+            // 1. Ricerca testuale
+            const matchesSearch = `${deal.firstName} ${deal.lastName}`.toLowerCase().includes(search.toLowerCase());
+            if (!matchesSearch) return false;
+
+            const isCompleted = deal.deal?.isCompleted === true;
+
+            // 2. Filtro Tab
+            if (filterMode === 'completed') return isCompleted;
+            if (filterMode === 'next15') {
+                if (isCompleted) return false;
+                const eventDate = deal.eventDate ? new Date(deal.eventDate) : null;
+                if (!eventDate) return true; 
+                
+                const now = new Date();
+                const diff = (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+                return diff >= -2 && diff <= 15; // Include eventi da 2 giorni fa a 15 giorni nel futuro
+            }
+            
+            return true;
+        })
         .sort((a, b) => {
             if (sortBy === 'date_asc') return new Date(a.eventDate || 0).getTime() - new Date(b.eventDate || 0).getTime();
             if (sortBy === 'date_desc') return new Date(b.eventDate || 0).getTime() - new Date(a.eventDate || 0).getTime();
@@ -52,32 +91,65 @@ export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProp
     return (
         <div className="space-y-8">
             {/* Toolbar: Filtri e Ricerca */}
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input 
-                        placeholder="Cerca cliente..." 
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-11 h-12 rounded-2xl bg-slate-50 border-none font-bold"
-                    />
+            <div className="flex flex-col space-y-4">
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
+                    <div className="relative w-full md:w-96">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input 
+                            placeholder="Cerca cliente..." 
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-11 h-12 rounded-2xl bg-slate-50 border-none font-bold"
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <Select value={sortBy} onValueChange={setSortBy}>
+                            <SelectTrigger className="h-12 w-full md:w-[220px] rounded-2xl bg-slate-50 border-none font-bold text-slate-600">
+                                <div className="flex items-center gap-2">
+                                    <Filter className="h-4 w-4 text-indigo-600" />
+                                    <SelectValue placeholder="Ordina per..." />
+                                </div>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-2xl border-slate-100 shadow-xl">
+                                <SelectItem value="date_asc" className="font-bold">📅 Data Evento: Più vicini</SelectItem>
+                                <SelectItem value="date_desc" className="font-bold">📅 Data Evento: Più lontani</SelectItem>
+                                <SelectItem value="progress_desc" className="font-bold">📊 Andamento: Più completi</SelectItem>
+                                <SelectItem value="progress_asc" className="font-bold">📊 Andamento: Da iniziare</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full md:w-auto">
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger className="h-12 w-full md:w-[220px] rounded-2xl bg-slate-50 border-none font-bold text-slate-600">
-                            <div className="flex items-center gap-2">
-                                <Filter className="h-4 w-4 text-indigo-600" />
-                                <SelectValue placeholder="Ordina per..." />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-slate-100 shadow-xl">
-                            <SelectItem value="date_asc" className="font-bold">📅 Data Evento: Più vicini</SelectItem>
-                            <SelectItem value="date_desc" className="font-bold">📅 Data Evento: Più lontani</SelectItem>
-                            <SelectItem value="progress_desc" className="font-bold">📊 Andamento: Più completi</SelectItem>
-                            <SelectItem value="progress_asc" className="font-bold">📊 Andamento: Da iniziare</SelectItem>
-                        </SelectContent>
-                    </Select>
+                {/* Filtri di stato */}
+                <div className="flex gap-2 p-1.5 bg-white border border-slate-100 rounded-2xl w-fit shadow-sm">
+                    <button
+                        onClick={() => setFilterMode('next15')}
+                        className={cn(
+                            "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                            filterMode === 'next15' ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-slate-400 hover:bg-slate-50"
+                        )}
+                    >
+                        Prossimi 15G
+                    </button>
+                    <button
+                        onClick={() => setFilterMode('all')}
+                        className={cn(
+                            "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                            filterMode === 'all' ? "bg-slate-900 text-white shadow-lg shadow-slate-200" : "text-slate-400 hover:bg-slate-50"
+                        )}
+                    >
+                        Tutti gli Eventi
+                    </button>
+                    <button
+                        onClick={() => setFilterMode('completed')}
+                        className={cn(
+                            "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                            filterMode === 'completed' ? "bg-emerald-600 text-white shadow-lg shadow-emerald-100" : "text-slate-400 hover:bg-slate-50"
+                        )}
+                    >
+                        Completati
+                    </button>
                 </div>
             </div>
 
@@ -123,9 +195,28 @@ export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProp
                                                 )}
                                             </div>
                                         </div>
-                                        <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold text-[9px] uppercase tracking-tighter">
-                                            VINTO
-                                        </Badge>
+                                            <div className="flex items-center gap-2">
+                                                <Badge className={cn(
+                                                    "border-none font-bold text-[9px] uppercase tracking-tighter",
+                                                    deal.deal?.isCompleted ? "bg-emerald-100 text-emerald-600" : "bg-indigo-50 text-indigo-600"
+                                                )}>
+                                                    {deal.deal?.isCompleted ? "COMPLETATO" : "VINTO"}
+                                                </Badge>
+
+                                                <button
+                                                    onClick={(e) => handleToggleComplete(e, deal.id, deal.deal?.isCompleted || false)}
+                                                    disabled={loadingId === deal.id}
+                                                    className={cn(
+                                                        "p-1.5 rounded-lg transition-all",
+                                                        deal.deal?.isCompleted 
+                                                            ? "bg-emerald-500 text-white shadow-sm" 
+                                                            : "bg-slate-100 text-slate-400 hover:bg-emerald-50 hover:text-emerald-500"
+                                                    )}
+                                                    title={deal.deal?.isCompleted ? "Riapri evento" : "Segna come completato"}
+                                                >
+                                                    {loadingId === deal.id ? <Clock className="h-3 w-3 animate-spin" /> : <Trophy className="h-3 w-3" />}
+                                                </button>
+                                            </div>
                                     </div>
 
                                     {/* Progress Bar Section */}

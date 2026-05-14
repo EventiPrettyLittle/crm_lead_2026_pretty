@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { Euro, CreditCard, Clock, CheckCircle2, MoreHorizontal, Plus, Trash2, Wallet, ArrowRight, FileText } from "lucide-react";
 import { AddPaymentDialog } from "@/components/finance/add-payment-dialog";
 import { PaymentList } from "@/components/finance/payment-list";
+import { FinanceReport } from "@/components/finance/finance-report";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -24,6 +25,15 @@ export default async function FinancePage() {
     const bankTotal = allPayments.filter((p: any) => p.method?.toUpperCase() === 'BONIFICO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
     const cardTotal = allPayments.filter((p: any) => ['CARTA', 'POS', 'LINK'].includes(p.method?.toUpperCase())).reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
     const checkTotal = allPayments.filter((p: any) => p.method?.toUpperCase() === 'ASSEGNO').reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
+
+    const allPaymentsWithLead = quotes.flatMap((q: any) => 
+        (q.payments || []).map((p: any) => ({
+            ...p,
+            leadName: `${q.lead.firstName} ${q.lead.lastName}`,
+            leadId: q.leadId,
+            quoteNumber: q.number
+        }))
+    );
 
 
     const balance = totalToCollect - totalCollected;
@@ -115,6 +125,15 @@ export default async function FinancePage() {
                         <h3 className="text-3xl font-black text-rose-600 mt-1 uppercase tracking-tighter">€{balance.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</h3>
                     </CardContent>
                 </Card>
+            </div>
+
+            {/* Cronologia Incassi Report */}
+            <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                    <h2 className="text-3xl font-black text-slate-900 italic uppercase tracking-tighter">Report Cronologico Incassi</h2>
+                    <Badge className="bg-indigo-600 text-white border-none font-bold text-[10px] uppercase">Nuovo</Badge>
+                </div>
+                <FinanceReport payments={allPaymentsWithLead} />
             </div>
 
             {/* Orders & Payments Table */}

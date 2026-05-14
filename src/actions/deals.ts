@@ -167,3 +167,18 @@ export async function updateDeal(leadId: string, data: any) {
         return { success: false, error: error.message };
     }
 }
+export async function toggleDealCompletion(leadId: string, currentStatus: boolean) {
+    try {
+        const updated = await prisma.deal.update({
+            where: { leadId },
+            data: { isCompleted: !currentStatus }
+        });
+        
+        revalidatePath(`/liveshow/${leadId}`);
+        revalidatePath('/liveshow');
+        revalidatePath('/deals');
+        return { success: true, isCompleted: updated.isCompleted };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
