@@ -1,8 +1,5 @@
-import { renderToBuffer } from '@react-pdf/renderer';
-import { QuoteDocument } from '@/components/quotes/quote-pdf';
 import { getQuote } from '@/actions/quotes';
 import { NextResponse } from 'next/server';
-import React from 'react';
 
 export async function GET(
     request: Request,
@@ -16,9 +13,15 @@ export async function GET(
             return new NextResponse("Preventivo non trovato", { status: 404 });
         }
 
-        const buffer = await renderToBuffer(<QuoteDocument quote={quote} />);
+        // Utilizziamo dynamic imports e React.createElement per evitare errori di parsing JSX
+        // e problemi di build con @react-pdf/renderer in ambiente Turbopack/Edge.
+        const { renderToBuffer } = await import('@react-pdf/renderer');
+        const { QuoteDocument } = await import('@/components/quotes/quote-pdf');
+        const React = await import('react');
+
+        const buffer = await renderToBuffer(React.createElement(QuoteDocument as any, { quote }));
         
-        return new NextResponse(buffer, {
+        return new NextResponse(buffer as any, {
             headers: {
                 'Content-Type': 'application/pdf',
                 'Content-Disposition': `inline; filename="Preventivo-${quote.number}.pdf"`,
