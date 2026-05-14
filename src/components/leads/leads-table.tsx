@@ -190,6 +190,14 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                             <TableRow className="hover:bg-transparent">
                                 <TableHead className="w-[50px] px-4 text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">#</TableHead>
                                 <TableHead className="w-[100px] text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">Status</TableHead>
+                                <TableHead
+                                    className="w-[100px] cursor-pointer hover:bg-slate-50/50 transition-colors text-[9px] font-black uppercase tracking-widest text-slate-400 py-4 group"
+                                    onClick={() => handleSort('leadCreatedAt')}
+                                >
+                                    <div className="flex items-center">
+                                        Arrivo {getSortIcon('leadCreatedAt')}
+                                    </div>
+                                </TableHead>
                                 <TableHead className="w-[120px] text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">Cliente</TableHead>
                                 <TableHead className="w-[100px] text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">Evento</TableHead>
                                 <TableHead className="w-[80px] text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">Ospiti</TableHead>
@@ -198,7 +206,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                                     onClick={() => handleSort('eventDate')}
                                 >
                                     <div className="flex items-center">
-                                        Data <ArrowUpDown className="ml-1.5 h-3 w-3 opacity-50 group-hover:opacity-100" />
+                                        Data {getSortIcon('eventDate')}
                                     </div>
                                 </TableHead>
                                 <TableHead className="w-[100px] text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">Location</TableHead>
@@ -209,7 +217,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                         <TableBody>
                             {filteredLeads.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={9} className="h-48 text-center bg-slate-50/30">
+                                    <TableCell colSpan={10} className="h-48 text-center bg-slate-50/30">
                                         <div className="flex flex-col items-center justify-center space-y-3">
                                             <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
                                                 <FilterX className="h-6 w-6 text-slate-400" />
@@ -246,6 +254,12 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                                             )}>
                                                 {lead.stage.replace('_', ' ')}
                                             </Badge>
+                                        </TableCell>
+                                        <TableCell className="py-2.5">
+                                            <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[10px]">
+                                                <Clock className="h-3 w-3" />
+                                                {lead.leadCreatedAt ? format(new Date(lead.leadCreatedAt), 'dd/MM/yy') : '-'}
+                                            </div>
                                         </TableCell>
                                         <TableCell className="py-2.5">
                                             <div className="flex flex-col">
