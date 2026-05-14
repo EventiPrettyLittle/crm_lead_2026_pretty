@@ -15,6 +15,7 @@ import {
 import QuoteBuilder from "./quote-builder";
 import { QuotePreviewDialog } from "./quote-preview-dialog";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export function QuoteRowActions({ quote }: { quote: any }) {
     const [loading, setLoading] = useState(false);
@@ -83,8 +84,13 @@ export function QuoteRowActions({ quote }: { quote: any }) {
                 size="icon"
                 disabled={sendingWhatsApp}
                 onClick={handleWhatsAppSend}
-                className="rounded-xl h-10 w-10 text-emerald-600 hover:bg-emerald-50 transition-all"
-                title="Invia via WhatsApp"
+                className={cn(
+                    "rounded-xl h-10 w-10 transition-all",
+                    (quote.sentAt || quote.status === 'INVIATO')
+                        ? "text-white bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-200 scale-105" 
+                        : "text-emerald-600 hover:bg-emerald-50"
+                )}
+                title={(quote.sentAt || quote.status === 'INVIATO') ? "Già inviato via WhatsApp" : "Invia via WhatsApp"}
             >
                 {sendingWhatsApp ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
             </Button>

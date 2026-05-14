@@ -206,15 +206,24 @@ export const QuoteDocument = ({ quote }: QuoteDocumentProps) => {
     const email = settings.email || "eventi@prettylittle.it";
     const referente = quote.createdBy || settings.referente || "Referente";
 
+    // Gestione Logo con fallback e supporto per generazione server-side
+    const logoUrl = quote.systemSettings?.logoUrl;
+    let finalLogo = logoUrl && logoUrl.trim() !== "" ? logoUrl : "/logo-pdf.png";
+    
+    // Se siamo sul server (es. invio WhatsApp/Email), i path relativi devono essere assoluti
+    if (typeof window === 'undefined' && finalLogo.startsWith('/')) {
+        finalLogo = `https://app.events-prettylittle.it${finalLogo}`;
+    }
+
     return (
         <Document>
             <Page size="A4" style={styles.page}>
                 <View style={styles.header}>
                     <View style={styles.logoSection}>
                         <Image 
-                            src={quote.systemSettings?.logoUrl || "/logo-pdf.png"} 
+                            src={finalLogo} 
                             style={{ 
-                                width: quote.systemSettings?.logoWidth || 160, 
+                                width: Number(quote.systemSettings?.logoWidth || 160), 
                                 maxHeight: 60, 
                                 objectFit: 'contain' 
                             }} 
