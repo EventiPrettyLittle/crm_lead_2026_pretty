@@ -127,7 +127,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
     const [newGuestName, setNewGuestName] = useState("");
     const [loading, setLoading] = useState(false);
     const [configFilter, setConfigFilter] = useState<'ALL' | 'COMPLETED' | 'MISSING'>('ALL');
-    const [prodFilter, setProdFilter] = useState<'ALL' | 'TODO' | 'DONE'>('ALL');
+    const [prodFilter, setProdFilter] = useState<'ALL' | 'TODO' | 'CONFIG'>('CONFIG');
     const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
     const [alertStockInfo, setAlertStockInfo] = useState<{name: string, remaining: number, status: string, total?: number} | null>(null);
     
@@ -367,7 +367,7 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
             const isReady = g.isCompleted;
 
             if (prodFilter === 'TODO') return !isReady;
-            if (prodFilter === 'DONE') return isReady;
+            if (prodFilter === 'CONFIG') return isConfigComplete && !isReady;
             return true;
         })
     );
@@ -1294,9 +1294,9 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                             <span className="text-[8px] font-black uppercase text-white/40 tracking-widest px-2">Stato Produzione</span>
                             <div className="flex bg-white/5 rounded-xl p-1">
                                 {[
-                                    { id: 'ALL', label: 'Tutti' },
+                                    { id: 'CONFIG', label: 'Configurati' },
                                     { id: 'TODO', label: 'Da Fare' },
-                                    { id: 'DONE', label: 'Fatti' }
+                                    { id: 'ALL', label: 'Tutti' }
                                 ].map((f) => (
                                     <button 
                                         key={f.id}
