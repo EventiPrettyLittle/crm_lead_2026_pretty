@@ -8,6 +8,13 @@ import { Euro, CreditCard, Clock, CheckCircle2, MoreHorizontal, Plus, Trash2, Wa
 import { AddPaymentDialog } from "@/components/finance/add-payment-dialog";
 import { PaymentList } from "@/components/finance/payment-list";
 import { FinanceReport } from "@/components/finance/finance-report";
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -52,6 +59,31 @@ export default async function FinancePage() {
                     </h1>
                     <p className="text-slate-400 font-bold text-lg">Monitora i saldi e gestisci gli acconti dei clienti.</p>
                 </div>
+
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button className="h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest gap-2 shadow-xl shadow-indigo-100 transition-all hover:scale-105 active:scale-95">
+                            <FileText className="h-5 w-5" />
+                            Visualizza Report Cronologico
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-[95vw] w-[1400px] h-[90vh] flex flex-col p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
+                        <DialogHeader className="p-8 pb-4 bg-slate-900 text-white">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-2xl bg-indigo-500 flex items-center justify-center">
+                                    <FileText className="h-6 w-6 text-white" />
+                                </div>
+                                <div className="space-y-1">
+                                    <DialogTitle className="text-3xl font-black italic uppercase tracking-tighter">Report Cronologico Incassi</DialogTitle>
+                                    <p className="text-indigo-300 text-[10px] font-black uppercase tracking-widest">Cronologia completa di tutti i versamenti ricevuti</p>
+                                </div>
+                            </div>
+                        </DialogHeader>
+                        <div className="flex-1 overflow-y-auto p-8 bg-slate-50">
+                            <FinanceReport payments={allPaymentsWithLead} />
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             {/* Financial Stats Overlap Grid */}
@@ -127,13 +159,6 @@ export default async function FinancePage() {
                 </Card>
             </div>
 
-            {/* Cronologia Incassi Report */}
-            <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-black text-slate-900 italic uppercase tracking-tighter">Report Cronologico Incassi</h2>
-                    <Badge className="bg-indigo-600 text-white border-none font-bold text-[10px] uppercase">Nuovo</Badge>
-                </div>
-                <FinanceReport payments={allPaymentsWithLead} />
             </div>
 
             {/* Orders & Payments Table */}
