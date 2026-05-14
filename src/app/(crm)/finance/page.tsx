@@ -67,7 +67,7 @@ export default async function FinancePage() {
                             Visualizza Report Cronologico
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-[95vw] w-[1400px] h-[90vh] flex flex-col p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
+                    <DialogContent className="sm:max-w-[95vw] w-[95vw] h-[92vh] flex flex-col p-0 rounded-[2.5rem] overflow-hidden border-none shadow-2xl">
                         <DialogHeader className="p-8 pb-4 bg-slate-900 text-white">
                             <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-2xl bg-indigo-500 flex items-center justify-center">

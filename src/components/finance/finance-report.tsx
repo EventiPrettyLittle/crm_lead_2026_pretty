@@ -102,28 +102,42 @@ export function FinanceReport({ payments }: FinanceReportProps) {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col xl:flex-row justify-between gap-6 items-start">
+        <div className="space-y-8 pb-10">
+            {/* Summary Totals Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="bg-slate-900 p-6 rounded-[2rem] shadow-xl border border-white/5 flex flex-col justify-center">
+                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-1">Totale Filtrato</span>
+                    <span className="text-2xl font-black text-white italic">€{totalFiltered.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
+                </div>
+                {Object.entries(totalsByMethod).map(([method, amount]) => (
+                    <div key={method} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col justify-center transition-all hover:shadow-md">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter block mb-1">{method}</span>
+                        <span className="text-xl font-black text-slate-900">€{amount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                ))}
+            </div>
+
+            <div className="flex flex-col xl:flex-row justify-between gap-6 items-center bg-white p-4 rounded-[2rem] shadow-sm border border-slate-100">
                 {/* Search and Filters */}
                 <div className="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
-                    <div className="relative w-full md:w-80">
+                    <div className="relative w-full md:w-96">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input 
-                            placeholder="Cerca per cliente..." 
+                            placeholder="Cerca per cliente o numero ordine..." 
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-11 h-12 rounded-2xl bg-white border-slate-100 shadow-sm font-bold"
+                            className="pl-11 h-12 rounded-2xl bg-slate-50 border-none font-bold text-slate-700"
                         />
                     </div>
                     
-                    <div className="flex gap-2 p-1.5 bg-white border border-slate-100 rounded-2xl shadow-sm h-12 items-center overflow-x-auto max-w-full">
+                    <div className="flex gap-2 p-1 bg-slate-50 rounded-xl h-12 items-center">
                         {["ALL", "CONTANTI", "BONIFICO", "POS"].map((m) => (
                             <button
                                 key={m}
                                 onClick={() => setMethodFilter(m)}
                                 className={cn(
-                                    "px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
-                                    methodFilter === m ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "text-slate-400 hover:bg-slate-50"
+                                    "px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                                    methodFilter === m ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
                                 )}
                             >
                                 {m}
@@ -132,29 +146,14 @@ export function FinanceReport({ payments }: FinanceReportProps) {
                     </div>
                 </div>
 
-                {/* Totals Summary in Header */}
-                <div className="flex flex-wrap gap-4 justify-end w-full xl:w-auto">
-                    <div className="flex flex-col items-end pr-4 border-r border-slate-200">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Totale Filtrato</span>
-                        <span className="text-2xl font-black text-slate-900 italic">€{totalFiltered.toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {Object.entries(totalsByMethod).filter(([_, val]) => val > 0).map(([method, amount]) => (
-                            <div key={method} className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm min-w-[120px]">
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter block">{method}</span>
-                                <span className="text-sm font-black text-slate-900">€{amount.toLocaleString('it-IT')}</span>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button 
-                            onClick={exportToCSV}
-                            className="h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg shadow-emerald-100"
-                        >
-                            <FileSpreadsheet className="h-4 w-4" />
-                            Esporta CSV
-                        </Button>
-                    </div>
+                <div className="flex items-center gap-3">
+                    <Button 
+                        onClick={exportToCSV}
+                        className="h-12 px-8 rounded-2xl bg-emerald-600 hover:bg-emerald-700 font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg shadow-emerald-100 transition-all hover:scale-105 active:scale-95"
+                    >
+                        <Download className="h-4 w-4" />
+                        Scarica Report CSV
+                    </Button>
                 </div>
             </div>
 
