@@ -23,7 +23,7 @@ interface LeadsTableProps {
 }
 
 type SortConfig = {
-    key: 'leadCreatedAt' | 'eventDate';
+    key: 'createdAt' | 'eventDate';
     direction: 'asc' | 'desc';
 } | null;
 
@@ -43,7 +43,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
     const [filterStage, setFilterStage] = useState<string | null>(null);
     const [filterEventType, setFilterEventType] = useState<string | null>(null);
     const [filterYear, setFilterYear] = useState<string | null>(null);
-    const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'leadCreatedAt', direction: 'desc' });
+    const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'createdAt', direction: 'desc' });
 
     const EVENT_TYPES = [
         "Matrimonio",
@@ -55,7 +55,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
         "Altro"
     ]
 
-    const handleSort = (key: 'leadCreatedAt' | 'eventDate') => {
+    const handleSort = (key: 'createdAt' | 'eventDate') => {
         setSortConfig((prev) => {
             if (prev?.key === key) {
                 return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
@@ -64,8 +64,8 @@ export function LeadsTable({ leads }: LeadsTableProps) {
         });
     };
 
-    const getSortIcon = (key: 'leadCreatedAt' | 'eventDate') => {
-        if (sortConfig?.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    const getSortIcon = (key: 'createdAt' | 'eventDate') => {
+        if (sortConfig?.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50 group-hover:opacity-100" />;
         return sortConfig.direction === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
     };
 
@@ -192,10 +192,10 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                                 <TableHead className="w-[100px] text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">Status</TableHead>
                                 <TableHead
                                     className="w-[100px] cursor-pointer hover:bg-slate-50/50 transition-colors text-[9px] font-black uppercase tracking-widest text-slate-400 py-4 group"
-                                    onClick={() => handleSort('leadCreatedAt')}
+                                    onClick={() => handleSort('createdAt')}
                                 >
                                     <div className="flex items-center">
-                                        Arrivo {getSortIcon('leadCreatedAt')}
+                                        Arrivo {getSortIcon('createdAt')}
                                     </div>
                                 </TableHead>
                                 <TableHead className="w-[120px] text-[9px] font-black uppercase tracking-widest text-slate-400 py-4">Cliente</TableHead>
@@ -258,7 +258,7 @@ export function LeadsTable({ leads }: LeadsTableProps) {
                                         <TableCell className="py-2.5">
                                             <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[10px]">
                                                 <Clock className="h-3 w-3" />
-                                                {lead.leadCreatedAt ? format(new Date(lead.leadCreatedAt), 'dd/MM/yy') : '-'}
+                                                {lead.createdAt ? format(new Date(lead.createdAt), 'dd/MM/yy') : '-'}
                                             </div>
                                         </TableCell>
                                         <TableCell className="py-2.5">
