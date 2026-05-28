@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { getDueRemindersAction, completeReminderAction } from "@/actions/reminder-actions"
+import { getCurrentUser } from "@/actions/auth"
 import { toast } from "sonner"
 import { Bell, Phone, ArrowUpRight, Check } from "lucide-react"
 import Link from "next/link"
@@ -9,8 +10,21 @@ import Link from "next/link"
 export function ReminderNotifier() {
     const activeToasts = useRef<Map<string, string | number>>(new Map());
     const lastNotifiedAt = useRef<Map<string, string>>(new Map());
+    const [shouldShow, setShouldShow] = useState<boolean | null>(null);
 
     useEffect(() => {
+        getCurrentUser().then(user => {
+            if (user?.role?.toUpperCase() === 'PRODUZIONE' || user?.email?.toLowerCase() === 'produzione@prettylittle.it') {
+                setShouldShow(false);
+            } else {
+                setShouldShow(true);
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        if (shouldShow !== true) return;
+
         const checkReminders = async () => {
             const res = await getDueRemindersAction();
             
@@ -100,7 +114,7 @@ export function ReminderNotifier() {
         const interval = setInterval(checkReminders, 30000);
         
         return () => clearInterval(interval);
-    }, []);
+    }, [shouldShow]);
 
     return null; // Componente invisibile
 }

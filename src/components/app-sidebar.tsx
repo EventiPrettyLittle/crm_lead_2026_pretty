@@ -47,8 +47,13 @@ export function AppSidebar() {
         if (!user) return false;
         
         const role = user.role?.toUpperCase();
+        const email = user.email?.toLowerCase();
+        
         if (role === 'PRODUZIONE') {
-            return item.title === 'Deal' || item.title === 'Live Show';
+            if (email === 'produzione@prettylittle.it') {
+                return item.title === 'Deal' || item.title === 'Live Show';
+            }
+            return item.title === 'Deal' || item.title === 'Live Show' || item.title === 'Team';
         }
         return true;
     });

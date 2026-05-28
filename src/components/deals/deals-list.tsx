@@ -160,8 +160,8 @@ export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProp
                         <Workflow className="h-16 w-16 text-slate-200 mx-auto mb-4" />
                         <p className="text-slate-400 font-bold uppercase tracking-widest">Nessun Deal trovato</p>
                     </div>
-                ) : filteredDeals.map((deal: any) => (
-                    <Card key={deal.id} className="rounded-[2.5rem] border-none shadow-sm hover:shadow-xl transition-all duration-500 bg-white overflow-hidden group">
+                ) : filteredDeals.map((deal: any, idx: number) => (
+                    <Card key={`${deal.id}-${idx}`} className="rounded-[2.5rem] border-none shadow-sm hover:shadow-xl transition-all duration-500 bg-white overflow-hidden group">
                         <CardContent className="p-0">
                             <Link href={`${linkPrefix}/${deal.id}`}>
                                 <div className="p-8 space-y-6">

@@ -54,6 +54,11 @@ export const sidebarLinks = [
         icon: Clock,
     },
     {
+        title: "Team",
+        href: "/team",
+        icon: Users,
+    },
+    {
         title: "Incassi & Pagamenti",
         href: "/finance",
         icon: Euro,

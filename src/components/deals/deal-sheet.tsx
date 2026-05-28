@@ -7,13 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useEffect } from "react";
 import { updateDeal } from "@/actions/deals";
+import { getTeamMembers, assignTeamMember, removeTeamAssignment, getTeamAssignmentsByDeal } from "@/actions/team";
 import { toast } from "sonner";
 import { formatITDate } from "@/lib/utils";
-import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2, ArrowLeft, Eye, Printer, Calendar } from "lucide-react";
+import { Save, Package, Sparkles, Clock, MapPin, Plus, Trash2, Layers, ListChecks, NotebookPen, Loader2, ArrowLeft, Eye, Printer, Calendar, UserPlus } from "lucide-react";
 import { QuotePreviewDialog } from "@/components/quotes/quote-preview-dialog";
 import {
     Dialog,
@@ -153,6 +155,72 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
     const quoteItems = acceptedQuote?.items ? (Array.isArray(acceptedQuote.items) ? acceptedQuote.items : []) : [];
     const productAssignments = data.productAssignments ? JSON.parse(data.productAssignments) : [];
 
+    // Stati per la gestione del team
+    const [teamMembers, setTeamMembers] = useState<any[]>([]);
+    const [dealAssignments, setDealAssignments] = useState<any[]>([]);
+    const [selectedMemberId, setSelectedMemberId] = useState<string>("");
+    const [memberAmount, setMemberAmount] = useState<string>("");
+    const [loadingTeam, setLoadingTeam] = useState(false);
+    const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+
+    useEffect(() => {
+        if (data.id && data.deliveryType === 'LIVE SHOW') {
+            loadTeamData();
+        }
+    }, [data.id, data.deliveryType]);
+
+    const loadTeamData = async () => {
+        setLoadingTeam(true);
+        try {
+            const members = await getTeamMembers();
+            setTeamMembers(members);
+            if (data.id) {
+                const assigns = await getTeamAssignmentsByDeal(data.id);
+                setDealAssignments(assigns);
+            }
+        } catch (err) {
+            console.error("Error loading team data:", err);
+        } finally {
+            setLoadingTeam(false);
+        }
+    };
+
+    const handleAssignMember = async () => {
+        if (!selectedMemberId || !memberAmount) {
+            toast.error("Seleziona un operatore e inserisci l'importo");
+            return;
+        }
+        try {
+            const res = await assignTeamMember(data.id, selectedMemberId, Number(memberAmount));
+            if (res.success) {
+                toast.success("Operatore assegnato con successo!");
+                setSelectedMemberId("");
+                setMemberAmount("");
+                loadTeamData();
+            } else {
+                toast.error(res.error || "Errore durante l'assegnazione");
+            }
+        } catch (err) {
+            toast.error("Errore durante l'assegnazione");
+        }
+    };
+
+    const handleRemoveAssignment = async (memberId: string) => {
+        if (confirm("Vuoi rimuovere questo operatore dall'evento?")) {
+            try {
+                const res = await removeTeamAssignment(data.id, memberId);
+                if (res.success) {
+                    toast.success("Operatore rimosso!");
+                    loadTeamData();
+                } else {
+                    toast.error(res.error || "Errore durante la rimozione");
+                }
+            } catch (err) {
+                toast.error("Errore durante la rimozione");
+            }
+        }
+    };
+
     // Logica di visibilità DERIVATA e REATTIVA
     const showFavor2 = productAssignments.some((a: any) => a.target === 'favor2');
     const showFavor3 = productAssignments.some((a: any) => a.target === 'favor3');
@@ -286,6 +354,106 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                                 <option value="CONSEGNA IN LOCATION">In Location</option>
                                 <option value="LIVE SHOW">Live Show</option>
                             </select>
+
+                            {/* Icona del team dell'evento (mostrata solo se è un LIVE SHOW) */}
+                            {data.deliveryType === 'LIVE SHOW' && (
+                                <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="h-7 w-7 p-0 rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all flex items-center justify-center animate-in zoom-in-50"
+                                            title="Componi Team Live Show"
+                                        >
+                                            <UserPlus className="h-3.5 w-3.5" />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="rounded-3xl border-slate-100 shadow-lg max-w-md bg-white">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-xl font-black text-slate-900 uppercase italic">
+                                                Componi <span className="text-purple-600">Team Evento</span>
+                                            </DialogTitle>
+                                            <p className="text-slate-500 text-xs font-semibold">
+                                                Assegna gli operatori per questo Live Show e imposta il compenso concordato.
+                                            </p>
+                                        </DialogHeader>
+
+                                        <div className="space-y-4 py-4">
+                                            {/* Form per aggiungere l'assegnazione */}
+                                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Assegna Nuovo Operatore</span>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <select
+                                                        value={selectedMemberId}
+                                                        onChange={(e) => setSelectedMemberId(e.target.value)}
+                                                        className="text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none cursor-pointer w-full text-slate-700"
+                                                    >
+                                                        <option value="">Seleziona operatore...</option>
+                                                        {teamMembers.map((m: any) => (
+                                                            <option key={m.id} value={m.id}>{m.name}</option>
+                                                        ))}
+                                                    </select>
+
+                                                    <Input
+                                                        type="number"
+                                                        placeholder="Importo compenso (€)"
+                                                        value={memberAmount}
+                                                        onChange={(e) => setMemberAmount(e.target.value)}
+                                                        className="bg-white border-slate-200 rounded-xl text-xs font-bold"
+                                                    />
+                                                </div>
+                                                <Button 
+                                                    onClick={handleAssignMember} 
+                                                    className="w-full bg-purple-600 hover:bg-purple-700 font-bold text-xs uppercase rounded-xl"
+                                                >
+                                                    Assegna Operatore
+                                                </Button>
+                                            </div>
+
+                                            {/* Lista operatori già assegnati */}
+                                            <div className="space-y-2">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Operatori Assegnati ({dealAssignments.length})</span>
+                                                <div className="max-h-[200px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                                                    {dealAssignments.length > 0 ? (
+                                                        dealAssignments.map((assign: any) => (
+                                                            <div key={assign.id} className="bg-white p-3 rounded-xl border border-slate-100 flex items-center justify-between shadow-sm">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs font-black text-slate-800 uppercase italic">{assign.teamMember.name}</span>
+                                                                    <span className="text-[9px] font-bold text-slate-400 uppercase">Compenso: €{Number(assign.amount).toLocaleString('it-IT', { minimumFractionDigits: 2 })}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    {assign.isPaid ? (
+                                                                        <Badge className="bg-emerald-100 hover:bg-emerald-100 text-emerald-800 rounded-full font-bold text-[8px] uppercase px-2 py-0.5">
+                                                                            Pagato
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <Badge className="bg-amber-100 hover:bg-amber-100 text-amber-800 rounded-full font-bold text-[8px] uppercase px-2 py-0.5">
+                                                                            Da Pagare
+                                                                        </Badge>
+                                                                    )}
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => handleRemoveAssignment(assign.teamMemberId)}
+                                                                        className="h-7 w-7 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50"
+                                                                    >
+                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-[11px] text-slate-400 font-medium text-center py-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                                                            Nessun operatore ancora assegnato a questo evento.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+
                             <div className="flex items-center gap-1.5 text-slate-900 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
                                 <MapPin className="h-3 w-3 text-indigo-500" />
                                 <span className="text-[10px] font-black uppercase tracking-tight">{leadLocation || 'No Location'}</span>

@@ -112,6 +112,7 @@ const LabelPDF = ({ guest, ammText }: { guest: any, ammText: string }) => (
 import { 
     addGuest, updateGuest, deleteGuest, togglePresence, getGuests, bulkAddGuests, clearGuests
 } from "@/actions/liveshow";
+import { updateDeal } from "@/actions/deals";
 import { cn } from "@/lib/utils";
 
 interface LiveShowSheetProps {
@@ -549,9 +550,34 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                 <div className="flex items-center gap-3 shrink-0">
                     <div className="flex flex-col items-end">
                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Status Evento</span>
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-200/50 rounded-lg px-3 py-1 font-black text-[10px] uppercase">
-                            Live In Progress
-                        </Badge>
+                        <Select 
+                            value={deal.status || 'IN_LAVORAZIONE'} 
+                            onValueChange={async (newStatus) => {
+                                const isCompleted = newStatus === 'PRONTO' || newStatus === 'CONSEGNATO';
+                                const res = await updateDeal(deal.leadId, { status: newStatus, isCompleted });
+                                if (res.success) {
+                                    setDeal((prev: any) => ({ ...prev, status: newStatus, isCompleted }));
+                                    toast.success("Stato evento aggiornato!");
+                                } else {
+                                    toast.error("Errore durante l'aggiornamento dello stato");
+                                }
+                            }}
+                        >
+                            <SelectTrigger className="h-8 rounded-xl font-black text-[10px] uppercase border-slate-200 bg-white">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl bg-white border-slate-200">
+                                <SelectItem value="IN_LAVORAZIONE" className="text-[10px] font-black uppercase text-amber-600">
+                                    LIVE IN PROGRESS
+                                </SelectItem>
+                                <SelectItem value="PRONTO" className="text-[10px] font-black uppercase text-emerald-600">
+                                    COMPLETATO / PRONTO
+                                </SelectItem>
+                                <SelectItem value="CONSEGNATO" className="text-[10px] font-black uppercase text-blue-600">
+                                    CONSEGNATO
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
             </div>
