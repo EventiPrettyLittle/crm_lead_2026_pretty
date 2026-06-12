@@ -318,11 +318,10 @@ export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProp
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1 text-indigo-600 font-bold text-[10px] uppercase group-hover:translate-x-1 transition-transform">
-                                             Dettagli <ArrowRight className="h-3 w-3" />
-                                         </div>
-                                     </div>
+                                        Dettagli <ArrowRight className="h-3 w-3" />
+                                    </div>
                                 </div>
-                            </Link>
+                            </div>
                         </CardContent>
                     </Card>
                 ))}
