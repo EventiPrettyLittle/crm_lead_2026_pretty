@@ -180,155 +180,144 @@ export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProp
                         <p className="text-slate-400 font-bold uppercase tracking-widest">Nessun Deal trovato</p>
                     </div>
                 ) : filteredDeals.map((deal: any, idx: number) => (
-                    <Card key={`${deal.id}-${idx}`} className="rounded-[2.5rem] border-none shadow-sm hover:shadow-xl transition-all duration-500 bg-white overflow-hidden group">
+                    <Card key={`${deal.id}-${idx}`} className="relative rounded-[2.5rem] border-none shadow-sm hover:shadow-xl transition-all duration-500 bg-white overflow-hidden group">
                         <CardContent className="p-0">
-                            <Link href={`${linkPrefix}/${deal.id}`}>
-                                <div className="p-8 space-y-6">
-                                    <div className="flex justify-between items-start">
-                                        <div className="space-y-2">
-                                            <h3 className="text-2xl font-black text-slate-900 leading-tight">
-                                                {deal.firstName} {deal.lastName}
-                                            </h3>
-                                            <div className="flex flex-col gap-1">
+                            {/* Absolute link overlay to make the entire card clickable */}
+                            <Link href={`${linkPrefix}/${deal.id}`} className="absolute inset-0 z-0">
+                                <span className="sr-only">Vedi dettagli per {deal.firstName} {deal.lastName}</span>
+                            </Link>
+
+                            <div className="p-8 space-y-6 relative z-10 pointer-events-none">
+                                <div className="flex justify-between items-start">
+                                    <div className="space-y-2">
+                                        <h3 className="text-2xl font-black text-slate-900 leading-tight">
+                                            {deal.firstName} {deal.lastName}
+                                        </h3>
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="h-3 w-3 text-slate-400" />
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                                    {deal.eventDate ? new Date(deal.eventDate).toLocaleDateString('it-IT') : 'Data non impostata'}
+                                                </span>
+                                            </div>
+                                            {deal.deal?.deliveryType && (
                                                 <div className="flex items-center gap-2">
-                                                    <Calendar className="h-3 w-3 text-slate-400" />
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                                        {deal.eventDate ? new Date(deal.eventDate).toLocaleDateString('it-IT') : 'Data non impostata'}
+                                                    <div className={cn(
+                                                        "h-1.5 w-1.5 rounded-full",
+                                                        deal.deal.deliveryType === 'CONSEGNA' ? "bg-blue-500" :
+                                                        deal.deal.deliveryType === 'LIVE SHOW' ? "bg-purple-500" : "bg-emerald-500"
+                                                    )} />
+                                                    <span className={cn(
+                                                        "text-[9px] font-black uppercase tracking-tighter flex items-center gap-1.5",
+                                                        deal.deal.deliveryType === 'CONSEGNA' ? "text-blue-600" :
+                                                        deal.deal.deliveryType === 'LIVE SHOW' ? "text-purple-600" : "text-emerald-600"
+                                                    )}>
+                                                        {deal.deal.deliveryType}
+                                                        {deal.deal.deliveryType === 'LIVE SHOW' && (() => {
+                                                            const qty = getFavor1Qty(deal);
+                                                            return qty !== null ? (
+                                                                <span className="text-[9px] font-black text-purple-700 bg-purple-100/80 px-1.5 py-0.5 rounded-md leading-none">
+                                                                    {qty} pz
+                                                                </span>
+                                                            ) : null;
+                                                        })()}
                                                     </span>
                                                 </div>
-                                                {deal.deal?.deliveryType && (
-                                                    <div className="flex items-center gap-2">
-                                                        <div className={cn(
-                                                            "h-1.5 w-1.5 rounded-full",
-                                                            deal.deal.deliveryType === 'CONSEGNA' ? "bg-blue-500" :
-                                                            deal.deal.deliveryType === 'LIVE SHOW' ? "bg-purple-500" : "bg-emerald-500"
-                                                        )} />
-                                                        <span className={cn(
-                                                            "text-[9px] font-black uppercase tracking-tighter flex items-center gap-1.5",
-                                                            deal.deal.deliveryType === 'CONSEGNA' ? "text-blue-600" :
-                                                            deal.deal.deliveryType === 'LIVE SHOW' ? "text-purple-600" : "text-emerald-600"
-                                                        )}>
-                                                            {deal.deal.deliveryType}
-                                                            {deal.deal.deliveryType === 'LIVE SHOW' && (() => {
-                                                                const qty = getFavor1Qty(deal);
-                                                                return qty !== null ? (
-                                                                    <span className="text-[9px] font-black text-purple-700 bg-purple-100/80 px-1.5 py-0.5 rounded-md leading-none">
-                                                                        {qty} pz
-                                                                    </span>
-                                                                ) : null;
-                                                            })()}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                            <div className="flex items-center gap-2">
-                                                <Badge className={cn(
-                                                    "border-none font-bold text-[9px] uppercase tracking-tighter",
-                                                    deal.deal?.isCompleted ? "bg-emerald-100 text-emerald-600" : "bg-indigo-50 text-indigo-600"
-                                                )}>
-                                                    {deal.deal?.isCompleted ? "COMPLETATO" : "VINTO"}
-                                                </Badge>
-
-                                                <button
-                                                    onClick={(e) => handleToggleComplete(e, deal.id, deal.deal?.isCompleted || false)}
-                                                    disabled={loadingId === deal.id}
-                                                    className={cn(
-                                                        "p-1.5 rounded-lg transition-all",
-                                                        deal.deal?.isCompleted 
-                                                            ? "bg-emerald-500 text-white shadow-sm" 
-                                                            : "bg-slate-100 text-slate-400 hover:bg-emerald-50 hover:text-emerald-500"
-                                                    )}
-                                                    title={deal.deal?.isCompleted ? "Riapri evento" : "Segna come completato"}
-                                                >
-                                                    {loadingId === deal.id ? <Clock className="h-3 w-3 animate-spin" /> : <Trophy className="h-3 w-3" />}
-                                                </button>
-                                            </div>
-                                    </div>
-
-                                    {/* Progress Bar Section */}
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-end">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Andamento Scheda</p>
-                                            <p className={cn("text-xs font-black italic", getTextColor(deal.progress))}>
-                                                {deal.progress}%
-                                            </p>
-                                        </div>
-                                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-                                            <div 
-                                                className={cn("h-full transition-all duration-1000", getProgressColor(deal.progress))}
-                                                style={{ width: `${deal.progress}%` }}
-                                            />
+                                            )}
                                         </div>
                                     </div>
+                                    <div className="flex items-center gap-2 pointer-events-auto relative z-20">
+                                        <Badge className={cn(
+                                            "border-none font-bold text-[9px] uppercase tracking-tighter",
+                                            deal.deal?.isCompleted ? "bg-emerald-100 text-emerald-600" : "bg-indigo-50 text-indigo-600"
+                                        )}>
+                                            {deal.deal?.isCompleted ? "COMPLETATO" : "VINTO"}
+                                        </Badge>
 
-                                     <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                                         <div className="flex items-center gap-4">
-                                             {/* Invitati count */}
-                                             <div className="flex items-center gap-1">
-                                                 <Users className="h-3 w-3 text-slate-300" />
-                                                 <span className="text-[10px] font-bold text-slate-500" title="Numero invitati">{deal.guestsCount || '--'}</span>
-                                             </div>
-                                             
-                                             {/* Team count & Eye widget */}
-                                             <div 
-                                                 className="flex items-center gap-1.5 border-l border-slate-100 pl-3"
-                                                 onClick={(e) => {
-                                                     e.preventDefault();
-                                                     e.stopPropagation();
-                                                 }}
-                                             >
-                                                 <span className="text-[9px] font-black uppercase text-slate-400">Team:</span>
-                                                 {deal.deal?.teamAssignments && deal.deal.teamAssignments.length > 0 ? (
-                                                     <div className="flex items-center gap-1">
-                                                         <span className="text-[10px] font-bold text-slate-700">
-                                                             {deal.deal.teamAssignments.length}
-                                                         </span>
-                                                         <Popover 
-                                                             open={openPopoverId === deal.id} 
-                                                             onOpenChange={(open) => setOpenPopoverId(open ? deal.id : null)}
-                                                         >
-                                                             <PopoverTrigger asChild>
-                                                                 <button 
-                                                                     type="button" 
-                                                                     onClick={(e) => {
-                                                                         e.preventDefault();
-                                                                         e.stopPropagation();
-                                                                         setOpenPopoverId(openPopoverId === deal.id ? null : deal.id);
-                                                                     }}
-                                                                     className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all flex items-center justify-center cursor-pointer"
-                                                                     title="Vedi personale assegnato"
-                                                                 >
-                                                                     <Eye className="h-3.5 w-3.5" />
-                                                                 </button>
-                                                             </PopoverTrigger>
-                                                             <PopoverContent 
-                                                                 className="w-56 p-3 rounded-2xl bg-white border border-slate-100 shadow-xl z-50"
-                                                                 onClick={(e) => {
-                                                                     e.preventDefault();
-                                                                     e.stopPropagation();
-                                                                 }}
-                                                             >
-                                                                 <div className="space-y-2">
-                                                                     <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest block">Operatori Assegnati</span>
-                                                                     <div className="space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar">
-                                                                         {deal.deal.teamAssignments.map((assign: any, aIdx: number) => (
-                                                                             <div key={aIdx} className="flex justify-between items-center bg-slate-50 p-1.5 rounded-xl border border-slate-100 animate-in fade-in duration-200">
-                                                                                 <span className="text-[10px] font-black text-slate-800 uppercase italic leading-none">{assign.teamMember?.name || 'Operatore'}</span>
-                                                                                 <span className="text-[8px] font-bold text-indigo-600 leading-none">€{Number(assign.amount)}</span>
-                                                                             </div>
-                                                                         ))}
-                                                                     </div>
-                                                                 </div>
-                                                             </PopoverContent>
-                                                         </Popover>
-                                                     </div>
-                                                 ) : (
-                                                     <span className="text-[10px] font-bold text-slate-400">0</span>
-                                                 )}
-                                             </div>
-                                         </div>
-                                         <div className="flex items-center gap-1 text-indigo-600 font-bold text-[10px] uppercase group-hover:translate-x-1 transition-transform">
+                                        <button
+                                            onClick={(e) => handleToggleComplete(e, deal.id, deal.deal?.isCompleted || false)}
+                                            disabled={loadingId === deal.id}
+                                            className={cn(
+                                                "p-1.5 rounded-lg transition-all",
+                                                deal.deal?.isCompleted 
+                                                    ? "bg-emerald-500 text-white shadow-sm" 
+                                                    : "bg-slate-100 text-slate-400 hover:bg-emerald-50 hover:text-emerald-500"
+                                            )}
+                                            title={deal.deal?.isCompleted ? "Riapri evento" : "Segna come completato"}
+                                        >
+                                            {loadingId === deal.id ? <Clock className="h-3 w-3 animate-spin" /> : <Trophy className="h-3 w-3" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Progress Bar Section */}
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-end">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Andamento Scheda</p>
+                                        <p className={cn("text-xs font-black italic", getTextColor(deal.progress))}>
+                                            {deal.progress}%
+                                        </p>
+                                    </div>
+                                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                                        <div 
+                                            className={cn("h-full transition-all duration-1000", getProgressColor(deal.progress))}
+                                            style={{ width: `${deal.progress}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                                    <div className="flex items-center gap-4">
+                                        {/* Invitati count */}
+                                        <div className="flex items-center gap-1">
+                                            <Users className="h-3 w-3 text-slate-300" />
+                                            <span className="text-[10px] font-bold text-slate-500" title="Numero invitati">{deal.guestsCount || '--'}</span>
+                                        </div>
+                                        
+                                        {/* Team count & Eye widget */}
+                                        <div className="flex items-center gap-1.5 border-l border-slate-100 pl-3 pointer-events-auto relative z-20">
+                                            <span className="text-[9px] font-black uppercase text-slate-400">Team:</span>
+                                            {deal.deal?.teamAssignments && deal.deal.teamAssignments.length > 0 ? (
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-[10px] font-bold text-slate-700">
+                                                        {deal.deal.teamAssignments.length}
+                                                    </span>
+                                                    <Popover 
+                                                        open={openPopoverId === deal.id} 
+                                                        onOpenChange={(open) => setOpenPopoverId(open ? deal.id : null)}
+                                                    >
+                                                        <PopoverTrigger asChild>
+                                                            <button 
+                                                                type="button" 
+                                                                className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all flex items-center justify-center cursor-pointer"
+                                                                title="Vedi personale assegnato"
+                                                            >
+                                                                <Eye className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent 
+                                                            className="w-56 p-3 rounded-2xl bg-white border border-slate-100 shadow-xl z-50 pointer-events-auto"
+                                                        >
+                                                            <div className="space-y-2">
+                                                                <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest block">Operatori Assegnati</span>
+                                                                <div className="space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar">
+                                                                    {deal.deal.teamAssignments.map((assign: any, aIdx: number) => (
+                                                                        <div key={aIdx} className="flex justify-between items-center bg-slate-50 p-1.5 rounded-xl border border-slate-100 animate-in fade-in duration-200">
+                                                                            <span className="text-[10px] font-black text-slate-800 uppercase italic leading-none">{assign.teamMember?.name || 'Operatore'}</span>
+                                                                            <span className="text-[8px] font-bold text-indigo-600 leading-none">€{Number(assign.amount)}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-slate-400">0</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-indigo-600 font-bold text-[10px] uppercase group-hover:translate-x-1 transition-transform">
                                              Dettagli <ArrowRight className="h-3 w-3" />
                                          </div>
                                      </div>
