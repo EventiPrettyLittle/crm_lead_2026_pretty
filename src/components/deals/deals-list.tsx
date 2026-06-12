@@ -40,6 +40,7 @@ const getFavor1Qty = (deal: any) => {
 };
 
 export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProps) {
+    console.log("Deals in list:", initialDeals.map(d => ({ name: d.firstName, dealId: d.deal?.id, teamCount: d.deal?.teamAssignments?.length, team: d.deal?.teamAssignments })));
     const [search, setSearch] = useState("");
     const [sortBy, setSortBy] = useState("date_asc"); 
     const [filterMode, setFilterMode] = useState("next15"); // all, next15, completed

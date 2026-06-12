@@ -120,6 +120,7 @@ export async function getDeals() {
             ...lead,
             id: lead?.id || quote.leadId,
             progress,
+            deal: lead?.deal,
             acceptedQuote: quote // Passiamo anche il riferimento al preventivo specifico
         };
     });
