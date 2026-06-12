@@ -683,10 +683,21 @@ export function LiveShowSheet({ initialDeal }: LiveShowSheetProps) {
                                         <p className="text-xs font-black uppercase text-indigo-300">{lead.locationName || 'Nessuna location'}</p>
                                     </div>
                                 </div>
-                                <div className="flex flex-col items-end">
-                                    <span className="text-[8px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Orario Arrivo</span>
-                                    <p className="text-xs font-black uppercase text-indigo-300">{deal.arrivalTime || '--:--'}</p>
-                                </div>
+                                 <div className="flex items-center gap-4 text-right">
+                                     {deal.appuntamentoSede && (
+                                         <>
+                                             <div className="flex flex-col items-end">
+                                                 <span className="text-[8px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">App. Sede</span>
+                                                 <p className="text-xs font-black uppercase text-indigo-300">{deal.appuntamentoSede}</p>
+                                             </div>
+                                             <div className="h-8 w-px bg-white/10" />
+                                         </>
+                                     )}
+                                     <div className="flex flex-col items-end">
+                                         <span className="text-[8px] font-black text-white/30 uppercase tracking-widest leading-none mb-1">Orario Arrivo</span>
+                                         <p className="text-xs font-black uppercase text-indigo-300">{deal.arrivalTime || '--:--'}</p>
+                                     </div>
+                                 </div>
                             </div>
                         </Card>
                     </div>

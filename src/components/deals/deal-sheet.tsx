@@ -515,21 +515,25 @@ export function DealSheet({ leadId, initialData, leadName, leadLocation, accepte
                 </Card>
 
                 <Card className="rounded-[2rem] border-none shadow-sm bg-white p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-emerald-600" />
-                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Timeline</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                            <span className="text-[8px] font-bold text-slate-400 uppercase">Arrivo</span>
-                            <Input value={data.arrivalTime || ''} onChange={(e) => handleChange('arrivalTime', e.target.value)} placeholder="00:00" className="h-10 rounded-xl bg-slate-50 border-none font-black text-lg text-center" />
-                        </div>
-                        <div className="space-y-1">
-                            <span className="text-[8px] font-bold text-slate-400 uppercase">Fine</span>
-                            <Input value={data.endTime || ''} onChange={(e) => handleChange('endTime', e.target.value)} placeholder="00:00" className="h-10 rounded-xl bg-slate-50 border-none font-black text-lg text-center" />
-                        </div>
-                    </div>
-                </Card>
+                     <div className="flex items-center gap-2">
+                         <Clock className="h-4 w-4 text-emerald-600" />
+                         <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Timeline</span>
+                     </div>
+                     <div className="grid grid-cols-3 gap-2">
+                         <div className="space-y-1">
+                             <span className="text-[8px] font-bold text-slate-400 uppercase">Arrivo</span>
+                             <Input value={data.arrivalTime || ''} onChange={(e) => handleChange('arrivalTime', e.target.value)} placeholder="00:00" className="h-10 rounded-xl bg-slate-50 border-none font-black text-lg text-center" />
+                         </div>
+                         <div className="space-y-1">
+                             <span className="text-[8px] font-bold text-slate-400 uppercase">Fine</span>
+                             <Input value={data.endTime || ''} onChange={(e) => handleChange('endTime', e.target.value)} placeholder="00:00" className="h-10 rounded-xl bg-slate-50 border-none font-black text-lg text-center" />
+                         </div>
+                         <div className="space-y-1">
+                             <span className="text-[8px] font-bold text-slate-400 uppercase">App. Sede</span>
+                             <Input value={data.appuntamentoSede || ''} onChange={(e) => handleChange('appuntamentoSede', e.target.value)} placeholder="00:00" className="h-10 rounded-xl bg-indigo-50 border-none font-black text-lg text-center text-indigo-600" />
+                         </div>
+                     </div>
+                 </Card>
 
                 <Card className="lg:col-span-2 rounded-[2rem] border-none shadow-sm bg-indigo-900 text-white p-4">
                     <div className="flex items-center gap-2 mb-2">

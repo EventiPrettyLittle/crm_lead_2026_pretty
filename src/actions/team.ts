@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { serializePrisma } from "@/lib/serialize";
+import { sendWhatsAppTemplate } from "@/lib/whatsapp";
 
 // 1. Recupera la lista di tutti i membri del team
 export async function getTeamMembers() {
@@ -31,20 +32,38 @@ export async function getTeamMembers() {
 }
 
 // 2. Crea un nuovo membro del team
-export async function createTeamMember(name: string) {
+export async function createTeamMember(name: string, phone?: string) {
   try {
     if (!name || name.trim() === "") {
       throw new Error("Il nome è obbligatorio");
     }
 
     const member = await prisma.teamMember.create({
-      data: { name: name.trim() }
+      data: { 
+        name: name.trim(),
+        phone: phone ? phone.trim() : null
+      }
     });
 
     revalidatePath('/team');
     return { success: true, member: serializePrisma(member) };
   } catch (error: any) {
     console.error("Error creating team member:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// 2.5 Aggiorna il numero di telefono di un membro del team
+export async function updateTeamMemberPhone(id: string, phone: string) {
+  try {
+    const member = await prisma.teamMember.update({
+      where: { id },
+      data: { phone: phone ? phone.trim() : null }
+    });
+    revalidatePath('/team');
+    return { success: true, member: serializePrisma(member) };
+  } catch (error: any) {
+    console.error("Error updating team member phone:", error);
     return { success: false, error: error.message };
   }
 }
@@ -83,6 +102,49 @@ export async function assignTeamMember(dealId: string, teamMemberId: string, amo
         isPaid: false
       }
     });
+
+    // Recuperiamo le informazioni necessarie per inviare il WhatsApp
+    const [member, deal] = await Promise.all([
+      prisma.teamMember.findUnique({ where: { id: teamMemberId } }),
+      prisma.deal.findUnique({
+        where: { id: dealId },
+        include: { lead: true }
+      })
+    ]);
+
+    if (member && member.phone) {
+      try {
+        const eventDateStr = deal?.lead?.eventDate
+          ? new Date(deal.lead.eventDate).toLocaleDateString("it-IT")
+          : "-";
+        const appuntamento = deal?.appuntamentoSede || "-";
+        const location = deal?.lead?.locationName || "-";
+
+        await sendWhatsAppTemplate({
+          to: member.phone,
+          templateName: "team_avviso",
+          bodyVariables: [
+            member.name,     // {{1}} Nome Operatore
+            eventDateStr,    // {{2}} Data Evento
+            appuntamento,    // {{3}} Orario Partenza/Appuntamento Sede
+            location         // {{4}} Nome Location
+          ]
+        });
+
+        // Registriamo l'attività nel Lead associato
+        if (deal?.leadId) {
+          await prisma.activity.create({
+            data: {
+              leadId: deal.leadId,
+              type: "WHATSAPP",
+              notes: `✅ Inviato template "team_avviso" a ${member.name} (${member.phone})`
+            }
+          });
+        }
+      } catch (wsErr: any) {
+        console.error("Error sending WhatsApp notification to team member:", wsErr);
+      }
+    }
 
     revalidatePath('/team');
     revalidatePath('/deals');
@@ -216,6 +278,7 @@ export async function getTeamStats() {
       membersDataMap.set(m.id, {
         id: m.id,
         name: m.name,
+        phone: m.phone || "",
         totalEarned: 0,
         totalPaid: 0,
         totalPending: 0,
@@ -230,6 +293,7 @@ export async function getTeamStats() {
         membersDataMap.set(a.teamMemberId, {
           id: a.teamMemberId,
           name: a.teamMember.name,
+          phone: a.teamMember.phone || "",
           totalEarned: 0,
           totalPaid: 0,
           totalPending: 0,

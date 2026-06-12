@@ -13,7 +13,10 @@ import {
   Clock, 
   History,
   FileText,
-  Search
+  Search,
+  Check,
+  X,
+  Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +46,7 @@ interface TeamClientProps {
     date?: string,
     notes?: string
   ) => Promise<void>;
+  handleUpdatePhone: (id: string, phone: string) => Promise<void>;
 }
 
 export default function TeamClientComponent({
@@ -50,12 +54,18 @@ export default function TeamClientComponent({
   currentUser,
   handleAddMember,
   handleDeleteMember,
-  handleUpdatePayment
+  handleUpdatePayment,
+  handleUpdatePhone
 }: TeamClientProps) {
   const [activeTab, setActiveTab] = useState("members");
   const [newMemberName, setNewMemberName] = useState("");
+  const [newMemberPhone, setNewMemberPhone] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Stati per la modifica inline del telefono
+  const [editingPhoneId, setEditingPhoneId] = useState<string | null>(null);
+  const [tempPhone, setTempPhone] = useState("");
 
   // Stato per la modale di registrazione pagamento
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
@@ -73,8 +83,10 @@ export default function TeamClientComponent({
     try {
       const formData = new FormData();
       formData.append("name", newMemberName);
+      formData.append("phone", newMemberPhone);
       await handleAddMember(formData);
       setNewMemberName("");
+      setNewMemberPhone("");
       toast.success("Membro del team aggiunto con successo!");
     } catch (error) {
       toast.error("Errore nell'aggiunta del membro del team");
@@ -172,15 +184,22 @@ export default function TeamClientComponent({
         </div>
 
         {/* Form di creazione rapida */}
-        <form onSubmit={onSubmitMember} className="flex gap-2 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm max-w-md w-full md:w-auto">
+        <form onSubmit={onSubmitMember} className="flex flex-col sm:flex-row gap-2 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm max-w-xl w-full md:w-auto">
           <Input
             placeholder="Nome operatore..."
             value={newMemberName}
             onChange={(e) => setNewMemberName(e.target.value)}
-            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-slate-50 rounded-xl text-xs font-bold"
+            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-slate-50 rounded-xl text-xs font-bold min-w-[150px]"
             disabled={isAdding}
           />
-          <Button type="submit" disabled={isAdding} className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-xs uppercase px-4 flex gap-1">
+          <Input
+            placeholder="Telefono (es. +39333...)"
+            value={newMemberPhone}
+            onChange={(e) => setNewMemberPhone(e.target.value)}
+            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-slate-50 rounded-xl text-xs font-bold min-w-[150px]"
+            disabled={isAdding}
+          />
+          <Button type="submit" disabled={isAdding} className="rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-xs uppercase px-4 flex gap-1 h-10 sm:h-auto items-center justify-center shrink-0">
             <Plus className="h-4 w-4" /> Add
           </Button>
         </form>
@@ -275,6 +294,7 @@ export default function TeamClientComponent({
               <TableHeader>
                 <TableRow className="border-slate-100 hover:bg-transparent">
                   <TableHead className="font-bold text-xs uppercase text-slate-400">Nome Operatore</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-slate-400">Telefono</TableHead>
                   <TableHead className="font-bold text-xs uppercase text-slate-400 text-center">Eventi Svolti</TableHead>
                   <TableHead className="font-bold text-xs uppercase text-slate-400 text-right">Guadagno Generato</TableHead>
                   <TableHead className="font-bold text-xs uppercase text-slate-400 text-right">Liquidato</TableHead>
@@ -287,6 +307,58 @@ export default function TeamClientComponent({
                   filteredMembers.map((member) => (
                     <TableRow key={member.id} className="border-slate-100 hover:bg-slate-50/50">
                       <TableCell className="font-black text-slate-800 text-sm uppercase italic">{member.name}</TableCell>
+                      
+                      {/* Telefono modificabile inline */}
+                      <TableCell>
+                        {editingPhoneId === member.id ? (
+                          <div className="flex items-center gap-1 animate-in fade-in duration-200">
+                            <Input 
+                              value={tempPhone}
+                              onChange={(e) => setTempPhone(e.target.value)}
+                              className="h-8 w-32 rounded-xl text-xs font-bold bg-slate-50 border-slate-200 focus:bg-white"
+                              placeholder="es. +39333..."
+                            />
+                            <Button
+                              size="sm"
+                              className="h-8 w-8 p-0 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-sm"
+                              onClick={async () => {
+                                try {
+                                  await handleUpdatePhone(member.id, tempPhone);
+                                  setEditingPhoneId(null);
+                                  toast.success("Telefono aggiornato con successo!");
+                                } catch(e) {
+                                  toast.error("Errore nell'aggiornamento del telefono");
+                                }
+                              }}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 rounded-xl text-slate-400 hover:bg-slate-100 flex items-center justify-center shrink-0 border border-slate-100"
+                              onClick={() => setEditingPhoneId(null)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 group min-h-[32px]">
+                            <span className="text-slate-600 text-xs font-bold">{member.phone || "—"}</span>
+                            <button 
+                              onClick={() => {
+                                setEditingPhoneId(member.id);
+                                setTempPhone(member.phone || "");
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-lg transition-all"
+                              title="Modifica Telefono"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+                      </TableCell>
+
                       <TableCell className="font-bold text-center text-slate-600">{member.eventsCount}</TableCell>
                       <TableCell className="font-black text-right text-slate-850">
                         €{member.totalEarned.toLocaleString("it-IT", { minimumFractionDigits: 2 })}
@@ -313,7 +385,7 @@ export default function TeamClientComponent({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-slate-400 font-bold">
+                    <TableCell colSpan={7} className="text-center py-12 text-slate-400 font-bold">
                       Nessun operatore corrisponde ai criteri di ricerca
                     </TableCell>
                   </TableRow>

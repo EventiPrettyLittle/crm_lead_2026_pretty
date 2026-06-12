@@ -67,7 +67,7 @@ export async function getDeals() {
             const assignments = deal.productAssignments ? JSON.parse(deal.productAssignments) : [];
             
             // 1. CAMPI BASE (Sempre obbligatori)
-            const baseFields = [deal.numGuests, deal.numFavors, deal.arrivalTime, deal.endTime];
+            const baseFields = [deal.numGuests, deal.numFavors, deal.arrivalTime, deal.endTime, deal.appuntamentoSede];
             const baseFilled = baseFields.filter(f => f && f.toString().trim() !== "").length;
             
             // 2. ASSEGNAZIONE PRODOTTI (Tutti i prodotti del preventivo devono essere assegnati)
