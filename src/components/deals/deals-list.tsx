@@ -42,6 +42,7 @@ const getFavor1Qty = (deal: any) => {
 export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProps) {
     console.log("Deals in list:", initialDeals.map(d => ({ name: d.firstName, dealId: d.deal?.id, teamCount: d.deal?.teamAssignments?.length, team: d.deal?.teamAssignments })));
     const [search, setSearch] = useState("");
+    const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState("date_asc"); 
     const [filterMode, setFilterMode] = useState("next15"); // all, next15, completed
     const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -270,22 +271,32 @@ export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProp
                                              </div>
                                              
                                              {/* Team count & Eye widget */}
-                                             <div className="flex items-center gap-1.5 border-l border-slate-100 pl-3">
+                                             <div 
+                                                 className="flex items-center gap-1.5 border-l border-slate-100 pl-3"
+                                                 onClick={(e) => {
+                                                     e.preventDefault();
+                                                     e.stopPropagation();
+                                                 }}
+                                             >
                                                  <span className="text-[9px] font-black uppercase text-slate-400">Team:</span>
                                                  {deal.deal?.teamAssignments && deal.deal.teamAssignments.length > 0 ? (
                                                      <div className="flex items-center gap-1">
                                                          <span className="text-[10px] font-bold text-slate-700">
                                                              {deal.deal.teamAssignments.length}
                                                          </span>
-                                                         <Popover>
+                                                         <Popover 
+                                                             open={openPopoverId === deal.id} 
+                                                             onOpenChange={(open) => setOpenPopoverId(open ? deal.id : null)}
+                                                         >
                                                              <PopoverTrigger asChild>
                                                                  <button 
                                                                      type="button" 
                                                                      onClick={(e) => {
                                                                          e.preventDefault();
                                                                          e.stopPropagation();
+                                                                         setOpenPopoverId(openPopoverId === deal.id ? null : deal.id);
                                                                      }}
-                                                                     className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all flex items-center justify-center"
+                                                                     className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all flex items-center justify-center cursor-pointer"
                                                                      title="Vedi personale assegnato"
                                                                  >
                                                                      <Eye className="h-3.5 w-3.5" />
