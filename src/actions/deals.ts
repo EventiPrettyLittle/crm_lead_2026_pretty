@@ -17,7 +17,16 @@ export async function getDeals() {
             items: true,
             lead: {
                 include: {
-                    deal: true
+                    deal: {
+                        include: {
+                            teamAssignments: {
+                                include: {
+                                    teamMember: true
+                                }
+                            },
+                            guests: true
+                        }
+                    }
                 }
             }
         },
@@ -45,7 +54,11 @@ export async function getDeals() {
                 }
             });
             // Aggiorniamo l'oggetto in memoria per il calcolo successivo
-            quote.lead.deal = newDeal;
+            quote.lead.deal = {
+                ...newDeal,
+                teamAssignments: [],
+                guests: []
+            } as any;
         } else if (!deal.deliveryType) {
             // AGGIORNAMENTO AUTOMATICO: Esiste ma è vuoto
             await prisma.deal.update({

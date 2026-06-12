@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Calendar, Users, Workflow, Search, SortAsc, SortDesc, Filter, Trophy, CheckCircle, Clock } from "lucide-react";
+import { ArrowRight, Calendar, Users, Workflow, Search, SortAsc, SortDesc, Filter, Trophy, CheckCircle, Clock, Eye } from "lucide-react";
 import { toggleDealCompletion } from "@/actions/deals";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -16,11 +16,28 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 interface DealsListProps {
     initialDeals: any[];
     linkPrefix?: string;
 }
+
+const getFavor1Qty = (deal: any) => {
+    try {
+        const productAssignments = deal.deal?.productAssignments 
+            ? JSON.parse(deal.deal.productAssignments) 
+            : [];
+        const assignment = productAssignments.find((a: any) => a.target === 'favor1');
+        if (!assignment) return null;
+        
+        const items = deal.acceptedQuote?.items || [];
+        const item = items.find((i: any) => i.id === assignment.quoteItemId);
+        return item ? item.quantity : null;
+    } catch (e) {
+        return null;
+    }
+};
 
 export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProps) {
     const [search, setSearch] = useState("");
@@ -185,11 +202,19 @@ export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProp
                                                             deal.deal.deliveryType === 'LIVE SHOW' ? "bg-purple-500" : "bg-emerald-500"
                                                         )} />
                                                         <span className={cn(
-                                                            "text-[9px] font-black uppercase tracking-tighter",
+                                                            "text-[9px] font-black uppercase tracking-tighter flex items-center gap-1.5",
                                                             deal.deal.deliveryType === 'CONSEGNA' ? "text-blue-600" :
                                                             deal.deal.deliveryType === 'LIVE SHOW' ? "text-purple-600" : "text-emerald-600"
                                                         )}>
                                                             {deal.deal.deliveryType}
+                                                            {deal.deal.deliveryType === 'LIVE SHOW' && (() => {
+                                                                const qty = getFavor1Qty(deal);
+                                                                return qty !== null ? (
+                                                                    <span className="text-[9px] font-black text-purple-700 bg-purple-100/80 px-1.5 py-0.5 rounded-md leading-none">
+                                                                        {qty} pz
+                                                                    </span>
+                                                                ) : null;
+                                                            })()}
                                                         </span>
                                                     </div>
                                                 )}
@@ -235,15 +260,66 @@ export function DealsList({ initialDeals, linkPrefix = "/deals" }: DealsListProp
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                                        <div className="flex items-center gap-1">
-                                            <Users className="h-3 w-3 text-slate-300" />
-                                            <span className="text-[10px] font-bold text-slate-500">{deal.guestsCount || '--'}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1 text-indigo-600 font-bold text-[10px] uppercase group-hover:translate-x-1 transition-transform">
-                                            Dettagli <ArrowRight className="h-3 w-3" />
-                                        </div>
-                                    </div>
+                                     <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                                         <div className="flex items-center gap-4">
+                                             {/* Invitati count */}
+                                             <div className="flex items-center gap-1">
+                                                 <Users className="h-3 w-3 text-slate-300" />
+                                                 <span className="text-[10px] font-bold text-slate-500" title="Numero invitati">{deal.guestsCount || '--'}</span>
+                                             </div>
+                                             
+                                             {/* Team count & Eye widget */}
+                                             <div className="flex items-center gap-1.5 border-l border-slate-100 pl-3">
+                                                 <span className="text-[9px] font-black uppercase text-slate-400">Team:</span>
+                                                 {deal.deal?.teamAssignments && deal.deal.teamAssignments.length > 0 ? (
+                                                     <div className="flex items-center gap-1">
+                                                         <span className="text-[10px] font-bold text-slate-700">
+                                                             {deal.deal.teamAssignments.length}
+                                                         </span>
+                                                         <Popover>
+                                                             <PopoverTrigger asChild>
+                                                                 <button 
+                                                                     type="button" 
+                                                                     onClick={(e) => {
+                                                                         e.preventDefault();
+                                                                         e.stopPropagation();
+                                                                     }}
+                                                                     className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-all flex items-center justify-center"
+                                                                     title="Vedi personale assegnato"
+                                                                 >
+                                                                     <Eye className="h-3.5 w-3.5" />
+                                                                 </button>
+                                                             </PopoverTrigger>
+                                                             <PopoverContent 
+                                                                 className="w-56 p-3 rounded-2xl bg-white border border-slate-100 shadow-xl z-50"
+                                                                 onClick={(e) => {
+                                                                     e.preventDefault();
+                                                                     e.stopPropagation();
+                                                                 }}
+                                                             >
+                                                                 <div className="space-y-2">
+                                                                     <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest block">Operatori Assegnati</span>
+                                                                     <div className="space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar">
+                                                                         {deal.deal.teamAssignments.map((assign: any, aIdx: number) => (
+                                                                             <div key={aIdx} className="flex justify-between items-center bg-slate-50 p-1.5 rounded-xl border border-slate-100 animate-in fade-in duration-200">
+                                                                                 <span className="text-[10px] font-black text-slate-800 uppercase italic leading-none">{assign.teamMember?.name || 'Operatore'}</span>
+                                                                                 <span className="text-[8px] font-bold text-indigo-600 leading-none">€{Number(assign.amount)}</span>
+                                                                             </div>
+                                                                         ))}
+                                                                     </div>
+                                                                 </div>
+                                                             </PopoverContent>
+                                                         </Popover>
+                                                     </div>
+                                                 ) : (
+                                                     <span className="text-[10px] font-bold text-slate-400">0</span>
+                                                 )}
+                                             </div>
+                                         </div>
+                                         <div className="flex items-center gap-1 text-indigo-600 font-bold text-[10px] uppercase group-hover:translate-x-1 transition-transform">
+                                             Dettagli <ArrowRight className="h-3 w-3" />
+                                         </div>
+                                     </div>
                                 </div>
                             </Link>
                         </CardContent>
